@@ -1,0 +1,868 @@
+[
+  {
+    "id": "ikoyi",
+    "name": "Ikoyi",
+    "jurisdiction": "Eti-Osa / Ikoyi",
+    "geometry": {
+      "center": [
+        6.4542,
+        3.435
+      ],
+      "polygon": [
+        [
+          6.4598,
+          3.4254
+        ],
+        [
+          6.4622,
+          3.4344
+        ],
+        [
+          6.4575,
+          3.4442
+        ],
+        [
+          6.4489,
+          3.444
+        ],
+        [
+          6.4451,
+          3.4351
+        ],
+        [
+          6.4495,
+          3.4266
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Validate civic and residential controls before density advice",
+      "summary": "Established high-value district with mixed civic, institutional, and residential controls. Approval path depends heavily on street frontage and drainage context.",
+      "bestNextAction": "Confirm current land-use classification and drainage comments before concept design.",
+      "riskLevel": "Medium",
+      "confidence": 61,
+      "confidenceReason": "Good historical signals, but parcel-level rules vary significantly."
+    },
+    "intelligence": {
+      "buildParameters": [
+        {
+          "label": "Permitted use",
+          "value": "Residential / civic",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Typical height",
+          "value": "3-5 floors",
+          "sourceType": "Historical"
+        },
+        {
+          "label": "Setback review",
+          "value": "Street specific",
+          "sourceType": "Manual",
+          "isOverride": true,
+          "overrideReason": "Historic approvals show street-by-street treatment."
+        },
+        {
+          "label": "Drainage review",
+          "value": "Required",
+          "sourceType": "Official"
+        }
+      ],
+      "constraints": [
+        {
+          "label": "Tree removal and drainage impacts require additional review",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Heritage or institutional plots may require ministry consent",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Higher-density schemes typically trigger traffic impact notes",
+          "sourceType": "Historical"
+        }
+      ],
+      "redFlags": [
+        "Drainage-sensitive streets",
+        "Institutional plot history",
+        "Traffic impact comments"
+      ],
+      "documentsToRequest": [
+        "Land-use confirmation",
+        "Drainage comments",
+        "Survey plan",
+        "Street frontage photos"
+      ]
+    },
+    "approvals": [
+      {
+        "date": "2026-05-14",
+        "projectType": "Mixed-use renovation",
+        "request": "Pre-check for civic/residential adaptive reuse",
+        "outcome": "Pending",
+        "signal": "Ministry signoff may be required on institutional blocks",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2026-03-07",
+        "projectType": "Residential extension",
+        "request": "Low-rise extension permit",
+        "outcome": "Approved",
+        "signal": "Conservative residential extensions remain viable",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2025-12-12",
+        "projectType": "Drainage variance",
+        "request": "Reduced drainage reserve",
+        "outcome": "Denied",
+        "signal": "Drainage objections are material blockers",
+        "sourceType": "Historical"
+      }
+    ],
+    "notes": [
+      {
+        "author": "Planning Team",
+        "date": "2026-06-18",
+        "category": "Verification",
+        "text": "Verify exact street frontage before advising setbacks.",
+        "pinned": true
+      },
+      {
+        "author": "Ops",
+        "date": "2026-06-09",
+        "category": "Risk",
+        "text": "Flooding history can change approval timeline.",
+        "pinned": false
+      }
+    ],
+    "metadata": {
+      "lastReviewed": "2026-06-18",
+      "reviewedBy": "Planning Team",
+      "freshness": "Current",
+      "reviewStatus": "Reviewed",
+      "datasets": [
+        "manual-boundary-v1",
+        "approval-log-v1"
+      ]
+    }
+  },
+  {
+    "id": "banana-island",
+    "name": "Banana Island",
+    "jurisdiction": "Ikoyi / Banana Island Estate",
+    "geometry": {
+      "center": [
+        6.4682,
+        3.4504
+      ],
+      "polygon": [
+        [
+          6.4723,
+          3.443
+        ],
+        [
+          6.4755,
+          3.4504
+        ],
+        [
+          6.4722,
+          3.4589
+        ],
+        [
+          6.4647,
+          3.4584
+        ],
+        [
+          6.4614,
+          3.4498
+        ],
+        [
+          6.465,
+          3.4428
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Prioritize 4-floor luxury residential schemes",
+      "summary": "High-confidence residential estate record with strong approval history and tight estate controls. Height variance above four floors is the primary risk.",
+      "bestNextAction": "Confirm the current estate setback memo before concept design.",
+      "riskLevel": "Medium",
+      "confidence": 82,
+      "confidenceReason": "Strong estate-rule, manual override, and approval-history coverage."
+    },
+    "intelligence": {
+      "buildParameters": [
+        {
+          "label": "Permitted use",
+          "value": "Residential",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Max height",
+          "value": "4 floors",
+          "sourceType": "Manual",
+          "isOverride": true,
+          "overrideReason": "Historical approvals indicate stricter effective cap than baseline guidance."
+        },
+        {
+          "label": "Front setback",
+          "value": "6 m",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Plot coverage",
+          "value": "60%",
+          "sourceType": "Internal"
+        }
+      ],
+      "constraints": [
+        {
+          "label": "No commercial signage on residential frontages",
+          "sourceType": "Estate"
+        },
+        {
+          "label": "Minimum 6 m front setback from all plot boundaries",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Prior variance approvals rarely granted above 4 floors",
+          "sourceType": "Historical"
+        }
+      ],
+      "redFlags": [
+        "Height above 4 floors",
+        "Commercial frontage",
+        "Estate board variance timing"
+      ],
+      "documentsToRequest": [
+        "Estate design code",
+        "Setback memo",
+        "Survey plan",
+        "Prior approval correspondence"
+      ]
+    },
+    "approvals": [
+      {
+        "date": "2026-04-18",
+        "projectType": "Residential variance",
+        "request": "5-floor height variance",
+        "outcome": "Denied",
+        "signal": "Schemes above 4 floors face strong resistance",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2026-02-02",
+        "projectType": "Boundary works",
+        "request": "Boundary wall permit",
+        "outcome": "Approved",
+        "signal": "Boundary works are viable when setback is preserved",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2025-11-20",
+        "projectType": "Residential intensification",
+        "request": "Dual-occupancy proposal",
+        "outcome": "Pending",
+        "signal": "Estate review timelines remain slow",
+        "sourceType": "Historical"
+      }
+    ],
+    "notes": [
+      {
+        "author": "Chidubem O.",
+        "date": "2026-06-12",
+        "category": "Recommendation",
+        "text": "Estate board has rejected most proposals above 4 floors since late 2025.",
+        "pinned": true
+      },
+      {
+        "author": "Adaeze N.",
+        "date": "2026-06-05",
+        "category": "Timeline",
+        "text": "Variance appeals usually run 8 to 10 weeks end to end.",
+        "pinned": false
+      }
+    ],
+    "metadata": {
+      "lastReviewed": "2026-06-12",
+      "reviewedBy": "Chidubem O.",
+      "freshness": "Current",
+      "reviewStatus": "Reviewed",
+      "datasets": [
+        "estate-rules-v1",
+        "approval-log-v1",
+        "internal-notes-v1"
+      ]
+    }
+  },
+  {
+    "id": "victoria-island",
+    "name": "Victoria Island",
+    "jurisdiction": "Eti-Osa / Victoria Island",
+    "geometry": {
+      "center": [
+        6.4281,
+        3.4219
+      ],
+      "polygon": [
+        [
+          6.4386,
+          3.4018
+        ],
+        [
+          6.4403,
+          3.432
+        ],
+        [
+          6.429,
+          3.4442
+        ],
+        [
+          6.416,
+          3.4385
+        ],
+        [
+          6.4131,
+          3.4128
+        ],
+        [
+          6.4232,
+          3.4005
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Treat as mixed-use viable, subject to traffic and parking proof",
+      "summary": "Commercial-residential district with strong development demand but inconsistent parcel-level records. Traffic comments are the recurring approval risk.",
+      "bestNextAction": "Confirm current use classification and parking strategy before client advice.",
+      "riskLevel": "Medium",
+      "confidence": 56,
+      "confidenceReason": "Useful historical approvals, but official parcel data is uneven."
+    },
+    "intelligence": {
+      "buildParameters": [
+        {
+          "label": "Permitted use",
+          "value": "Mixed use",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Typical height",
+          "value": "6-12 floors",
+          "sourceType": "Historical"
+        },
+        {
+          "label": "Parking ratio",
+          "value": "Use dependent",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Traffic impact",
+          "value": "Often required",
+          "sourceType": "Official"
+        }
+      ],
+      "constraints": [
+        {
+          "label": "Commercial frontage needs parking and access review",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Hospitality projects require fire and evacuation signoff",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Noise and generator screening requested near residential blocks",
+          "sourceType": "Manual"
+        }
+      ],
+      "redFlags": [
+        "Parking shortfall",
+        "Generator screening",
+        "Access conflicts"
+      ],
+      "documentsToRequest": [
+        "Parking schedule",
+        "Traffic note",
+        "Land-use confirmation",
+        "Fire strategy"
+      ]
+    },
+    "approvals": [
+      {
+        "date": "2026-06-22",
+        "projectType": "Retail conversion",
+        "request": "Commercial frontage conversion",
+        "outcome": "Approved",
+        "signal": "Retail works when parking/access is addressed",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2026-01-16",
+        "projectType": "Hospitality",
+        "request": "Serviced apartment review",
+        "outcome": "Pending",
+        "signal": "Hospitality review can extend approval timeline",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2025-10-04",
+        "projectType": "Parking variance",
+        "request": "Parking reduction",
+        "outcome": "Denied",
+        "signal": "Parking shortfalls are material blockers",
+        "sourceType": "Historical"
+      }
+    ],
+    "notes": [
+      {
+        "author": "Planning Team",
+        "date": "2026-06-20",
+        "category": "Next action",
+        "text": "Best first step is confirming current land-use classification.",
+        "pinned": true
+      },
+      {
+        "author": "Ops",
+        "date": "2026-06-02",
+        "category": "Risk",
+        "text": "Traffic comments are the most common approval blocker.",
+        "pinned": false
+      }
+    ],
+    "metadata": {
+      "lastReviewed": "2026-06-20",
+      "reviewedBy": "Planning Team",
+      "freshness": "Current",
+      "reviewStatus": "Needs parcel verification",
+      "datasets": [
+        "approval-log-v1",
+        "manual-boundary-v1"
+      ]
+    }
+  },
+  {
+    "id": "eko-atlantic",
+    "name": "Eko Atlantic",
+    "jurisdiction": "Eko Atlantic master development",
+    "geometry": {
+      "center": [
+        6.4102,
+        3.4095
+      ],
+      "polygon": [
+        [
+          6.4198,
+          3.3902
+        ],
+        [
+          6.423,
+          3.4168
+        ],
+        [
+          6.4101,
+          3.4318
+        ],
+        [
+          6.3974,
+          3.4218
+        ],
+        [
+          6.395,
+          3.3972
+        ],
+        [
+          6.4052,
+          3.3866
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Do not advise without district code and plot covenant",
+      "summary": "Master-planned coastal district where development controls are likely district-specific. Current record is intentionally conservative due to missing data.",
+      "bestNextAction": "Request plot number, district code, and master developer guidance.",
+      "riskLevel": "Unknown",
+      "confidence": 0,
+      "confidenceReason": "Insufficient loaded source coverage."
+    },
+    "intelligence": {
+      "buildParameters": [
+        {
+          "label": "Permitted use",
+          "value": "Plan specific",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Height limit",
+          "value": "District specific",
+          "sourceType": "No data"
+        },
+        {
+          "label": "Coastal review",
+          "value": "Likely required",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Utilities tie-in",
+          "value": "Developer approval",
+          "sourceType": "Manual"
+        }
+      ],
+      "constraints": [
+        {
+          "label": "Confirm plot covenant and district design code before advising",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Public realm interfaces likely controlled by master developer",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Insufficient approval history in current record",
+          "sourceType": "No data"
+        }
+      ],
+      "redFlags": [
+        "No loaded district code",
+        "No approval history",
+        "Master developer controls"
+      ],
+      "documentsToRequest": [
+        "Plot covenant",
+        "District design code",
+        "Utility tie-in requirements",
+        "Developer approval guide"
+      ]
+    },
+    "approvals": [
+      {
+        "date": "",
+        "projectType": "No record",
+        "request": "No approval records loaded",
+        "outcome": "No data",
+        "signal": "Treat as placeholder until source documents are loaded",
+        "sourceType": "No data"
+      }
+    ],
+    "notes": [
+      {
+        "author": "Planning Team",
+        "date": "2026-06-10",
+        "category": "Data gap",
+        "text": "Treat this record as a placeholder until source documents are loaded.",
+        "pinned": true
+      },
+      {
+        "author": "Ops",
+        "date": "2026-06-10",
+        "category": "Next action",
+        "text": "Ask for plot number and district code.",
+        "pinned": false
+      }
+    ],
+    "metadata": {
+      "lastReviewed": "2026-06-10",
+      "reviewedBy": "Planning Team",
+      "freshness": "Incomplete",
+      "reviewStatus": "Data gap",
+      "datasets": [
+        "manual-boundary-v1"
+      ]
+    }
+  },
+  {
+    "id": "oniru",
+    "name": "Oniru",
+    "jurisdiction": "Eti-Osa / Oniru",
+    "geometry": {
+      "center": [
+        6.4309,
+        3.4555
+      ],
+      "polygon": [
+        [
+          6.4402,
+          3.444
+        ],
+        [
+          6.4417,
+          3.4668
+        ],
+        [
+          6.4304,
+          3.4784
+        ],
+        [
+          6.4194,
+          3.47
+        ],
+        [
+          6.418,
+          3.4488
+        ],
+        [
+          6.4292,
+          3.4385
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Proceed only after title, access, and use verification",
+      "summary": "Fast-changing residential and hospitality corridor with fragmented approval history. Current confidence is low due to conflicting local and official signals.",
+      "bestNextAction": "Run title/access verification before design advice.",
+      "riskLevel": "High",
+      "confidence": 34,
+      "confidenceReason": "Data conflicts between historical notes and official sources."
+    },
+    "intelligence": {
+      "buildParameters": [
+        {
+          "label": "Permitted use",
+          "value": "Residential / hospitality",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Typical height",
+          "value": "4-8 floors",
+          "sourceType": "Historical"
+        },
+        {
+          "label": "Setback review",
+          "value": "Required",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Title check",
+          "value": "Required",
+          "sourceType": "Manual",
+          "isOverride": true,
+          "overrideReason": "Local ownership and access constraints frequently affect feasibility."
+        }
+      ],
+      "constraints": [
+        {
+          "label": "Short-let and hospitality uses need added operating review",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Some streets require local family or estate confirmation",
+          "sourceType": "Historical"
+        },
+        {
+          "label": "Flood and access constraints can reduce viable coverage",
+          "sourceType": "Official"
+        }
+      ],
+      "redFlags": [
+        "Conflicting title signals",
+        "Access constraints",
+        "Hospitality operating review"
+      ],
+      "documentsToRequest": [
+        "Title evidence",
+        "Access survey",
+        "Flood comments",
+        "Use confirmation"
+      ]
+    },
+    "approvals": [
+      {
+        "date": "2026-05-30",
+        "projectType": "Hospitality",
+        "request": "Boutique hotel pre-application",
+        "outcome": "Pending",
+        "signal": "Hospitality path requires added verification",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2026-02-09",
+        "projectType": "Residential block",
+        "request": "Residential block expansion",
+        "outcome": "Denied",
+        "signal": "Access and coverage concerns can block expansion",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2025-08-18",
+        "projectType": "Boundary",
+        "request": "Boundary regularization",
+        "outcome": "Approved",
+        "signal": "Regularization possible after title checks",
+        "sourceType": "Historical"
+      }
+    ],
+    "notes": [
+      {
+        "author": "Planning Team",
+        "date": "2026-06-15",
+        "category": "Risk",
+        "text": "Use caution: data conflicts between historical notes and official sources.",
+        "pinned": true
+      },
+      {
+        "author": "Ops",
+        "date": "2026-06-03",
+        "category": "Next action",
+        "text": "Title and access checks should happen before design advice.",
+        "pinned": false
+      }
+    ],
+    "metadata": {
+      "lastReviewed": "2026-06-15",
+      "reviewedBy": "Planning Team",
+      "freshness": "Needs review",
+      "reviewStatus": "Low confidence",
+      "datasets": [
+        "approval-log-v1",
+        "internal-notes-v1"
+      ]
+    }
+  },
+  {
+    "id": "lekki-phase-1",
+    "name": "Lekki Phase 1",
+    "jurisdiction": "Eti-Osa / Lekki Phase 1",
+    "geometry": {
+      "center": [
+        6.4442,
+        3.4727
+      ],
+      "polygon": [
+        [
+          6.4578,
+          3.459
+        ],
+        [
+          6.4589,
+          3.4888
+        ],
+        [
+          6.445,
+          3.5025
+        ],
+        [
+          6.43,
+          3.4935
+        ],
+        [
+          6.4295,
+          3.4648
+        ],
+        [
+          6.4438,
+          3.4534
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Strong candidate for early feasibility screening",
+      "summary": "Well-covered mixed residential district with active redevelopment and recurring drainage, parking, and commercial-conversion constraints.",
+      "bestNextAction": "Confirm street classification before proposing commercial use.",
+      "riskLevel": "Medium",
+      "confidence": 74,
+      "confidenceReason": "Good approval-history coverage and consistent recurring constraints."
+    },
+    "intelligence": {
+      "buildParameters": [
+        {
+          "label": "Permitted use",
+          "value": "Residential mixed",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Typical height",
+          "value": "4-6 floors",
+          "sourceType": "Historical"
+        },
+        {
+          "label": "Parking",
+          "value": "Required",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Drainage review",
+          "value": "Required",
+          "sourceType": "Official"
+        }
+      ],
+      "constraints": [
+        {
+          "label": "Redevelopment projects require drainage and access statement",
+          "sourceType": "Official"
+        },
+        {
+          "label": "Commercial conversion is street-dependent",
+          "sourceType": "Manual"
+        },
+        {
+          "label": "Parking shortfalls are commonly queried",
+          "sourceType": "Historical"
+        }
+      ],
+      "redFlags": [
+        "Parking shortfall",
+        "Commercial conversion on residential street",
+        "Drainage comments"
+      ],
+      "documentsToRequest": [
+        "Street classification",
+        "Drainage statement",
+        "Parking schedule",
+        "Survey plan"
+      ]
+    },
+    "approvals": [
+      {
+        "date": "2026-06-11",
+        "projectType": "Apartment redevelopment",
+        "request": "Residential redevelopment",
+        "outcome": "Approved",
+        "signal": "Apartment redevelopment can move quickly when drainage is addressed",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2026-03-28",
+        "projectType": "Retail conversion",
+        "request": "Ground-floor commercial conversion",
+        "outcome": "Pending",
+        "signal": "Commercial conversion requires street-specific review",
+        "sourceType": "Historical"
+      },
+      {
+        "date": "2026-01-15",
+        "projectType": "Parking variance",
+        "request": "Parking reduction",
+        "outcome": "Denied",
+        "signal": "Parking shortfalls remain a strong blocker",
+        "sourceType": "Historical"
+      }
+    ],
+    "notes": [
+      {
+        "author": "Planning Team",
+        "date": "2026-06-21",
+        "category": "Recommendation",
+        "text": "Good candidate for rapid early feasibility checks.",
+        "pinned": true
+      },
+      {
+        "author": "Ops",
+        "date": "2026-06-06",
+        "category": "Verification",
+        "text": "Confirm street classification before proposing commercial use.",
+        "pinned": false
+      }
+    ],
+    "metadata": {
+      "lastReviewed": "2026-06-21",
+      "reviewedBy": "Planning Team",
+      "freshness": "Current",
+      "reviewStatus": "Reviewed",
+      "datasets": [
+        "approval-log-v1",
+        "official-baseline-v1"
+      ]
+    }
+  }
+]
