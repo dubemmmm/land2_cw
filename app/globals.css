@@ -61,7 +61,8 @@ a {
   border-radius: 10px;
   background: #d2a24e;
   color: #17120c;
-  font: 600 18px/1 "Cormorant Garamond", serif;
+  font: 700 13px/1 "Hanken Grotesk", sans-serif;
+  letter-spacing: 0;
   margin-bottom: 52px;
 }
 
@@ -2156,7 +2157,8 @@ a {
   border-radius: 9px;
   background: #d2a24e;
   color: #17120c;
-  font: 600 16px/1 "Cormorant Garamond", serif;
+  font: 700 12px/1 "Hanken Grotesk", sans-serif;
+  letter-spacing: 0;
 }
 
 .report-brand strong,

@@ -14,7 +14,7 @@ export default function AppShell({ active, children }) {
   return (
     <div className="app-shell">
       <aside className="rail">
-        <Link className="logo" href="/">C</Link>
+        <Link className="logo" href="/" aria-label="CW Real Estate">CW</Link>
         <nav aria-label="Main navigation">
           {items.map((item) => {
             const Icon = item.icon;

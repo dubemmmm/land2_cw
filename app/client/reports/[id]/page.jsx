@@ -34,9 +34,9 @@ export default async function ClientReportPage({ params }) {
       <article className="report-paper">
         <header className="report-paper-head">
           <div className="report-brand">
-            <span>C</span>
+            <span>CW</span>
             <div>
-              <strong>CabalWorks Intelligence</strong>
+              <strong>CW Real Estate</strong>
               <p>Development brief</p>
             </div>
           </div>

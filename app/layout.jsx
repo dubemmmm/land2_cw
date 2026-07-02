@@ -2,7 +2,7 @@ import "./globals.css";
 import Script from "next/script";
 
 export const metadata = {
-  title: "CabalWorks Intelligence",
+  title: "CW Real Estate Intelligence",
   description: "Planning intelligence dashboard for Lagos development decisions"
 };
 

@@ -1,4 +1,4 @@
-# CabalWorks Development Intelligence
+# CW Real Estate Intelligence
 
 A Next.js planning intelligence dashboard for evaluating Lagos development locations, neighborhood risk, approval history, and client-ready briefs.
 
@@ -53,7 +53,7 @@ npm run start
 
 ## Data
 
-The app creates a local SQLite database at `data/app.db` when it starts. That file is intentionally ignored by Git because it is runtime data. On Vercel, the app uses `/tmp/cabalworks-app.db` because the deployed project filesystem is read-only at runtime.
+The app creates a local SQLite database at `data/app.db` when it starts. That file is intentionally ignored by Git because it is runtime data. On Vercel, the app uses `/tmp/cw-real-estate-app.db` because the deployed project filesystem is read-only at runtime.
 
 Seed data lives in:
 
