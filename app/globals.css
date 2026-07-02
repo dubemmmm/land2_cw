@@ -1842,18 +1842,23 @@ a {
   gap: 16px;
 }
 
-.report-tabs span {
+.report-tabs button {
   height: 30px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: 0;
   border-radius: 8px;
+  background: transparent;
   color: #8a7f6e;
   padding: 0 11px;
   font: 600 12px/1 "Hanken Grotesk", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.report-tabs span.active {
+.report-tabs button:hover,
+.report-tabs button.active {
   background: rgba(210, 162, 78, 0.22);
   color: #f8f2e8;
 }
@@ -1913,7 +1918,6 @@ a {
   gap: 8px;
 }
 
-.report-filter-row span,
 .report-filter-row button {
   height: 31px;
   border: 1px solid rgba(255, 255, 255, 0.11);
@@ -1922,16 +1926,18 @@ a {
   color: #9c907f;
   padding: 0 12px;
   font: 600 11px/1 "Hanken Grotesk", sans-serif;
-}
-
-.report-filter-row span {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.report-filter-row button:hover {
   color: #c9bca9;
 }
 
-.report-filter-row span i {
+.report-filter-row button i {
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -1977,14 +1983,23 @@ a {
 .report-ledger-row {
   min-height: 68px;
   border-left: 1px solid transparent;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
   border-radius: 10px;
+  background: transparent;
   color: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
 }
 
 .report-ledger-row:hover,
-.report-ledger-row.featured {
+.report-ledger-row.featured,
+.report-ledger-row:focus-visible {
   background: rgba(210, 162, 78, 0.11);
   border-left-color: #d2a24e;
+  outline: 0;
 }
 
 .report-ledger-row strong {
@@ -1997,6 +2012,30 @@ a {
   margin: 5px 0 0;
   color: #8a7f6e;
   font: 500 11px/1.25 "Hanken Grotesk", sans-serif;
+}
+
+.report-empty-state {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  margin: 22px 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #8a7f6e;
+  text-align: center;
+}
+
+.report-empty-state strong {
+  color: #f3ece1;
+  font: 700 13px/1 "Hanken Grotesk", sans-serif;
+}
+
+.report-empty-state p {
+  margin: 0;
+  color: #8a7f6e;
+  font: 500 12px/1 "Hanken Grotesk", sans-serif;
 }
 
 .report-confidence {
@@ -2094,6 +2133,21 @@ a {
   color: #c9bca9;
   padding: 0 10px;
   font: 700 10px/1 "Hanken Grotesk", sans-serif;
+}
+
+.report-detail-actions button {
+  cursor: pointer;
+}
+
+.report-detail-actions button:hover {
+  border-color: rgba(210, 162, 78, 0.42);
+  color: #f3ece1;
+}
+
+.report-detail-actions em {
+  color: #8a7f6e;
+  font: 600 10px/1 "Hanken Grotesk", sans-serif;
+  font-style: normal;
 }
 
 .report-detail-status.shared {
@@ -2463,7 +2517,17 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
   background: #100c08;
+  color: inherit;
   padding: 12px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+
+.report-comp-row:hover,
+.report-comp-row:focus-visible {
+  border-color: rgba(210, 162, 78, 0.38);
+  outline: 0;
 }
 
 .report-comp-row strong {
@@ -3283,7 +3347,6 @@ a {
     padding-bottom: 2px;
   }
 
-  .report-filter-row span,
   .report-filter-row button {
     flex: 0 0 auto;
   }
