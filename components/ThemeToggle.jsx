@@ -1,12 +1,13 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function ThemeToggle({ icon }) {
+export default function ThemeToggle() {
   const [light, setLight] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("di-theme") || "dark";
+    const stored = localStorage.getItem("cw-theme") || "light";
     setLight(stored === "light");
     document.documentElement.classList.toggle("theme-light", stored === "light");
   }, []);
@@ -14,13 +15,13 @@ export default function ThemeToggle({ icon }) {
   function toggle() {
     const next = !light;
     setLight(next);
-    localStorage.setItem("di-theme", next ? "light" : "dark");
+    localStorage.setItem("cw-theme", next ? "light" : "dark");
     document.documentElement.classList.toggle("theme-light", next);
   }
 
   return (
-    <button className="theme-btn" type="button" onClick={toggle} aria-label="Toggle light and dark mode">
-      {icon}
+    <button className="theme-btn theme-toggle-btn" type="button" onClick={toggle} aria-label={light ? "Switch to dark mode" : "Switch to light mode"} title={light ? "Dark mode" : "Light mode"}>
+      {light ? <Moon size={20} /> : <Sun size={20} />}
     </button>
   );
 }

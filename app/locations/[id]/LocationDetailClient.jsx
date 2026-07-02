@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ExternalLink, FileText, Map, Pencil, Save, Share2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Database, ExternalLink, FileText, Link as LinkIcon, Pencil, Save, Share2 } from "lucide-react";
 import { useState } from "react";
 import { SourcePill, StatusPill } from "@/components/Pills";
 import { confidenceColor, confidenceLevel, confidenceScore, formatDate, initials } from "@/lib/metrics";
 
-export default function LocationDetailClient({ neighborhood }) {
+export default function LocationDetailClient({ neighborhood, neighborhoods = [], market, resources = [], isAdmin = false }) {
   const [record, setRecord] = useState(neighborhood);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(toDraft(neighborhood));
@@ -56,21 +56,32 @@ export default function LocationDetailClient({ neighborhood }) {
     await navigator.clipboard.writeText(window.location.href);
   }
 
+  function switchLocation(id) {
+    if (!id || id === record.id) return;
+    router.push(`/locations/${id}`);
+  }
+
   return (
     <div className="focus-page">
       <header className="focus-topbar">
         <div className="focus-titlebar">
           <Link className="focus-back" href="/map"><ArrowLeft size={15} /> Back to map</Link>
           <span className="focus-divider" />
-          <button className="focus-location-select" type="button">
-            {record.name}
-            <ChevronDown size={15} />
-          </button>
+          <select className="focus-location-select" value={record.id} onChange={(event) => switchLocation(event.target.value)} aria-label="Switch location">
+            {(neighborhoods.length ? neighborhoods : [record]).map((item) => (
+              <option value={item.id} key={item.id}>{item.name}</option>
+            ))}
+          </select>
         </div>
         <div className="focus-actions">
           <button className="focus-icon-btn" type="button" onClick={shareLocation} aria-label="Copy location link"><Share2 size={16} /></button>
-          <button className="focus-icon-btn" type="button" onClick={() => setEditing(true)} aria-label="Edit intelligence"><Pencil size={16} /></button>
-          <Link className="focus-report-btn" href={`/reports?report=report-${record.id}`}><FileText size={15} /> Open report</Link>
+          {isAdmin ? (
+            <>
+              <button className="focus-icon-btn" type="button" onClick={() => setEditing(true)} aria-label="Quick edit intelligence"><Pencil size={16} /></button>
+              <Link className="focus-icon-btn" href="/data" aria-label="Open full data admin"><Database size={16} /></Link>
+            </>
+          ) : null}
+          <Link className="focus-report-btn" href={`/reports?report=land-${record.id}`}><FileText size={15} /> Open report</Link>
         </div>
       </header>
 
@@ -120,6 +131,8 @@ export default function LocationDetailClient({ neighborhood }) {
         </aside>
 
         <main className="focus-brief">
+          {market ? <MarketSection market={market} /> : null}
+
           <section className="focus-section">
             <SectionHeading title="What you can build" />
             <div className="focus-build-grid">
@@ -175,6 +188,13 @@ export default function LocationDetailClient({ neighborhood }) {
               ))}
             </div>
           </section>
+
+          {resources.length ? (
+            <section className="focus-section">
+              <SectionHeading title="Market research" meta={`${resources.length} resources`} />
+              <ResourceList resources={resources} />
+            </section>
+          ) : null}
         </main>
       </section>
 
@@ -197,6 +217,175 @@ export default function LocationDetailClient({ neighborhood }) {
       )}
     </div>
   );
+}
+
+function ResourceList({ resources }) {
+  return (
+    <div className="intelligence-resource-list">
+      {resources.map((resource) => (
+        <article className="intelligence-resource-card" key={resource.id}>
+          <div>
+            <span>{resource.resourceType} · {resource.source}</span>
+            <h3>{resource.title}</h3>
+            {resource.summary ? <p>{resource.summary}</p> : null}
+            <small>{resource.author} · {formatDate(resource.createdAt)}</small>
+          </div>
+          {resource.url ? (
+            <a href={resource.url} target="_blank" rel="noreferrer">
+              <LinkIcon size={15} /> Open
+            </a>
+          ) : resource.fileName ? (
+            <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">
+              <LinkIcon size={15} /> Open
+            </a>
+          ) : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function MarketSection({ market }) {
+  const primaryMetric = market.kind === "estate" ? `${market.currentYear} estate price/sqm` : `${market.currentYear} avg price/sqm`;
+  const estatesLabel = market.estateSummary.total
+    ? `${market.estateSummary.developing} developing · ${market.estateSummary.built} built`
+    : "No estates mapped";
+  const firstYear = market.trend?.[0]?.year;
+  const lastYear = market.trend?.at(-1)?.year;
+
+  return (
+    <section className="focus-section market-section">
+      <SectionHeading title="Market intelligence" meta={market.asOfLabel || market.meta?.pricing_date} />
+      <div className="market-overview">
+        <div>
+          <span className="market-lga"><i />{market.lga}</span>
+          <h3>{market.name}</h3>
+          <p>{market.description}</p>
+          {market.highlights?.length ? (
+            <div className="market-tags">
+              {market.highlights.slice(0, 4).map((item) => <span key={item}>{item}</span>)}
+            </div>
+          ) : null}
+        </div>
+        <div className="market-metrics">
+          <MetricCard label={primaryMetric} value={market.priceLabel} />
+          <MetricCard label="Est. annual growth" value={market.annualGrowthLabel} accent />
+          <MetricCard label="Estates" value={market.estateSummary.total || "N/A"} sub={estatesLabel} />
+          <MetricCard label="Total land mapped" value={market.totalLandLabel} />
+        </div>
+      </div>
+
+      {market.trend?.length ? (
+        <div className="market-chart-card">
+          <div className="market-chart-head">
+            <div>
+              <h3>Price Trend - {market.name}</h3>
+              <p>Estimated average price per sqm from {firstYear} to {lastYear}. Dashed line is projected after {market.currentYear}.</p>
+            </div>
+            <div className="market-legend">
+              <span><i />Historical</span>
+              <span><i className="projected" />Projected</span>
+            </div>
+          </div>
+          <PriceTrendChart points={market.trend} currency={market.trendCurrency} />
+        </div>
+      ) : null}
+
+      {market.estates?.length ? (
+        <div className="estate-section">
+          <div className="market-chart-head">
+            <div>
+              <h3>Estate intelligence</h3>
+              <p>Estate-level pricing, land mapped, use, status, and available plot details.</p>
+            </div>
+          </div>
+          <div className="estate-grid">
+            {market.estates.map((estate) => <EstateCard estate={estate} key={estate.id} />)}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function MetricCard({ label, value, sub, accent = false }) {
+  return (
+    <article className="market-metric-card">
+      <span>{label}</span>
+      <strong className={accent ? "accent" : ""}>{value}</strong>
+      {sub ? <p>{sub}</p> : null}
+    </article>
+  );
+}
+
+function EstateCard({ estate }) {
+  return (
+    <Link className="estate-card estate-card-link" href={`/estates/${toEstateSlug(estate.id)}`}>
+      <div>
+        <span>{estate.location_label}</span>
+        <h4>{estate.name}<ArrowRight size={15} /></h4>
+      </div>
+      <dl>
+        <div><dt>Price</dt><dd>{estate.current_price_label || "Contact for pricing"}</dd></div>
+        <div><dt>2026 est.</dt><dd>{estate.current_estimated_price_label || estate.current_price_label || "Contact for pricing"}</dd></div>
+        <div><dt>Land</dt><dd>{estate.total_land_label || "Not mapped"}</dd></div>
+        <div><dt>Use</dt><dd>{estate.primary_use || "Mixed use"}</dd></div>
+        <div><dt>Status</dt><dd>{estate.status || "Unknown"}</dd></div>
+        {estate.available_plots ? <div><dt>Plots</dt><dd>{estate.available_plots}</dd></div> : null}
+        {estate.developer ? <div><dt>Developer</dt><dd>{estate.developer}</dd></div> : null}
+      </dl>
+    </Link>
+  );
+}
+
+function toEstateSlug(id = "") {
+  return String(id).replaceAll("_", "-");
+}
+
+function PriceTrendChart({ points, currency = "NGN" }) {
+  const width = 780;
+  const height = 260;
+  const pad = { top: 24, right: 28, bottom: 36, left: 72 };
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values) * 0.9;
+  const max = Math.max(...values) * 1.08;
+  const x = (index) => pad.left + (index * (width - pad.left - pad.right)) / (points.length - 1);
+  const y = (value) => pad.top + ((max - value) * (height - pad.top - pad.bottom)) / (max - min || 1);
+  const historical = points.filter((point) => !point.projected);
+  const currentIndex = Math.max(0, points.findIndex((point) => point.current));
+  const currentYear = points[currentIndex]?.year;
+  const projected = points.filter((point) => point.year >= currentYear);
+  const toPath = (series) => series.map((point, index) => `${index ? "L" : "M"} ${x(points.findIndex((item) => item.year === point.year))} ${y(point.value)}`).join(" ");
+  const ticks = [min, min + (max - min) / 3, min + (max - min) * 2 / 3, max].reverse();
+
+  return (
+    <svg className="market-price-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Price trend chart">
+      {ticks.map((tick) => (
+        <g key={tick}>
+          <line x1={pad.left} x2={width - pad.right} y1={y(tick)} y2={y(tick)} />
+          <text x={pad.left - 12} y={y(tick) + 4} textAnchor="end">{formatCompactPrice(tick, currency)}</text>
+        </g>
+      ))}
+      <line className="market-now-line" x1={x(currentIndex)} x2={x(currentIndex)} y1={pad.top} y2={height - pad.bottom} />
+      <text className="market-now-text" x={x(currentIndex)} y={pad.top - 5} textAnchor="middle">NOW</text>
+      <path className="market-historical-line" d={toPath(historical)} />
+      <path className="market-projected-line" d={toPath(projected)} />
+      {points.map((point, index) => (
+        <g key={point.year}>
+          <circle className={point.projected ? "projected" : ""} cx={x(index)} cy={y(point.value)} r={point.current ? 7 : 4} />
+          <text className={point.current ? "current" : ""} x={x(index)} y={height - 10} textAnchor="middle">{point.year}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function formatCompactPrice(value, currency = "NGN") {
+  if (!value) return "";
+  if (currency === "USD") return `$${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value)}`;
+  if (value >= 1000000) return `₦${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `₦${Math.round(value / 1000)}K`;
+  return `${Math.round(value)}`;
 }
 
 function SectionHeading({ title, meta }) {

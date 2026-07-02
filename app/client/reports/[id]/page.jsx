@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Building2, GitCommitHorizontal, User } from "lucide-react";
+import { Building2, ExternalLink, GitCommitHorizontal, User } from "lucide-react";
 import { SourcePill, StatusPill } from "@/components/Pills";
 import { confidenceColor, formatDate } from "@/lib/metrics";
 import { getReport, getReports } from "@/lib/reportStore";
@@ -13,21 +13,9 @@ export default async function ClientReportPage({ params }) {
   const reports = await getReports();
   const comparable = reports.filter((item) => item.id !== report.id && item.neighborhoodName === report.neighborhoodName).slice(0, 1);
   const n = report.neighborhood;
-  const build = report.id === "glover-road"
-    ? [
-        { label: "Permitted use", value: "Res + commercial", sourceType: "Official" },
-        { label: "Max height", value: "8 floors", sourceType: "Official" },
-        { label: "Front setback", value: "4.5 m", sourceType: "Official" },
-        { label: "Plot coverage", value: "65%", sourceType: "Internal" }
-      ]
-    : (n.intelligence?.buildParameters || []).slice(0, 4);
-  const rules = report.id === "glover-road"
-    ? [
-        { label: "Commercial permitted on designated corridors only", sourceType: "Official" },
-        { label: "Heritage frontages require design-review sign-off", sourceType: "Estate" },
-        { label: "Basement parking mandatory above 4 floors", sourceType: "Official" }
-      ]
-    : (n.intelligence?.constraints || []).slice(0, 3);
+  const build = (report.data?.buildParameters?.length ? report.data.buildParameters : n.intelligence?.buildParameters || []).slice(0, 4);
+  const rules = (report.data?.constraints?.length ? report.data.constraints : n.intelligence?.constraints || []).slice(0, 3);
+  const rationale = report.data?.recommendationRationale || n.recommendation?.confidenceReason || "Verify source pricing, title, survey, estate rules, and approvals before committing capital.";
 
   return (
     <main className="client-report-screen">
@@ -53,6 +41,19 @@ export default async function ClientReportPage({ params }) {
           <span><Building2 size={13} /> {report.use}</span>
         </p>
 
+        {report.data?.executiveSummary ? (
+          <section className="report-intel-summary">
+            <span>{report.data.reportType || "Client brief"}</span>
+            <p>{report.data.executiveSummary}</p>
+          </section>
+        ) : null}
+
+        <div className="report-brief-facts">
+          {report.data?.riskLevel ? <span><b>Risk</b>{report.data.riskLevel}</span> : null}
+          {report.data?.publishDate ? <span><b>Published</b>{formatDate(report.data.publishDate)}</span> : null}
+          {report.data?.reviewDate ? <span><b>Review by</b>{formatDate(report.data.reviewDate)}</span> : null}
+        </div>
+
         <section className="report-change-box">
           <strong><GitCommitHorizontal size={14} /> {report.changes || report.data?.changeNotes?.length || 0} changes since this brief was sent</strong>
           {(report.data?.changeNotes?.length ? report.data.changeNotes : ["No material changes since the previous brief"]).map((note) => <p key={note}>{note}</p>)}
@@ -62,9 +63,26 @@ export default async function ClientReportPage({ params }) {
           <div className="report-ring" style={{ "--score": report.score, "--tone": confidenceColor(report.score) }}><span>{report.score}</span></div>
           <div>
             <span>Recommendation <b>{report.verdict}</b></span>
-            <p>Signals are mixed. Verify before committing capital.</p>
+            <p>{rationale}</p>
           </div>
         </section>
+
+        {report.data?.keyRisks?.length || report.data?.opportunityNotes?.length ? (
+          <div className="report-two-col report-intel-lists">
+            {report.data?.keyRisks?.length ? (
+              <section>
+                <SectionHeading title="Key risks" />
+                {report.data.keyRisks.map((risk) => <p key={risk}>{risk}</p>)}
+              </section>
+            ) : null}
+            {report.data?.opportunityNotes?.length ? (
+              <section>
+                <SectionHeading title="Opportunity notes" />
+                {report.data.opportunityNotes.map((note) => <p key={note}>{note}</p>)}
+              </section>
+            ) : null}
+          </div>
+        ) : null}
 
         <SectionHeading title="What you can build" />
         <div className="report-build-grid">
@@ -103,6 +121,27 @@ export default async function ClientReportPage({ params }) {
             </div>
           </section>
         </div>
+
+        {report.resources?.length ? (
+          <>
+            <SectionHeading title="Market research" meta={`${report.resources.length} resources`} />
+            <div className="report-resource-list">
+              {report.resources.slice(0, 4).map((resource) => (
+                <article className="report-resource-row" key={resource.id}>
+                  <div>
+                    <strong>{resource.title}</strong>
+                    <p>{resource.resourceType} · {resource.source}</p>
+                  </div>
+                  {resource.url ? (
+                    <a href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                  ) : resource.fileName ? (
+                    <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          </>
+        ) : null}
 
         {comparable.length ? (
           <>

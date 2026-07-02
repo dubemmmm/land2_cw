@@ -34,24 +34,23 @@ export default function MapClient({ initialNeighborhoods }) {
 
   useEffect(() => {
     let cancelled = false;
-    function init() {
-      if (cancelled || !mapRef.current || !window.L || mapInstance.current) return;
-      const L = window.L;
+    async function init() {
+      if (cancelled || !mapRef.current || mapInstance.current) return;
+      const L = await import("leaflet");
+      if (cancelled || !mapRef.current || mapInstance.current) return;
       const map = L.map(mapRef.current, { zoomControl: false, attributionControl: true }).setView([6.445, 3.445], 12);
       mapInstance.current = map;
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution: "© OpenStreetMap © CARTO"
+        attribution: "© OpenStreetMap contributors"
       }).addTo(map);
       layerRef.current = L.layerGroup().addTo(map);
       drawPolygons(L, map, layerRef.current, trackedRecords, router);
       setTimeout(() => map.invalidateSize(), 200);
     }
     init();
-    const timer = setInterval(init, 100);
     return () => {
       cancelled = true;
-      clearInterval(timer);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
@@ -61,8 +60,18 @@ export default function MapClient({ initialNeighborhoods }) {
   }, [router, trackedRecords]);
 
   useEffect(() => {
-    if (!window.L || !mapInstance.current || !layerRef.current) return;
-    drawPolygons(window.L, mapInstance.current, layerRef.current, filtered, router);
+    let cancelled = false;
+    async function redraw() {
+      if (!mapInstance.current || !layerRef.current) return;
+      const L = await import("leaflet");
+      if (!cancelled && mapInstance.current && layerRef.current) {
+        drawPolygons(L, mapInstance.current, layerRef.current, filtered, router);
+      }
+    }
+    redraw();
+    return () => {
+      cancelled = true;
+    };
   }, [filtered, router]);
 
   async function createLocation(event) {

@@ -2,37 +2,41 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Building2, FileText, GitCommitHorizontal, Plus, Search, Share2, User } from "lucide-react";
+import { Building2, ExternalLink, FileText, GitCommitHorizontal, Pencil, Plus, Search, Share2, User } from "lucide-react";
 import { SourcePill, StatusPill } from "@/components/Pills";
 import { confidenceColor, formatDate } from "@/lib/metrics";
 
 const filters = [
   { key: "all", label: "All" },
   { key: "Draft", label: "Drafts" },
-  { key: "Shared", label: "Shared" },
+  { key: "Published", label: "Published" },
   { key: "Client viewed", label: "Client viewed" }
 ];
 
-export default function ReportsClient({ reports, initialSelectedId }) {
-  const [selectedId, setSelectedId] = useState(initialSelectedId || reports[2]?.id || reports[0]?.id);
+export default function ReportsClient({ reports, initialSelectedId, isAdmin = false }) {
+  const [selectedId, setSelectedId] = useState(initialSelectedId || "");
   const [statusFilter, setStatusFilter] = useState("all");
   const [changedOnly, setChangedOnly] = useState(false);
   const [sortBy, setSortBy] = useState("recent");
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState("");
 
+  const accessibleReports = useMemo(() => (
+    isAdmin ? reports : reports.filter((report) => report.clientVisible)
+  ), [isAdmin, reports]);
+
   const counts = useMemo(() => ({
-    all: reports.length,
-    Draft: reports.filter((report) => report.status === "Draft").length,
-    Shared: reports.filter((report) => report.status === "Shared").length,
-    "Client viewed": reports.filter((report) => report.status === "Client viewed").length,
-    changed: reports.filter(hasChanges).length
-  }), [reports]);
+    all: accessibleReports.length,
+    Draft: accessibleReports.filter((report) => report.status === "Draft").length,
+    Published: accessibleReports.filter((report) => report.status === "Published").length,
+    "Client viewed": accessibleReports.filter((report) => report.status === "Client viewed").length,
+    changed: accessibleReports.filter(hasChanges).length
+  }), [accessibleReports]);
 
   const visibleReports = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return [...reports]
-      .filter((report) => statusFilter === "all" || report.status === statusFilter)
+    return [...accessibleReports]
+      .filter((report) => !isAdmin || statusFilter === "all" || report.status === statusFilter)
       .filter((report) => !changedOnly || hasChanges(report))
       .filter((report) => {
         if (!needle) return true;
@@ -41,7 +45,7 @@ export default function ReportsClient({ reports, initialSelectedId }) {
           report.client,
           report.neighborhoodName,
           report.use,
-          report.status,
+          isAdmin ? report.status : "",
           report.ref
         ].some((value) => String(value || "").toLowerCase().includes(needle));
       })
@@ -50,14 +54,20 @@ export default function ReportsClient({ reports, initialSelectedId }) {
         if (sortBy === "az") return a.siteTitle.localeCompare(b.siteTitle);
         return activityRank(a.activity) - activityRank(b.activity);
       });
-  }, [changedOnly, query, reports, sortBy, statusFilter]);
+  }, [accessibleReports, changedOnly, isAdmin, query, sortBy, statusFilter]);
 
-  const selected = visibleReports.find((report) => report.id === selectedId) || visibleReports[0] || reports[0];
+  const groupedReports = useMemo(() => groupReportsByLocation(visibleReports), [visibleReports]);
+
+  const selected = visibleReports.find((report) => report.id === selectedId) || null;
 
   useEffect(() => {
-    if (!selected || visibleReports.some((report) => report.id === selected.id)) return;
-    setSelectedId(visibleReports[0]?.id || reports[0]?.id);
-  }, [reports, selected, visibleReports]);
+    if (!selectedId || visibleReports.some((report) => report.id === selectedId)) return;
+    setSelectedId("");
+    const params = new URLSearchParams(window.location.search);
+    params.delete("report");
+    const queryString = params.toString();
+    window.history.replaceState(null, "", queryString ? `/reports?${queryString}` : "/reports");
+  }, [selectedId, visibleReports]);
 
   function selectReport(id) {
     setSelectedId(id);
@@ -72,7 +82,7 @@ export default function ReportsClient({ reports, initialSelectedId }) {
     try {
       if (navigator.share) {
         await navigator.share({ title: report.siteTitle, text: `${report.siteTitle} development brief`, url });
-        setShareState("Shared");
+        setShareState("Published link shared");
         return;
       }
       await navigator.clipboard.writeText(url);
@@ -88,19 +98,21 @@ export default function ReportsClient({ reports, initialSelectedId }) {
         <header className="report-ledger-header">
           <div>
             <h1>Reports</h1>
-            <p>{visibleReports.length} of {reports.length} briefs</p>
-            <nav className="report-tabs" aria-label="Report filters">
-              {filters.map((filter) => (
-                <button
-                  className={statusFilter === filter.key ? "active" : ""}
-                  key={filter.key}
-                  onClick={() => setStatusFilter(filter.key)}
-                  type="button"
-                >
-                  {filter.label} <b>{counts[filter.key]}</b>
-                </button>
-              ))}
-            </nav>
+            <p>{visibleReports.length} of {accessibleReports.length} briefs · grouped by location</p>
+            {isAdmin ? (
+              <nav className="report-tabs" aria-label="Report filters">
+                {filters.map((filter) => (
+                  <button
+                    className={statusFilter === filter.key ? "active" : ""}
+                    key={filter.key}
+                    onClick={() => setStatusFilter(filter.key)}
+                    type="button"
+                  >
+                    {filter.label} <b>{counts[filter.key]}</b>
+                  </button>
+                ))}
+              </nav>
+            ) : null}
           </div>
           <div className="report-ledger-tools">
             <label className="report-search">
@@ -111,11 +123,13 @@ export default function ReportsClient({ reports, initialSelectedId }) {
                 value={query}
               />
             </label>
-            <Link className="report-new-btn" href="/reports/new"><Plus size={15} /> New report</Link>
+            {isAdmin ? <Link className="report-new-btn" href="/reports/new"><Plus size={15} /> New report</Link> : null}
             <div className="report-filter-row">
-              <button className={changedOnly ? "active" : ""} onClick={() => setChangedOnly((value) => !value)} type="button">
-                <i /> Changed since sent <b>{counts.changed}</b>
-              </button>
+              {isAdmin ? (
+                <button className={changedOnly ? "active" : ""} onClick={() => setChangedOnly((value) => !value)} type="button">
+                  <i /> Changed since sent <b>{counts.changed}</b>
+                </button>
+              ) : null}
               <em>Sort</em>
               <button className={sortBy === "recent" ? "active" : ""} onClick={() => setSortBy("recent")} type="button">Recent</button>
               <button className={sortBy === "confidence" ? "active" : ""} onClick={() => setSortBy("confidence")} type="button">Confidence</button>
@@ -124,31 +138,42 @@ export default function ReportsClient({ reports, initialSelectedId }) {
           </div>
         </header>
 
-        <div className="report-table">
+        <div className={`report-table ${isAdmin ? "admin-mode" : "client-mode"}`}>
           <div className="report-table-head">
             <span>Report</span>
             <span>Confidence</span>
-            <span>Status</span>
-            <span>Activity</span>
+            {isAdmin ? <span>Status</span> : null}
+            <span>{isAdmin ? "Activity" : "Publication"}</span>
           </div>
-          {visibleReports.map((report) => (
-            <button
-              className={`report-ledger-row ${report.id === selected?.id ? "featured" : ""}`}
-              key={report.id}
-              onClick={() => selectReport(report.id)}
-              type="button"
-            >
-              <div>
-                <strong>{report.siteTitle}</strong>
-                <p>{report.neighborhoodName} · {report.use} · {report.client}</p>
+          {groupedReports.map((group) => (
+            <section className="report-location-group" key={group.key}>
+              <div className="report-location-head">
+                <div>
+                  <strong>{group.name}</strong>
+                  <span>{group.reports.length} {group.reports.length === 1 ? "brief" : "briefs"}</span>
+                </div>
+                <em>{group.hasEstates ? "Location + estates" : "Location"}</em>
               </div>
-              <span className="report-confidence"><i style={{ "--tone": confidenceColor(report.score) }} /> <b>{report.score}</b> {report.level}</span>
-              <StatusPill status={report.status} />
-              <span className="report-activity">
-                {report.activity}
-                {hasChanges(report) ? <em><GitCommitHorizontal size={12} /> {changeCount(report)} since sent</em> : null}
-              </span>
-            </button>
+              {group.reports.map((report) => (
+                <button
+                  className={`report-ledger-row ${report.sourceType === "estate" ? "estate-child" : "location-parent"} ${report.id === selectedId ? "featured" : ""}`}
+                  key={report.id}
+                  onClick={() => selectReport(report.id)}
+                  type="button"
+                >
+                  <div>
+                    <strong>{report.siteTitle}</strong>
+                    <p>{reportRowMeta(report)}</p>
+                  </div>
+                  <span className="report-confidence"><i style={{ "--tone": confidenceColor(report.score) }} /> <b>{report.score}</b> {report.level}</span>
+                  {isAdmin ? <StatusPill status={report.status} /> : null}
+                  <span className="report-activity">
+                    {isAdmin ? report.activity : "Published"}
+                    {isAdmin && hasChanges(report) ? <em><GitCommitHorizontal size={12} /> {changeCount(report)} since sent</em> : null}
+                  </span>
+                </button>
+              ))}
+            </section>
           ))}
           {!visibleReports.length ? (
             <div className="report-empty-state">
@@ -161,36 +186,34 @@ export default function ReportsClient({ reports, initialSelectedId }) {
       </section>
 
       {selected ? (
-        <ReportDetail report={selected} reports={reports} shareState={shareState} onSelect={selectReport} onShare={() => shareReport(selected)} embedded />
-      ) : null}
+        <ReportDetail report={selected} reports={accessibleReports} shareState={shareState} onSelect={selectReport} onShare={() => shareReport(selected)} isAdmin={isAdmin} embedded />
+      ) : (
+        <section className="report-detail-screen embedded empty">
+          <div className="report-select-empty">
+            <FileText size={22} />
+            <h2>Select a report</h2>
+            <p>Choose a land or estate brief from the ledger to preview its client-facing intelligence.</p>
+          </div>
+        </section>
+      )}
     </section>
   );
 }
 
-function ReportDetail({ report, reports, shareState, onSelect, onShare, embedded = false }) {
+function ReportDetail({ report, reports, shareState, onSelect, onShare, isAdmin = false, embedded = false }) {
   const n = report.neighborhood;
   const comparable = reports.filter((item) => item.id !== report.id && item.neighborhoodName === report.neighborhoodName).slice(0, 1);
-  const build = report.id === "glover-road"
-    ? [
-        { label: "Permitted use", value: "Res + commercial", sourceType: "Official" },
-        { label: "Max height", value: "8 floors", sourceType: "Official" },
-        { label: "Front setback", value: "4.5 m", sourceType: "Official" },
-        { label: "Plot coverage", value: "65%", sourceType: "Internal" }
-      ]
-    : (n.intelligence?.buildParameters || []).slice(0, 4);
-  const rules = report.id === "glover-road"
-    ? [
-        { label: "Commercial permitted on designated corridors only", sourceType: "Official" },
-        { label: "Heritage frontages require design-review sign-off", sourceType: "Estate" },
-        { label: "Basement parking mandatory above 4 floors", sourceType: "Official" }
-      ]
-    : (n.intelligence?.constraints || []).slice(0, 3);
+  const build = (report.data?.buildParameters?.length ? report.data.buildParameters : n.intelligence?.buildParameters || []).slice(0, 4);
+  const rules = (report.data?.constraints?.length ? report.data.constraints : n.intelligence?.constraints || []).slice(0, 3);
+  const notes = report.data?.notes?.length ? report.data.notes : n.notes || [];
+  const rationale = report.data?.recommendationRationale || n.recommendation?.confidenceReason || "Verify source pricing, title, survey, estate rules, and approvals before committing capital.";
 
   return (
     <section className={`report-detail-screen ${embedded ? "embedded" : ""}`}>
       <div className="report-detail-actions">
-        <span className={statusClass(report.status)}>{report.status}</span>
-        <button aria-label="Copy client report link" onClick={onShare} type="button"><Share2 size={15} /></button>
+        {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
+        {isAdmin ? <Link aria-label="Edit report" href={`/reports/${report.id}/edit`}><Pencil size={15} /></Link> : null}
+        {isAdmin ? <button aria-label="Copy client report link" onClick={onShare} type="button"><Share2 size={15} /></button> : null}
         {shareState ? <em>{shareState}</em> : null}
       </div>
 
@@ -216,6 +239,19 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, embedded
           <span><Building2 size={13} /> {report.use}</span>
         </p>
 
+        {report.data?.executiveSummary ? (
+          <section className="report-intel-summary">
+            <span>{report.data.reportType || "Client brief"}</span>
+            <p>{report.data.executiveSummary}</p>
+          </section>
+        ) : null}
+
+        <div className="report-brief-facts">
+          {report.data?.riskLevel ? <span><b>Risk</b>{report.data.riskLevel}</span> : null}
+          {report.data?.publishDate ? <span><b>Published</b>{formatDate(report.data.publishDate)}</span> : null}
+          {report.data?.reviewDate ? <span><b>Review by</b>{formatDate(report.data.reviewDate)}</span> : null}
+        </div>
+
         <section className="report-change-box">
           <strong><GitCommitHorizontal size={14} /> {changeCount(report)} changes since this brief was sent</strong>
           {(changeCount(report) > 0 && report.data?.changeNotes?.length ? report.data.changeNotes : ["No material changes since this brief was prepared"]).map((note) => (
@@ -227,9 +263,26 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, embedded
           <div className="report-ring" style={{ "--score": report.score, "--tone": confidenceColor(report.score) }}><span>{report.score}</span></div>
           <div>
             <span>Recommendation <b>{report.verdict}</b></span>
-            <p>Signals are mixed. Verify before committing capital.</p>
+            <p>{rationale}</p>
           </div>
         </section>
+
+        {report.data?.keyRisks?.length || report.data?.opportunityNotes?.length ? (
+          <div className="report-two-col report-intel-lists">
+            {report.data?.keyRisks?.length ? (
+              <section>
+                <SectionHeading title="Key risks" />
+                {report.data.keyRisks.map((risk) => <p key={risk}>{risk}</p>)}
+              </section>
+            ) : null}
+            {report.data?.opportunityNotes?.length ? (
+              <section>
+                <SectionHeading title="Opportunity notes" />
+                {report.data.opportunityNotes.map((note) => <p key={note}>{note}</p>)}
+              </section>
+            ) : null}
+          </div>
+        ) : null}
 
         <SectionHeading title="What you can build" />
         <div className="report-build-grid">
@@ -272,7 +325,7 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, embedded
 
         <SectionHeading title="Advisory commentary" />
         <div className="report-notes">
-          {(n.notes || []).slice(0, 2).map((note, index) => (
+          {notes.slice(0, 2).map((note, index) => (
             <article key={`${note.date}-${index}`}>
               <span>{note.author?.split(/\s+/).map((part) => part[0]).join("").slice(0, 2) || "CW"}</span>
               <div>
@@ -282,6 +335,27 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, embedded
             </article>
           ))}
         </div>
+
+        {report.resources?.length ? (
+          <>
+            <SectionHeading title="Market research" meta={`${report.resources.length} resources`} />
+            <div className="report-resource-list">
+              {report.resources.slice(0, 4).map((resource) => (
+                <article className="report-resource-row" key={resource.id}>
+                  <div>
+                    <strong>{resource.title}</strong>
+                    <p>{resource.resourceType} · {resource.source}</p>
+                  </div>
+                  {resource.url ? (
+                    <a href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                  ) : resource.fileName ? (
+                    <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          </>
+        ) : null}
 
         {comparable.length ? (
           <>
@@ -295,6 +369,15 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, embedded
                 <span><i style={{ "--tone": confidenceColor(item.score) }} /> {item.score}</span>
               </button>
             ))}
+          </>
+        ) : null}
+
+        {isAdmin && report.data?.internalNotes ? (
+          <>
+            <SectionHeading title="Internal notes" meta="admin only" />
+            <section className="report-internal-notes">
+              <p>{report.data.internalNotes}</p>
+            </section>
           </>
         ) : null}
       </article>
@@ -315,12 +398,50 @@ function statusClass(status) {
   return `report-detail-status ${String(status).toLowerCase().replace(/\s+/g, "-")}`;
 }
 
+function reportRowMeta(report) {
+  return [
+    report.sourceType === "estate" ? "Estate" : "Location",
+    report.use,
+    isInternalReportClient(report.client) ? null : report.client
+  ].filter(Boolean).join(" · ");
+}
+
+function isInternalReportClient(client) {
+  return String(client || "").trim().toLowerCase() === "cw real estate intelligence";
+}
+
 function hasChanges(report) {
   return changeCount(report) > 0;
 }
 
 function changeCount(report) {
   return Number(report.changes) || 0;
+}
+
+function groupReportsByLocation(reports) {
+  const groups = new Map();
+  reports.forEach((report) => {
+    const key = report.neighborhoodId || report.neighborhoodName || "portfolio";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        name: report.neighborhoodName || "Portfolio",
+        reports: [],
+        hasEstates: false
+      });
+    }
+    const group = groups.get(key);
+    group.reports.push(report);
+    if (report.sourceType === "estate") group.hasEstates = true;
+  });
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    reports: group.reports.sort((a, b) => {
+      if (a.sourceType === "neighborhood" && b.sourceType !== "neighborhood") return -1;
+      if (a.sourceType !== "neighborhood" && b.sourceType === "neighborhood") return 1;
+      return a.siteTitle.localeCompare(b.siteTitle);
+    })
+  }));
 }
 
 function activityRank(value = "") {

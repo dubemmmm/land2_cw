@@ -9,6 +9,8 @@ A Next.js planning intelligence dashboard for evaluating Lagos development locat
 - Neighborhood detail pages with editable intelligence data
 - Reports ledger with split-pane report detail view
 - Client-facing report pages
+- Admin login for creating and editing intelligence data
+- Admin-managed attachments and market research for locations and estates
 - SQLite-backed seed database created automatically at runtime
 
 ## Tech Stack
@@ -39,6 +41,19 @@ Open:
 http://localhost:4174
 ```
 
+Admin login:
+
+```text
+http://localhost:4174/admin/login
+```
+
+Local development credentials default to:
+
+```text
+admin@cwrealestate.local
+admin123
+```
+
 Build for production:
 
 ```bash
@@ -64,6 +79,8 @@ lib/reportSeeds.js
 
 If `data/app.db` is missing, the app recreates it from the seed files.
 
+Admins can add client-visible or internal-only research resources from `/data`. Resource records can target either a neighborhood or an estate and are shown on the dashboard feed, detail pages, and related reports when marked client-visible. The current prototype stores uploaded documents in SQLite with a 15MB per-file limit; production file storage should move to object storage such as S3 or Supabase Storage.
+
 The Vercel SQLite file is ephemeral. It is fine for the current seeded demo/admin prototype, but real production data should move to a persistent database such as Vercel Postgres, Neon, Supabase, or another managed Postgres database.
 
 ## Deployment
@@ -75,7 +92,12 @@ For Vercel:
 - Build command: `npm run build`
 - Install command: `npm install`
 - Node version: `22.x`
-- Required environment variables: none for the current seed-data demo
+- Required environment variables:
+  - `ADMIN_EMAIL`
+  - `ADMIN_PASSWORD`
+  - `AUTH_SECRET`
+
+Set a strong `AUTH_SECRET` and replace the development admin credentials before deploying. The app has development fallbacks so local setup is quick, but production/Vercel should always define these values.
 
 ## GitHub Notes
 

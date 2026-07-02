@@ -26,7 +26,10 @@ export default function AppShell({ active, children }) {
           })}
         </nav>
         <div className="rail-foot">
-          <ThemeToggle icon={<Settings size={21} />} />
+          <ThemeToggle />
+          <Link className="rail-link" href="/admin/login" aria-label="Settings">
+            <Settings size={21} />
+          </Link>
           <span className="avatar">CO</span>
         </div>
       </aside>

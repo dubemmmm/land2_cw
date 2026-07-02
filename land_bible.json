@@ -1,0 +1,767 @@
+{
+  "meta": {
+    "source": "Land Bible by Squaremeter by CWRE Lagos",
+    "pricing_date": "November 2023",
+    "currency": "NGN (Naira)",
+    "pricing_unit": "per sqm",
+    "disclaimer": "Prices are indicative and based on market data as at the pricing date. Actual prices may vary. Always conduct independent due diligence."
+  },
+  "neighborhoods": [
+    {
+      "id": "ikoyi",
+      "name": "Ikoyi",
+      "lga": "Lagos Island",
+      "avg_price_per_sqm": 1200000,
+      "price_label": "₦1.2M/sqm",
+      "description": "Prominent upscale residential and commercial area in Lagos. Prime location with high demand, exclusive lifestyle, and steady rental income potential.",
+      "highlights": [
+        "Home to Banana Island — Lagos' most expensive address",
+        "Strong history of capital appreciation",
+        "Excellent security with gated estates",
+        "Diverse property options from old-money estates to new developments"
+      ],
+      "estates": [
+        "banana_island",
+        "parkview",
+        "shoreline",
+        "bourdillon",
+        "osborne_foreshore"
+      ]
+    },
+    {
+      "id": "victoria_island",
+      "name": "Victoria Island",
+      "lga": "Eti-Osa",
+      "size_sqkm": 10.8,
+      "avg_price_per_sqm": 1000000,
+      "price_label": "₦1M/sqm",
+      "description": "The business district of Lagos. A hub for both business and high-end living with a cosmopolitan lifestyle.",
+      "highlights": [
+        "Lagos' primary commercial and business district",
+        "Strong rental market from expatriates and business professionals",
+        "Upscale shopping, fine dining, and vibrant entertainment",
+        "Robust infrastructure development and security",
+        "Home to Eko Atlantic — Africa's largest real estate project"
+      ],
+      "estates": [
+        "eko_atlantic"
+      ]
+    },
+    {
+      "id": "lekki_phase_1",
+      "name": "Lekki Phase 1",
+      "lga": "Eti-Osa",
+      "size_sqkm": 9.0,
+      "avg_price_per_sqm": 750000,
+      "price_label": "₦750K/sqm",
+      "description": "Well-known upscale residential neighborhood with a well-planned layout, modern infrastructure, and well-paved roads.",
+      "highlights": [
+        "Well-organized residential layout",
+        "Modern infrastructure and amenities",
+        "Multiple established estates within the area",
+        "Popular choice for families seeking high-quality living"
+      ],
+      "estates": [
+        "orange_island",
+        "veritas_island",
+        "lekki_foreshore"
+      ]
+    },
+    {
+      "id": "ikate",
+      "name": "Ikate",
+      "lga": "Eti-Osa",
+      "avg_price_per_sqm": 500000,
+      "price_label": "₦500K/sqm",
+      "description": "Emerging real estate hotspot with rapid urban development and modern infrastructure. Proximity to established high-end neighborhoods drives continued value growth.",
+      "highlights": [
+        "Emerging hotspot — strong appreciation potential",
+        "Proximity to Lekki Phase 1 and Victoria Island",
+        "Rapid urban development underway",
+        "More affordable entry point than established neighborhoods"
+      ],
+      "estates": []
+    },
+    {
+      "id": "osapa_london",
+      "name": "Osapa London",
+      "lga": "Eti-Osa",
+      "avg_price_per_sqm": 400000,
+      "price_label": "₦400K/sqm",
+      "description": "Emerging hotspot with diverse investment options in residential and commercial properties. Strong rental market appealing to professionals, expatriates, and tourists.",
+      "highlights": [
+        "Diverse residential and commercial investment options",
+        "Strong and consistent rental market",
+        "Enhanced security measures",
+        "Ongoing government and private investment"
+      ],
+      "estates": [
+        "pinnock_beach",
+        "victory_park",
+        "palm_residence",
+        "femi_okunnu"
+      ]
+    },
+    {
+      "id": "lekki",
+      "name": "Lekki (General / Chevron)",
+      "lga": "Eti-Osa",
+      "avg_price_per_sqm": 450000,
+      "price_label": "₦450K/sqm",
+      "description": "Strategically located area with rapid development and great potential for property value appreciation. Thriving business environment attracting corporations and entrepreneurs.",
+      "highlights": [
+        "Rapid development and infrastructure growth",
+        "Thriving business environment",
+        "Access to major business hubs and beaches",
+        "History of substantial capital appreciation"
+      ],
+      "estates": [
+        "maiyegun_beach",
+        "iibc_imperial_city",
+        "hampton_bay",
+        "gracefield_island",
+        "twin_lakes",
+        "cowrie_creek",
+        "hampton_island"
+      ]
+    },
+    {
+      "id": "ajah",
+      "name": "Ajah",
+      "lga": "Eti-Osa",
+      "avg_price_per_sqm": 300000,
+      "price_label": "₦300K/sqm",
+      "description": "Emerging area with diverse investment opportunities. Prioritizes security and safety with a history of substantial capital appreciation.",
+      "highlights": [
+        "Most affordable entry point along the Lekki corridor",
+        "Diverse residential and commercial opportunities",
+        "Growing infrastructure and amenities",
+        "Strong potential for future appreciation"
+      ],
+      "estates": [
+        "ajah_general"
+      ]
+    },
+    {
+      "id": "ibeju_lekki",
+      "name": "Ibeju Lekki",
+      "lga": "Ibeju-Lekki",
+      "avg_price_per_sqm": null,
+      "price_label": "Varies by estate",
+      "description": "Growth corridor along the Lekki Peninsula with future development potential and ongoing government and private investments.",
+      "highlights": [
+        "Early-stage growth corridor",
+        "Home to Lakowe development",
+        "Future Lekki Free Trade Zone proximity",
+        "Affordable land banking opportunity"
+      ],
+      "estates": [
+        "lakowe"
+      ]
+    },
+    {
+      "id": "epe",
+      "name": "Epe",
+      "lga": "Epe",
+      "avg_price_per_sqm": null,
+      "price_label": "Varies by estate",
+      "description": "Emerging area with mixed-use development potential. Less urbanized with significant future growth potential.",
+      "highlights": [
+        "Home to Isimi Lagos — a premium mixed-use development",
+        "Less urbanized, more land available",
+        "Long-term investment play"
+      ],
+      "estates": [
+        "isimi_lagos"
+      ]
+    }
+  ],
+  "estates": [
+    {
+      "id": "banana_island",
+      "neighborhood_id": "ikoyi",
+      "name": "Banana Island",
+      "location_label": "Ikoyi, Lagos",
+      "total_land_sqm": 1630000,
+      "total_land_label": "1,630,000 sqm",
+      "current_price_per_sqm": 1200000,
+      "current_price_label": "₦1.2M/sqm",
+      "price_5yr_ago": 600000,
+      "price_5yr_ago_label": "₦600K/sqm",
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Fully Built"
+    },
+    {
+      "id": "parkview",
+      "neighborhood_id": "ikoyi",
+      "name": "Parkview Estate",
+      "location_label": "Ikoyi, Lagos",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 700000,
+      "current_price_label": "₦700K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Fully Built"
+    },
+    {
+      "id": "orange_island",
+      "neighborhood_id": "lekki_phase_1",
+      "name": "Orange Island",
+      "location_label": "Lekki Phase 1, Lagos",
+      "total_land_sqm": 1500000,
+      "total_land_label": "1,500,000 sqm (150 hectares)",
+      "current_price_per_sqm": 250000,
+      "current_price_label": "₦250K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": "N/A (new development)",
+      "primary_use": "Mixed Development",
+      "developer": "Orange Island Development Company",
+      "status": "Developing"
+    },
+    {
+      "id": "maiyegun_beach",
+      "neighborhood_id": "lekki",
+      "name": "Maiyegun Beach Estate",
+      "location_label": "Jakande, Lekki",
+      "total_land_sqm": 500000,
+      "total_land_label": "500,000 sqm (50 hectares)",
+      "current_price_per_sqm": 270000,
+      "current_price_label": "₦270K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": "N/A (new development)",
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing",
+      "available_plots": "600sqm - 1,200sqm"
+    },
+    {
+      "id": "veritas_island",
+      "neighborhood_id": "lekki_phase_1",
+      "name": "Veritas Island",
+      "location_label": "Lekki Phase 1, Lagos",
+      "total_land_sqm": 1250000,
+      "total_land_label": "1,250,000 sqm (125 hectares)",
+      "current_price_per_sqm": 320000,
+      "current_price_label": "₦320K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use Development",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "iibc_imperial_city",
+      "neighborhood_id": "lekki",
+      "name": "IIBC Imperial City",
+      "location_label": "Lekki",
+      "total_land_sqm": 2000000,
+      "total_land_label": "2,000,000 sqm (200 hectares)",
+      "current_price_per_sqm": null,
+      "current_price_label": "Contact for pricing",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use Development",
+      "developer": "Gensler Architects",
+      "status": "Developing"
+    },
+    {
+      "id": "eko_atlantic",
+      "neighborhood_id": "victoria_island",
+      "name": "Eko Atlantic",
+      "location_label": "Victoria Island, Lagos",
+      "total_land_sqm": 10000000,
+      "total_land_label": "10,000,000 sqm",
+      "current_price_per_sqm": null,
+      "current_price_label": "$1,500/sqm (USD)",
+      "current_price_usd": 1500,
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use",
+      "developer": "South Energy Nigeria LTD",
+      "status": "Developing"
+    },
+    {
+      "id": "hampton_bay",
+      "neighborhood_id": "lekki",
+      "name": "Hampton Bay",
+      "location_label": "Lekki",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 280000,
+      "current_price_label": "₦280K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "pinnock_beach",
+      "neighborhood_id": "osapa_london",
+      "name": "Pinnock Beach Estate",
+      "location_label": "Osapa London, Lagos",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 300000,
+      "current_price_label": "₦300K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "victory_park",
+      "neighborhood_id": "osapa_london",
+      "name": "Victory Park",
+      "location_label": "Osapa London, Lagos",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 300000,
+      "current_price_label": "₦300K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "lakowe",
+      "neighborhood_id": "ibeju_lekki",
+      "name": "Lakowe",
+      "location_label": "Ibeju Lekki",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": null,
+      "current_price_label": "Starting at ₦14M per plot",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "shoreline",
+      "neighborhood_id": "ikoyi",
+      "name": "Shoreline",
+      "location_label": "Ikoyi",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 1200000,
+      "current_price_label": "₦1.2M/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "gracefield_island",
+      "neighborhood_id": "lekki",
+      "name": "Gracefield Island",
+      "location_label": "Lagoon Shoreline, Chevron Dr. Lekki",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": null,
+      "current_price_label": "Contact for pricing",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": "Gravitas Investments",
+      "status": "Developing"
+    },
+    {
+      "id": "lekki_foreshore",
+      "neighborhood_id": "lekki_phase_1",
+      "name": "Lekki Foreshore Estate",
+      "location_label": "Lekki Phase 1",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": null,
+      "current_price_label": "Contact for pricing",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use Development",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "palm_residence",
+      "neighborhood_id": "osapa_london",
+      "name": "Palm Residence",
+      "location_label": "Osapa London",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 350000,
+      "current_price_label": "₦350K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "femi_okunnu",
+      "neighborhood_id": "osapa_london",
+      "name": "Femi Okunnu Estate",
+      "location_label": "Osapa London",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": null,
+      "current_price_label": "Contact for pricing",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Fully Built"
+    },
+    {
+      "id": "bourdillon",
+      "neighborhood_id": "ikoyi",
+      "name": "Bourdillon",
+      "location_label": "Ikoyi",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 1200000,
+      "current_price_label": "₦1.2M/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Fully Built"
+    },
+    {
+      "id": "osborne_foreshore",
+      "neighborhood_id": "ikoyi",
+      "name": "Osborne Foreshore",
+      "location_label": "Ikoyi",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 900000,
+      "current_price_label": "₦900K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Fully Built"
+    },
+    {
+      "id": "ajah_general",
+      "neighborhood_id": "ajah",
+      "name": "Ajah",
+      "location_label": "Ajah",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 300000,
+      "current_price_label": "₦300K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "twin_lakes",
+      "neighborhood_id": "lekki",
+      "name": "Twin Lakes",
+      "location_label": "Chevron, Lekki",
+      "total_land_sqm": 2000000,
+      "total_land_label": "2,000,000 sqm (200 hectares)",
+      "current_price_per_sqm": null,
+      "current_price_label": "Contact for pricing",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use Development",
+      "developer": "Chevron NIG LTD, et al",
+      "status": "Developing"
+    },
+    {
+      "id": "cowrie_creek",
+      "neighborhood_id": "lekki",
+      "name": "Cowrie Creek",
+      "location_label": "Lekki",
+      "total_land_sqm": 430000,
+      "total_land_label": "430,000 sqm (43 hectares)",
+      "current_price_per_sqm": 350000,
+      "current_price_label": "₦350K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mostly Residential",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "isimi_lagos",
+      "neighborhood_id": "epe",
+      "name": "Isimi Lagos",
+      "location_label": "Epe",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": null,
+      "current_price_label": "Contact for pricing",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use",
+      "developer": null,
+      "status": "Developing"
+    },
+    {
+      "id": "hampton_island",
+      "neighborhood_id": "lekki",
+      "name": "Hampton Island",
+      "location_label": "Lekki",
+      "total_land_sqm": null,
+      "total_land_label": null,
+      "current_price_per_sqm": 350000,
+      "current_price_label": "₦350K/sqm",
+      "price_5yr_ago": null,
+      "price_5yr_ago_label": null,
+      "primary_use": "Mixed Use",
+      "developer": null,
+      "status": "Developing"
+    }
+  ],
+  "why_invest": {
+    "headline": "Why Invest in Land in Lagos?",
+    "stats": [
+      {
+        "label": "Population density",
+        "value": "5,000 persons/km²"
+      },
+      {
+        "label": "Population influx",
+        "value": "~86 people/hour (~1M/year)"
+      },
+      {
+        "label": "Lagos GDP",
+        "value": "$33.67 billion"
+      },
+      {
+        "label": "Share of Nigeria GDP",
+        "value": "25%+"
+      },
+      {
+        "label": "Urbanization rate",
+        "value": "16%"
+      },
+      {
+        "label": "Manufacturing companies",
+        "value": "2,000+"
+      },
+      {
+        "label": "Financial institutions",
+        "value": "200+"
+      }
+    ],
+    "reasons": [
+      {
+        "title": "Growing Population",
+        "summary": "Lagos is the most densely populated city in Africa, receiving close to a million new residents every year. This continuously drives demand for land and housing."
+      },
+      {
+        "title": "Economic & Industrial Hub",
+        "summary": "Lagos is Nigeria's commercial capital, contributing over 25% of the country's GDP with thousands of manufacturing companies and financial institutions."
+      },
+      {
+        "title": "Fast Urban Growth",
+        "summary": "With a 16% urbanization rate, Lagos is one of the fastest-growing megacities globally. Property values are expected to appreciate significantly as development continues."
+      },
+      {
+        "title": "High Appreciation Potential",
+        "summary": "Property values in Lagos are among the highest in Nigeria. Despite economic downturns, the property market has remained buoyant with substantial appreciation over time."
+      },
+      {
+        "title": "Diverse Investment Options",
+        "summary": "From residential to commercial and industrial properties, Lagos offers a wide range of land investment types to match different goals and risk tolerances."
+      },
+      {
+        "title": "Wealth Preservation",
+        "summary": "Land investments serve as a hedge against inflation and an effective means of preserving wealth over the long term."
+      }
+    ]
+  },
+  "land_types": [
+    {
+      "type": "Residential",
+      "description": "Zoned for construction of homes and residential buildings. Located in areas with roads, utilities, schools, parks, and shopping centers.",
+      "key_features": [
+        "Zoning for housing",
+        "Access to infrastructure and amenities",
+        "Stable demand",
+        "Property values appreciate over time"
+      ]
+    },
+    {
+      "type": "Commercial",
+      "description": "Zoned for business purposes. Located in areas with high economic activity such as city centers, business districts, or along major transportation routes.",
+      "key_features": [
+        "High visibility and accessibility",
+        "Income-generating potential",
+        "Value driven by market demand",
+        "Essential infrastructure for business operations"
+      ]
+    },
+    {
+      "type": "Mixed Use",
+      "description": "Areas where multiple types of land uses — residential, commercial, and sometimes industrial — are allowed within the same geographical area.",
+      "key_features": [
+        "Efficient land use",
+        "Combines residential and commercial",
+        "Urban renewal potential",
+        "Diverse revenue streams"
+      ]
+    },
+    {
+      "type": "Industrial",
+      "description": "Designated for manufacturing, processing, and warehousing. Typically located away from residential areas due to potential noise and environmental concerns.",
+      "key_features": [
+        "Specialized infrastructure",
+        "Stricter zoning regulations",
+        "Separated from residential zones",
+        "Heavy-duty production capability"
+      ]
+    }
+  ],
+  "legal_documents": [
+    {
+      "name": "Certificate of Occupancy (C of O)",
+      "description": "Government-issued legal document confirming the holder's right to own and use a specific piece of land for a defined period. Issued by the State Government.",
+      "importance": "critical"
+    },
+    {
+      "name": "Deed of Assignment",
+      "description": "Legal document that transfers ownership rights from the current owner (assignor) to the new owner (assignee). Drafted by a legal practitioner and registered at the Land Registry.",
+      "importance": "critical"
+    },
+    {
+      "name": "Survey Plan",
+      "description": "Document displaying precise land measurements and boundaries. Prepared by a Registered Surveyor, often attached to a Deed of Assignment.",
+      "importance": "critical"
+    },
+    {
+      "name": "Contract of Sale of Land",
+      "description": "Agreement on terms before finalization of a land transaction. Precedes the Deed of Assignment. Not a registrable instrument on its own.",
+      "importance": "important"
+    },
+    {
+      "name": "Power of Attorney",
+      "description": "Authorizes one person to act on behalf of another in land-related matters when the landowner cannot participate directly.",
+      "importance": "important"
+    },
+    {
+      "name": "Deed of Gift",
+      "description": "Transfers ownership from one person to another without monetary transaction. Often used for gifting land to family members.",
+      "importance": "situational"
+    },
+    {
+      "name": "Deed of Mortgage",
+      "description": "Demonstrates temporary transfer of land from borrower to lender in mortgage transactions. Property reverts when loan is fully repaid.",
+      "importance": "situational"
+    },
+    {
+      "name": "Grant of Probate",
+      "description": "Issued after verifying the will of a deceased person. Vests assets in executors who may transfer or manage the property.",
+      "importance": "situational"
+    },
+    {
+      "name": "Letter of Administration",
+      "description": "Similar to Grant of Probate but for cases where there is no valid will. Vests property in administrators of the estate.",
+      "importance": "situational"
+    }
+  ],
+  "risks": [
+    {
+      "category": "Scam & Fraud",
+      "items": [
+        {
+          "risk": "Title Fraud",
+          "description": "Forged documents used to illicitly transfer property ownership.",
+          "mitigation": "Engage a lawyer to verify Deed of Assignment, Certificate of Ownership, and Power of Attorney."
+        },
+        {
+          "risk": "Fake Land Sales",
+          "description": "Properties advertised and sold by people who don't own them.",
+          "mitigation": "Conduct thorough due diligence. Verify ownership through Land Registry."
+        },
+        {
+          "risk": "Land Flipping Schemes",
+          "description": "Undervalued land purchased and artificially inflated through false appraisals.",
+          "mitigation": "Get independent property valuations and market analysis."
+        },
+        {
+          "risk": "Phantom Development Projects",
+          "description": "Non-existent developments promoted to collect investor funds.",
+          "mitigation": "Verify developer credentials, visit sites in person, check government approvals."
+        },
+        {
+          "risk": "Land Banking Scams",
+          "description": "Undeveloped land sold with false promises of high future returns.",
+          "mitigation": "Verify land development potential and zoning. Assess market value independently."
+        }
+      ]
+    },
+    {
+      "category": "Environmental",
+      "items": [
+        {
+          "risk": "Coastal Erosion & Flooding",
+          "description": "Lagos is a coastal city vulnerable to erosion, sea-level rise, and land subsidence.",
+          "mitigation": "Assess flood risk before purchase. Check proximity to coastline and drainage."
+        },
+        {
+          "risk": "Pollution",
+          "description": "Air and water pollution from industrial activities and inadequate waste disposal.",
+          "mitigation": "Evaluate environmental conditions on-site. Check proximity to industrial zones."
+        }
+      ]
+    },
+    {
+      "category": "Legal",
+      "items": [
+        {
+          "risk": "Unscrupulous Sellers",
+          "description": "Transacting with parties who aren't legitimate owners.",
+          "mitigation": "Meticulous review of all ownership documents. Extra checks for family land."
+        },
+        {
+          "risk": "Defective Property",
+          "description": "Purchasing without proper due diligence, leading to legal issues.",
+          "mitigation": "Hire a lawyer for land searches. Verify no encumbrances, litigation, or government acquisition."
+        },
+        {
+          "risk": "Illegal Resale",
+          "description": "Property resold illegally after purchase if not physically secured.",
+          "mitigation": "Erect fences immediately. Register at Lands Registry. File all documentation."
+        },
+        {
+          "risk": "Government Acquisition",
+          "description": "Government can acquire land for overriding public interest.",
+          "mitigation": "Check government plans for the area. Verify with Land Use and Allocation Committee."
+        }
+      ]
+    },
+    {
+      "category": "Infrastructure",
+      "items": [
+        {
+          "risk": "Infrastructure Gaps",
+          "description": "Inadequate roads, water supply, sanitation, and electricity in some areas.",
+          "mitigation": "Assess current infrastructure before purchasing. Factor in development costs."
+        }
+      ]
+    }
+  ],
+  "investment_tips": [
+    "Understand market dynamics — research population growth, economic activity, and infrastructure development in your target area.",
+    "Conduct thorough market research — understand price ranges for your investment type (commercial, residential, industrial).",
+    "Visit properties in person — inspect land condition, surrounding area, and neighboring developments firsthand.",
+    "Examine land titles and survey documents — check for liens, encumbrances, or legal disputes before any transaction.",
+    "Set a realistic budget — account for land price plus documentation costs (C of O, legal fees, agency fees, survey plan fees, registration).",
+    "Hire a real estate expert — for negotiation skills, legal knowledge, market access, and connections.",
+    "Engage a property lawyer — essential for due diligence, land searches, and protection against fraud."
+  ]
+}

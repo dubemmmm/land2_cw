@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth";
 import {
   createClient,
   createDashboardSignal,
@@ -7,11 +8,15 @@ import {
   getDashboardData
 } from "@/lib/dashboardStore";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   return NextResponse.json(await getDashboardData());
 }
 
 export async function POST(request) {
+  const unauthorized = await requireAdminApi();
+  if (unauthorized) return unauthorized;
   try {
     const body = await request.json();
     const type = body.type || "task";

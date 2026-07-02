@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth";
 import { deleteReport, getReport, updateReport } from "@/lib/reportStore";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ export async function GET(_request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const unauthorized = await requireAdminApi();
+  if (unauthorized) return unauthorized;
   const { id } = await params;
   try {
     const patch = await request.json();
@@ -23,6 +26,8 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(_request, { params }) {
+  const unauthorized = await requireAdminApi();
+  if (unauthorized) return unauthorized;
   const { id } = await params;
   const report = await deleteReport(id);
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });

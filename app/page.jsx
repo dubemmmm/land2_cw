@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { AlertTriangle, Clock, FilePen, Map, Minus, Plus, RefreshCw, TrendingDown, TrendingUp, X } from "lucide-react";
+import { FileText, Map, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { getDashboardData } from "@/lib/dashboardStore";
+import { getLandMarketProfile } from "@/lib/landBible";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getReports } from "@/lib/reportStore";
 import { averageConfidence, confidenceColor, confidenceScore } from "@/lib/metrics";
@@ -14,9 +15,20 @@ export default async function DashboardPage() {
   const pending = approvals.filter((item) => item.row.outcome === "Pending").length;
   const leaders = [...neighborhoods].sort((a, b) => confidenceScore(b) - confidenceScore(a)).slice(0, 4);
   const portfolioConfidence = leaders.length ? averageConfidence(leaders) : averageConfidence(neighborhoods);
-  const actions = dashboard.tasks;
+  const stats = dashboard.clientStats || {};
   const changes = dashboard.signals;
-  const activity = dashboard.activity;
+  const activity = dashboard.clientUpdates || dashboard.activity || [];
+  const clientReports = reports.filter((report) => report.clientVisible || ["Published", "Client viewed"].includes(report.status));
+  const latestReports = clientReports.slice(0, 5);
+  const estateReportCount = reports.filter((report) => report.sourceType === "estate").length;
+  const marketSnapshots = neighborhoods
+    .map((neighborhood) => ({ neighborhood, market: getLandMarketProfile(neighborhood.id), score: confidenceScore(neighborhood) }))
+    .filter((item) => item.market)
+    .sort((a, b) => (b.market.annualGrowth || 0) - (a.market.annualGrowth || 0))
+    .slice(0, 4);
+  const avgGrowth = marketSnapshots.length
+    ? Math.round((marketSnapshots.reduce((sum, item) => sum + (item.market.annualGrowth || 0), 0) / marketSnapshots.length) * 100)
+    : 0;
   const approvalCounts = {
     approved: approvals.filter((item) => item.row.outcome === "Approved").length,
     pending,
@@ -30,47 +42,37 @@ export default async function DashboardPage() {
       <div className="briefing">
         <header className="brief-header">
           <div>
-            <h1>Good morning, Chidubem</h1>
-            <p>{today} · {neighborhoods.length} neighborhoods · {reports.length} active briefs · {dashboard.clientCount || 12} clients</p>
+            <h1>Market intelligence dashboard</h1>
+            <p>{today} · {neighborhoods.length} tracked locations · {clientReports.length} published briefs · {stats.estateCount || estateReportCount} estate records</p>
           </div>
           <div className="brief-actions">
-            <div className="range-tabs" aria-label="Date range">
-              <button type="button">Today</button>
-              <button className="active" type="button">Week</button>
-              <button type="button">Month</button>
-            </div>
-            <Link className="brief-button primary" href="/reports"><Plus size={15} /> New report</Link>
+            <Link className="brief-button" href="/admin/login">Admin login</Link>
             <Link className="brief-button" href="/map"><Map size={15} /> Open map</Link>
           </div>
         </header>
 
         <section className="brief-kpis">
-          <Kpi label="Portfolio confidence" value={portfolioConfidence} sub="▼ 1 vs prior" tone="down" />
-          <Kpi label="Active briefs" value={reports.length} sub="▲ 1 new" tone="up" />
-          <Kpi label="Needs attention" value={actions.length} sub="in queue" />
-          <Kpi label="New signals" value={dashboard.newSignalCount || changes.length} sub="this week" />
-          <Kpi label="Pending approvals" value={pending || 2} sub="this week" />
+          <Kpi label="Portfolio confidence" value={portfolioConfidence} sub="tracked intelligence" />
+          <Kpi label="Published reports" value={stats.publishedReports || clientReports.length} sub={`${stats.reportsPublishedThisWeek || 0} new this week`} tone="up" />
+          <Kpi label="Edited reports" value={stats.reportsEditedThisWeek || 0} sub="admin updates" />
+          <Kpi label="Data updates" value={stats.dataUpdatesThisWeek || dashboard.newSignalCount || changes.length} sub="land + locations" />
+          <Kpi label="Avg market growth" value={`${avgGrowth || 0}%`} sub="tracked trend" tone="up" />
         </section>
 
         <section className="brief-grid">
           <div className="brief-left">
-            <article className="brief-card needs-card">
-              <CardTitle title="Needs you today" count={actions.length} />
-              <div className="action-list">
-                {actions.map((item) => {
-                  const Icon = taskIcons[item.icon] || AlertTriangle;
-                  return (
-                    <Link className="action-row" href={item.href} key={item.id || item.subject}>
-                      <span className={`action-icon ${item.tone}`}><Icon size={16} /></span>
-                      <span>
-                        <strong>{item.subject}</strong>
-                        <em>{item.meta}</em>
-                      </span>
-                      <b>{item.action}</b>
-                      <X className="dismiss" size={14} />
-                    </Link>
-                  );
-                })}
+            <article className="brief-card needs-card client-feed-card">
+              <CardTitle title="Latest client intelligence" count={activity.length} />
+              <div className="client-intel-list">
+                {activity.map((item, index) => (
+                  <Link className="client-intel-row" href={item.href || "/reports"} key={item.id || `${item.who}-${index}`}>
+                    <span className={item.gold ? "gold" : ""}>{item.who}</span>
+                    <div>
+                      <p>{item.text}</p>
+                      <em>{item.when}</em>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </article>
 
@@ -98,8 +100,24 @@ export default async function DashboardPage() {
           </div>
 
           <div className="brief-right">
+            <article className="brief-card reports-card">
+              <CardTitle title="Published report activity" meta={`${latestReports.length} latest`} />
+              <div className="published-report-list">
+                {latestReports.map((report) => (
+                  <Link className="published-report-row" href={`/reports?report=${report.id}`} key={report.id}>
+                    <span><FileText size={14} /></span>
+                    <div>
+                      <strong>{report.siteTitle}</strong>
+                      <p>{report.neighborhoodName} · {report.data?.reportType || report.use}</p>
+                    </div>
+                    <em>{report.status === "Client viewed" ? "Viewed" : "Published"}</em>
+                  </Link>
+                ))}
+              </div>
+            </article>
+
             <article className="brief-card changes-card">
-              <CardTitle title="What changed" meta="this week" />
+              <CardTitle title="What changed" meta="location signals" />
               {changes.map((item) => {
                 const Icon = signalIcons[item.icon] || Minus;
                 return (
@@ -112,6 +130,22 @@ export default async function DashboardPage() {
                   </div>
                 );
               })}
+            </article>
+
+            <article className="brief-card trend-card">
+              <CardTitle title="Market trend snapshot" meta="price movement" />
+              <div className="trend-list">
+                {marketSnapshots.map(({ neighborhood, market, score }) => (
+                  <Link className="trend-row" href={`/locations/${neighborhood.id}`} key={neighborhood.id}>
+                    <div>
+                      <strong>{neighborhood.name}</strong>
+                      <p>{market.priceLabel || "Pricing under review"} · {market.annualGrowthLabel || "N/A"} growth</p>
+                    </div>
+                    <i><span style={{ width: `${Math.max(8, Math.min(100, Math.round((market.annualGrowth || 0) * 500)))}%` }} /></i>
+                    <b>{score}</b>
+                  </Link>
+                ))}
+              </div>
             </article>
 
             <article className="brief-card pipeline-card">
@@ -127,32 +161,12 @@ export default async function DashboardPage() {
                 <span><i className="denied" />Denied <b>{approvalCounts.denied}</b></span>
               </div>
             </article>
-
-            <article className="brief-card activity-card">
-              <CardTitle title="Team activity" />
-              {activity.map((item, index) => (
-                <div className="activity-row" key={`${item.who}-${index}`}>
-                  <span className={item.gold ? "gold" : ""}>{item.who}</span>
-                  <div>
-                    <p>{item.text}</p>
-                    <em>{item.when}</em>
-                  </div>
-                </div>
-              ))}
-            </article>
           </div>
         </section>
       </div>
     </AppShell>
   );
 }
-
-const taskIcons = {
-  alert: AlertTriangle,
-  clock: Clock,
-  file: FilePen,
-  refresh: RefreshCw
-};
 
 const signalIcons = {
   down: TrendingDown,
