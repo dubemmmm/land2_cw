@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;background:#0C0906;font-family:'Hanken Grotesk',system-ui,sans-serif;}
+    ::selection{background:rgba(201,162,75,0.28);color:#F3ECE1;}
+    .om-scroll::-webkit-scrollbar{width:8px;height:8px;}
+    .om-scroll::-webkit-scrollbar-track{background:transparent;}
+    .om-scroll::-webkit-scrollbar-thumb{background:rgba(201,162,75,0.16);border-radius:6px;border:2px solid #191410;}
+    .om-scroll::-webkit-scrollbar-thumb:hover{background:rgba(201,162,75,0.30);}
+    input,select,textarea{outline:none;font-family:'Hanken Grotesk',sans-serif;}
+    input::placeholder,textarea::placeholder{color:#6F6558;}
+    select{color-scheme:dark;}
+    .dv-turn{padding:44px 52px 40px;}
+    .dv-thd{display:flex;align-items:baseline;gap:12px;margin:0 0 8px;}
+    .dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:4px 8px;background:#C9A24B;color:#17120C;border-radius:5px;text-decoration:none;}
+    .dv-tname{font:600 14px/1.3 'Hanken Grotesk',system-ui,sans-serif;color:#F3ECE1;}
+    .dv-sub{margin:0 0 26px;font:400 13px/1.6 'Hanken Grotesk',system-ui,sans-serif;color:#8A7F6E;max-width:920px;}
+    .dv-sub a{color:#C9A24B;text-decoration:none;}
+    .dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start;}
+    .dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px;}
+    .dv-olabel{display:flex;align-items:center;gap:10px;font:400 13px/1.3 'Hanken Grotesk';color:#8A7F6E;}
+    .dv-oid{font:600 11px ui-monospace,Menlo,monospace;padding:3px 8px;background:rgba(255,255,255,0.08);color:#F3ECE1;border-radius:6px;text-decoration:none;}
+    .dv-oname{color:#F3ECE1;font-weight:600;}
+    .dv-opt:target .dv-oid{background:#C9A24B;color:#17120C;}
+    .dv-card{background:#100C08;border:1px solid rgba(255,255,255,0.09);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,0.55);overflow:hidden;}
+    .dv-next{margin:30px 0 0;font:13px/1.7 'Hanken Grotesk';color:#8A7F6E;}
+    .dv-next a{color:#C9A24B;text-decoration:none;}
+  </style>
+</helmet>
+
+<section class="dv-turn" id="t5">
+  <div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Land listings &mdash; admin upload &amp; the public grid</span></div>
+  <p class="dv-sub">Two pairs. <a href="#5a">5a</a>/<a href="#5b">5b</a> &mdash; the admin form for uploading a plot of land, sharing one draft: a <b style="color:#C9BCA9;">real drag-and-drop photo uploader</b> (reorder by dragging, explicit &ldquo;set as cover&rdquo;), Location (required) with an optional free-text Estate field with suggestions, size/use/price/title-document/status controls, and <b style="color:#C9BCA9;">Publish</b> (gated on title + location + a photo) which actually appends the listing. <a href="#5c">5c</a>/<a href="#5d">5d</a> &mdash; the public grid, grouped by location, sharing one live filter bar (search, land use, estate, price &amp; size range, location toggles). Publish a listing above and scroll down &mdash; it appears in both grids below.</p>
+
+  <div class="dv-opts">
+
+    <!-- =============================== 5a : THE LEDGER FORM =============================== -->
+    <div class="dv-opt" id="5a">
+      <div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a><span class="dv-oname">The Ledger Form</span>&nbsp;&middot;&nbsp;linear, single column &mdash; fast sequential entry</div>
+      <div class="dv-card">
+        <div data-screen-label="5a Land listings — New (Ledger)" style="position:relative; width:1440px; height:900px; background:radial-gradient(120% 80% at 18% -10%, #1B140C 0%, #100C08 60%); overflow:hidden; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#F3ECE1; -webkit-font-smoothing:antialiased;">
+          {{ rail }}
+
+          <div style="position:absolute; left:72px; top:0; right:0; height:72px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(12,9,6,0.5); z-index:15;">
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif; font-size:25px; font-weight:600; color:#F8F2E8;">New land listing</div>
+              <div style="font-size:12px; color:#8A7F6E; margin-top:1px;">{{ listingsCountLine }}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <span style="font-size:12px; color:#6F6558;">{{ missingText }}</span>
+              <div onClick="{{ onCancel }}" style="height:38px; padding:0 15px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; display:flex; align-items:center; font-size:13px; color:#A89E8F; cursor:pointer;">Clear</div>
+              <div onClick="{{ onSaveDraft }}" style="height:38px; padding:0 15px; border:1px solid rgba(201,162,75,0.4); color:#E6CB8E; border-radius:10px; display:flex; align-items:center; font-size:13px; font-weight:600; cursor:pointer;">Save as draft</div>
+              <div onClick="{{ onPublish }}" style="{{ publishBtnStyle }}"><i data-lucide="upload" width="15" height="15"></i>Publish listing</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; top:84px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:center; gap:9px; padding:10px 18px; background:rgba(23,18,12,0.95); border:1px solid rgba(201,162,75,0.4); border-radius:11px; box-shadow:0 12px 30px rgba(0,0,0,0.5); color:#E6CB8E; font-size:13px; font-weight:600;"><i data-lucide="check-circle" width="16" height="16"></i>{{ toastText }}</div>
+          </sc-if>
+
+          <div class="om-scroll" style="position:absolute; left:72px; top:72px; right:0; bottom:0; overflow-y:auto; overflow-x:hidden;">
+            <div style="max-width:700px; margin:0 auto; padding:26px 24px 60px; display:flex; flex-direction:column; gap:16px;">
+
+              <!-- Photos -->
+              <div style="background:#191410; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><div style="display:flex; align-items:center; gap:10px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:#F3ECE1;">Photos</span></div><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6F6558;">{{ photos.length }} added</span></div>
+
+                <div onDragOver="{{ onDropOver }}" onDrop="{{ onDropFiles }}" style="position:relative; border:1.5px dashed rgba(201,162,75,0.35); border-radius:13px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; background:rgba(201,162,75,0.03); cursor:pointer; transition:border-color 150ms ease;" style-hover="border-color:rgba(201,162,75,0.6);">
+                  <input type="file" accept="image/*" multiple="true" onChange="{{ onFileInput }}" style="position:absolute; inset:0; opacity:0; cursor:pointer;">
+                  <i data-lucide="upload-cloud" width="24" height="24" style="color:#C9A24B;"></i>
+                  <div style="font-size:13px; color:#C9BCA9;">Drag photos here, or click to browse</div>
+                  <div style="font-size:11px; color:#6F6558;">JPG or PNG &middot; multiple files supported</div>
+                </div>
+
+                <sc-if value="{{ hasPhotosAny }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;">
+                    <sc-for list="{{ photos }}" as="p" hint-placeholder-count="0">
+                      <div draggable="true" onDragStart="{{ p.onDragStart }}" onDragOver="{{ photoDragOverHandler }}" onDrop="{{ p.onDrop }}" style="position:relative; width:92px; height:92px; border-radius:12px; overflow:hidden; flex-shrink:0; cursor:grab;">
+                        <img src="{{ p.url }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        <sc-if value="{{ p.isCover }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:absolute; left:6px; bottom:6px; padding:2px 7px; border-radius:5px; background:rgba(201,162,75,0.92); color:#17120C; font-size:9px; font-weight:700;">Cover</div>
+                        </sc-if>
+                        <div style="position:absolute; inset:0; display:flex; align-items:flex-start; justify-content:flex-end; gap:5px; padding:6px; opacity:0; transition:opacity 140ms ease, background 140ms ease;" style-hover="opacity:1; background:rgba(10,8,6,0.32);">
+                          <div onClick="{{ p.onSetCover }}" style="width:23px; height:23px; border-radius:7px; background:rgba(23,18,12,0.9); display:flex; align-items:center; justify-content:center; color:#E6CB8E; cursor:pointer;"><i data-lucide="star" width="12" height="12"></i></div>
+                          <div onClick="{{ p.onRemove }}" style="width:23px; height:23px; border-radius:7px; background:rgba(23,18,12,0.9); display:flex; align-items:center; justify-content:center; color:#E0A183; cursor:pointer;"><i data-lucide="x" width="12" height="12"></i></div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+
+              <!-- Basic info -->
+              <div style="background:#191410; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:#F3ECE1;">Basic info</span></div>
+                <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:8px;">Title / plot address</div>
+                <input value="{{ draftTitle }}" onChange="{{ onTitleChange }}" placeholder="e.g. Plot 14B, Bourdillon Close" style="width:100%; height:42px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:0 14px; font-size:14px; color:#F3ECE1;">
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+                  <div>
+                    <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:8px;">Location</div>
+                    <select value="{{ draftLoc }}" onChange="{{ onLocChange }}" style="width:100%; height:42px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:0 12px; font-size:13.5px; color:#F3ECE1;">
+                      <option value="">Select a location</option>
+                      <sc-for list="{{ locationOptions }}" as="lo" hint-placeholder-count="4">
+                        <option value="{{ lo.key }}">{{ lo.name }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                  <div style="position:relative;">
+                    <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:8px;">Estate <span style="text-transform:none; letter-spacing:0; color:#4A4438;">(optional)</span></div>
+                    <input value="{{ draftEstate }}" onChange="{{ onEstateChange }}" onFocus="{{ onEstateFocus }}" onBlur="{{ onEstateBlur }}" placeholder="e.g. Lekki Gardens Estate" style="width:100%; height:42px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:0 14px; font-size:13.5px; color:#F3ECE1;">
+                    <sc-if value="{{ estateSuggestOpen }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute; left:0; right:0; top:44px; background:#1B150F; border:1px solid rgba(255,255,255,0.12); border-radius:11px; box-shadow:0 20px 50px rgba(0,0,0,0.5); padding:5px; z-index:20;">
+                        <sc-for list="{{ estateSuggestions }}" as="es" hint-placeholder-count="4">
+                          <div onMouseDown="{{ es.onPick }}" style="padding:9px 11px; border-radius:8px; font-size:13px; color:#D8CFC0; cursor:pointer;" style-hover="background:rgba(201,162,75,0.10); color:#F3ECE1;">{{ es.name }}</div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Specs -->
+              <div style="background:#191410; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:#F3ECE1;">Specs</span></div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                  <div>
+                    <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:8px;">Land size</div>
+                    <div style="display:flex; gap:8px;">
+                      <input value="{{ draftSizeVal }}" onChange="{{ onSizeVal }}" placeholder="1200" style="flex:1; height:42px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:0 14px; font-size:14px; color:#F3ECE1;">
+                      <div style="display:flex; background:#100C08; border:1px solid rgba(255,255,255,0.08); border-radius:9px; padding:3px;">
+                        <sc-for list="{{ sizeUnitTabs }}" as="u" hint-placeholder-count="3">
+                          <div onClick="{{ u.onClick }}" style="{{ u.style }}">{{ u.label }}</div>
+                        </sc-for>
+                      </div>
+                    </div>
+                    <div style="font-size:11px; color:#6F6558; margin-top:7px;">{{ sizeSqmPreview }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:8px;">Asking price</div>
+                    <div style="position:relative;">
+                      <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#8A7F6E; font-family:'IBM Plex Mono',monospace; font-size:14px;">&#8358;</span>
+                      <input value="{{ draftPrice }}" onChange="{{ onPriceChange }}" placeholder="850000000" style="width:100%; height:42px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:0 14px 0 30px; font-size:14px; color:#F3ECE1;">
+                    </div>
+                    <div style="font-size:11px; color:#6F6558; margin-top:7px;">{{ priceFormattedPreview }}</div>
+                  </div>
+                </div>
+
+                <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin:16px 0 8px;">Land use</div>
+                <div style="display:flex; gap:8px;">
+                  <sc-for list="{{ useTabsDraft }}" as="u" hint-placeholder-count="3">
+                    <div onClick="{{ u.onClick }}" style="{{ u.style }}">{{ u.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <!-- Legal & status -->
+              <div style="background:#191410; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:#F3ECE1;">Legal &amp; status</span></div>
+
+                <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:8px;">Title document status</div>
+                <select value="{{ draftTitleDoc }}" onChange="{{ onTitleDocChange }}" style="width:100%; height:42px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:0 12px; font-size:13.5px; color:#F3ECE1;">
+                  <sc-for list="{{ titleDocSelectOptions }}" as="td" hint-placeholder-count="5">
+                    <option value="{{ td.key }}">{{ td.label }}</option>
+                  </sc-for>
+                </select>
+                <div style="font-size:11.5px; color:#6F6558; margin-top:8px; line-height:1.4;">{{ titleDocHelp }}</div>
+
+                <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin:18px 0 8px;">Listing status</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                  <sc-for list="{{ statusTabsDraft }}" as="st" hint-placeholder-count="5">
+                    <div onClick="{{ st.onClick }}" style="{{ st.style }}">{{ st.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div style="background:#191410; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:#F3ECE1;">Description</span></div>
+                <textarea value="{{ draftNotes }}" onChange="{{ onNotesChange }}" placeholder="Internal notes — visible to your team only" style="width:100%; min-height:86px; resize:vertical; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:11px; padding:12px 14px; font-size:13.5px; color:#F3ECE1; line-height:1.5;"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================== 5b : THE SPLIT DESK =============================== -->
+    <div class="dv-opt" id="5b">
+      <div class="dv-olabel"><a class="dv-oid" href="#5b">5b</a><span class="dv-oname">The Split Desk</span>&nbsp;&middot;&nbsp;grouped fields with a live preview card that updates as you type</div>
+      <div class="dv-card">
+        <div data-screen-label="5b Land listings — New (Split desk)" style="position:relative; width:1440px; height:900px; background:radial-gradient(120% 80% at 82% -10%, #1B140C 0%, #0C0906 60%); overflow:hidden; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#F3ECE1; -webkit-font-smoothing:antialiased;">
+          {{ rail }}
+
+          <div style="position:absolute; left:72px; top:0; right:0; height:72px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(12,9,6,0.5); z-index:15;">
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif; font-size:25px; font-weight:600; color:#F8F2E8;">New land listing</div>
+              <div style="font-size:12px; color:#8A7F6E; margin-top:1px;">{{ listingsCountLine }}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <span style="font-size:12px; color:#6F6558;">{{ missingText }}</span>
+              <div onClick="{{ onCancel }}" style="height:38px; padding:0 15px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; display:flex; align-items:center; font-size:13px; color:#A89E8F; cursor:pointer;">Clear</div>
+              <div onClick="{{ onSaveDraft }}" style="height:38px; padding:0 15px; border:1px solid rgba(201,162,75,0.4); color:#E6CB8E; border-radius:10px; display:flex; align-items:center; font-size:13px; font-weight:600; cursor:pointer;">Save as draft</div>
+              <div onClick="{{ onPublish }}" style="{{ publishBtnStyle }}"><i data-lucide="upload" width="15" height="15"></i>Publish listing</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; top:84px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:center; gap:9px; padding:10px 18px; background:rgba(23,18,12,0.95); border:1px solid rgba(201,162,75,0.4); border-radius:11px; box-shadow:0 12px 30px rgba(0,0,0,0.5); color:#E6CB8E; font-size:13px; font-weight:600;"><i data-lucide="check-circle" width="16" height="16"></i>{{ toastText }}</div>
+          </sc-if>
+
+          <div style="position:absolute; left:72px; top:72px; right:0; bottom:0; display:flex; gap:20px; padding:22px 24px;">
+
+            <div class="om-scroll" style="flex:1; min-width:0; overflow-y:auto; overflow-x:hidden; padding-right:4px;">
+              <div style="display:flex; flex-direction:column; gap:14px;">
+
+                <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:15px; padding:16px 18px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;"><div style="display:flex; align-items:center; gap:9px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:#F3ECE1;">Photos</span></div><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6F6558;">{{ photos.length }} added</span></div>
+                  <div onDragOver="{{ onDropOver }}" onDrop="{{ onDropFiles }}" style="position:relative; border:1.5px dashed rgba(201,162,75,0.35); border-radius:12px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:rgba(201,162,75,0.03); cursor:pointer;" style-hover="border-color:rgba(201,162,75,0.6);">
+                    <input type="file" accept="image/*" multiple="true" onChange="{{ onFileInput }}" style="position:absolute; inset:0; opacity:0; cursor:pointer;">
+                    <i data-lucide="upload-cloud" width="21" height="21" style="color:#C9A24B;"></i>
+                    <div style="font-size:12.5px; color:#C9BCA9;">Drag photos here, or click to browse</div>
+                  </div>
+                  <sc-if value="{{ hasPhotosAny }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; flex-wrap:wrap; gap:9px; margin-top:12px;">
+                      <sc-for list="{{ photos }}" as="p" hint-placeholder-count="0">
+                        <div draggable="true" onDragStart="{{ p.onDragStart }}" onDragOver="{{ photoDragOverHandler }}" onDrop="{{ p.onDrop }}" style="position:relative; width:78px; height:78px; border-radius:10px; overflow:hidden; flex-shrink:0; cursor:grab;">
+                          <img src="{{ p.url }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                          <sc-if value="{{ p.isCover }}" hint-placeholder-val="{{ false }}">
+                            <div style="position:absolute; left:5px; bottom:5px; padding:2px 6px; border-radius:4px; background:rgba(201,162,75,0.92); color:#17120C; font-size:8.5px; font-weight:700;">Cover</div>
+                          </sc-if>
+                          <div style="position:absolute; inset:0; display:flex; align-items:flex-start; justify-content:flex-end; gap:4px; padding:5px; opacity:0; transition:opacity 140ms ease, background 140ms ease;" style-hover="opacity:1; background:rgba(10,8,6,0.32);">
+                            <div onClick="{{ p.onSetCover }}" style="width:20px; height:20px; border-radius:6px; background:rgba(23,18,12,0.9); display:flex; align-items:center; justify-content:center; color:#E6CB8E; cursor:pointer;"><i data-lucide="star" width="11" height="11"></i></div>
+                            <div onClick="{{ p.onRemove }}" style="width:20px; height:20px; border-radius:6px; background:rgba(23,18,12,0.9); display:flex; align-items:center; justify-content:center; color:#E0A183; cursor:pointer;"><i data-lucide="x" width="11" height="11"></i></div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:15px; padding:16px 18px;">
+                  <div style="display:flex; align-items:center; gap:9px; margin-bottom:12px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:#F3ECE1;">Basic info &amp; classification</span></div>
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:7px;">Title / plot address</div>
+                  <input value="{{ draftTitle }}" onChange="{{ onTitleChange }}" placeholder="e.g. Plot 14B, Bourdillon Close" style="width:100%; height:40px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:0 13px; font-size:13.5px; color:#F3ECE1;">
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;">
+                    <div>
+                      <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:7px;">Location</div>
+                      <select value="{{ draftLoc }}" onChange="{{ onLocChange }}" style="width:100%; height:40px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:0 11px; font-size:13px; color:#F3ECE1;">
+                        <option value="">Select a location</option>
+                        <sc-for list="{{ locationOptions }}" as="lo" hint-placeholder-count="4">
+                          <option value="{{ lo.key }}">{{ lo.name }}</option>
+                        </sc-for>
+                      </select>
+                    </div>
+                    <div style="position:relative;">
+                      <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:7px;">Estate <span style="text-transform:none; letter-spacing:0; color:#4A4438;">(optional)</span></div>
+                      <input value="{{ draftEstate }}" onChange="{{ onEstateChange }}" onFocus="{{ onEstateFocus }}" onBlur="{{ onEstateBlur }}" placeholder="e.g. Lekki Gardens Estate" style="width:100%; height:40px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:0 13px; font-size:13px; color:#F3ECE1;">
+                      <sc-if value="{{ estateSuggestOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="position:absolute; left:0; right:0; top:42px; background:#1B150F; border:1px solid rgba(255,255,255,0.12); border-radius:11px; box-shadow:0 20px 50px rgba(0,0,0,0.5); padding:5px; z-index:20;">
+                          <sc-for list="{{ estateSuggestions }}" as="es" hint-placeholder-count="4">
+                            <div onMouseDown="{{ es.onPick }}" style="padding:8px 10px; border-radius:8px; font-size:12.5px; color:#D8CFC0; cursor:pointer;" style-hover="background:rgba(201,162,75,0.10); color:#F3ECE1;">{{ es.name }}</div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:15px; padding:16px 18px;">
+                  <div style="display:flex; align-items:center; gap:9px; margin-bottom:12px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:#F3ECE1;">Specs</span></div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div>
+                      <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:7px;">Land size</div>
+                      <div style="display:flex; gap:7px;">
+                        <input value="{{ draftSizeVal }}" onChange="{{ onSizeVal }}" placeholder="1200" style="flex:1; height:40px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:0 13px; font-size:13.5px; color:#F3ECE1;">
+                        <div style="display:flex; background:#100C08; border:1px solid rgba(255,255,255,0.08); border-radius:9px; padding:3px;">
+                          <sc-for list="{{ sizeUnitTabs }}" as="u" hint-placeholder-count="3">
+                            <div onClick="{{ u.onClick }}" style="{{ u.style }}">{{ u.label }}</div>
+                          </sc-for>
+                        </div>
+                      </div>
+                      <div style="font-size:10.5px; color:#6F6558; margin-top:6px;">{{ sizeSqmPreview }}</div>
+                    </div>
+                    <div>
+                      <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:7px;">Asking price</div>
+                      <div style="position:relative;">
+                        <span style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#8A7F6E; font-family:'IBM Plex Mono',monospace; font-size:13px;">&#8358;</span>
+                        <input value="{{ draftPrice }}" onChange="{{ onPriceChange }}" placeholder="850000000" style="width:100%; height:40px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:0 13px 0 28px; font-size:13.5px; color:#F3ECE1;">
+                      </div>
+                      <div style="font-size:10.5px; color:#6F6558; margin-top:6px;">{{ priceFormattedPreview }}</div>
+                    </div>
+                  </div>
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin:14px 0 7px;">Land use</div>
+                  <div style="display:flex; gap:7px;">
+                    <sc-for list="{{ useTabsDraft }}" as="u" hint-placeholder-count="3">
+                      <div onClick="{{ u.onClick }}" style="{{ u.style }}">{{ u.label }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:15px; padding:16px 18px;">
+                  <div style="display:flex; align-items:center; gap:9px; margin-bottom:12px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:#F3ECE1;">Legal &amp; status</span></div>
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:7px;">Title document status</div>
+                  <select value="{{ draftTitleDoc }}" onChange="{{ onTitleDocChange }}" style="width:100%; height:40px; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:0 11px; font-size:13px; color:#F3ECE1;">
+                    <sc-for list="{{ titleDocSelectOptions }}" as="td" hint-placeholder-count="5">
+                      <option value="{{ td.key }}">{{ td.label }}</option>
+                    </sc-for>
+                  </select>
+                  <div style="font-size:11px; color:#6F6558; margin-top:7px; line-height:1.4;">{{ titleDocHelp }}</div>
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin:14px 0 7px;">Listing status</div>
+                  <div style="display:flex; flex-wrap:wrap; gap:7px;">
+                    <sc-for list="{{ statusTabsDraft }}" as="st" hint-placeholder-count="5">
+                      <div onClick="{{ st.onClick }}" style="{{ st.style }}">{{ st.label }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:15px; padding:16px 18px;">
+                  <div style="display:flex; align-items:center; gap:9px; margin-bottom:12px;"><span style="width:5px; height:5px; background:#C9A24B; transform:rotate(45deg); display:block;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:#F3ECE1;">Description</span></div>
+                  <textarea value="{{ draftNotes }}" onChange="{{ onNotesChange }}" placeholder="Internal notes — visible to your team only" style="width:100%; min-height:70px; resize:vertical; background:#100C08; border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:11px 13px; font-size:13px; color:#F3ECE1; line-height:1.5;"></textarea>
+                </div>
+
+              </div>
+            </div>
+
+            <div style="width:360px; flex-shrink:0; display:flex; flex-direction:column; gap:14px;">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#8A7F6E; font-weight:600;">Live preview</div>
+
+              <div style="background:#15100B; border:1px solid rgba(255,255,255,0.09); border-radius:16px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.4);">
+                <div style="position:relative; height:150px; background:linear-gradient(140deg,#241C12,#2F251A);">
+                  <sc-for list="{{ livePreview.photoList }}" as="ph" hint-placeholder-count="0">
+                    <img src="{{ ph.url }}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+                  </sc-for>
+                  <sc-if value="{{ livePreview.noPhoto }}" hint-placeholder-val="{{ true }}">
+                    <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:#4A3F2E;"><i data-lucide="image" width="22" height="22"></i><span style="font-size:11px;">Add photos to preview the cover</span></div>
+                  </sc-if>
+                  <div style="position:absolute; left:0; right:0; bottom:0; height:60px; background:linear-gradient(to top, rgba(12,9,6,0.9), transparent);"></div>
+                  <span style="{{ livePreview.statusStyle }}; position:absolute; top:11px; left:11px;">{{ livePreview.statusLabel }}</span>
+                  <div style="position:absolute; top:11px; right:11px; padding:5px 10px; border-radius:999px; background:rgba(12,9,6,0.66); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); font-family:'IBM Plex Mono',monospace; font-size:12px; color:#F3ECE1;">{{ livePreview.priceText }}</div>
+                  <div style="position:absolute; left:14px; bottom:10px; right:14px; font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600; color:#F8F2E8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ livePreview.title }}</div>
+                </div>
+                <div style="padding:13px 15px 15px;">
+                  <div style="font-size:12px; color:#A89E8F;">{{ livePreview.metaText }}</div>
+                  <div style="font-size:11.5px; color:#6F6558; margin-top:4px;">{{ livePreview.locText }}<sc-if value="{{ livePreview.hasEstate }}" hint-placeholder-val="{{ false }}"> &middot; {{ livePreview.estateText }}</sc-if></div>
+                  <div style="margin-top:11px; padding-top:11px; border-top:1px solid rgba(255,255,255,0.07);"><span style="{{ livePreview.docChip }}"><span style="{{ livePreview.docDot }}"></span>{{ livePreview.docLabel }}</span></div>
+                </div>
+              </div>
+
+              <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:15px 17px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.09em; color:#6F6558; font-weight:600; margin-bottom:11px;">Before you publish</div>
+                <div style="display:flex; flex-direction:column; gap:9px;">
+                  <sc-for list="{{ livePreview.checklist }}" as="ck" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:9px;"><i data-lucide="{{ ck.icon }}" width="15" height="15" style="{{ ck.iconStyle }}"></i><span style="font-size:12.5px; color:#A89E8F;">{{ ck.label }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================== 5c : GALLERY BLOCKS =============================== -->
+    <div class="dv-opt" id="5c">
+      <div class="dv-olabel"><a class="dv-oid" href="#5c">5c</a><span class="dv-oname">Gallery Blocks</span>&nbsp;&middot;&nbsp;photo-forward, grouped rows per location</div>
+      <div class="dv-card">
+        <div data-screen-label="5c Land listings — Grid (Gallery)" style="position:relative; width:1440px; height:900px; background:radial-gradient(120% 80% at 20% -10%, #1B140C 0%, #100C08 60%); overflow:hidden; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#F3ECE1; -webkit-font-smoothing:antialiased;">
+          {{ rail }}
+          <div style="position:absolute; left:72px; top:0; right:0; bottom:0; display:flex; flex-direction:column; padding:24px 30px;">
+
+            <div style="display:flex; align-items:flex-end; justify-content:space-between; flex-shrink:0;">
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600; color:#F8F2E8;">Land listings</div>
+                <div style="font-size:12.5px; color:#8A7F6E; margin-top:2px;">{{ resultsLine }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; height:40px; padding:0 16px; background:#C9A24B; color:#17120C; border-radius:11px; font-size:13px; font-weight:600; cursor:pointer;"><i data-lucide="plus" width="16" height="16"></i>New listing</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:16px; flex-shrink:0;">
+              <sc-for list="{{ pulse }}" as="k" hint-placeholder-count="4">
+                <div style="background:#191410; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 16px;">
+                  <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:#8A7F6E; font-weight:600;">{{ k.label }}</div>
+                  <div style="display:flex; align-items:baseline; gap:7px; margin-top:8px;"><span style="{{ k.valueStyle }}">{{ k.value }}</span><span style="font-size:12px; color:#8A7F6E;">{{ k.sub }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-top:14px; flex-shrink:0;">
+              <div style="display:flex; align-items:center; gap:8px; height:38px; width:220px; padding:0 12px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:10px; color:#6F6558;"><i data-lucide="search" width="15" height="15"></i><input value="{{ query }}" onInput="{{ onSearch }}" placeholder="Search listings" style="flex:1; background:transparent; border:none; font-size:12.5px; color:#F3ECE1;"></div>
+              <div style="display:flex; background:#191410; border:1px solid rgba(255,255,255,0.08); border-radius:9px; padding:3px;">
+                <sc-for list="{{ useFilterTabs }}" as="u" hint-placeholder-count="4">
+                  <div onClick="{{ u.onClick }}" style="{{ u.style }}">{{ u.label }}</div>
+                </sc-for>
+              </div>
+              <select value="{{ estateFilter }}" onChange="{{ onEstateFilterChange }}" style="height:38px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12.5px; color:#C9BCA9;">
+                <sc-for list="{{ estateFilterOptions }}" as="ef" hint-placeholder-count="6">
+                  <option value="{{ ef.key }}">{{ ef.label }}</option>
+                </sc-for>
+              </select>
+              <div style="display:flex; align-items:center; gap:6px;"><input value="{{ priceMin }}" onChange="{{ onPriceMin }}" placeholder="Min &#8358;M" style="width:78px; height:38px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"><span style="color:#4A4438; font-size:12px;">&ndash;</span><input value="{{ priceMax }}" onChange="{{ onPriceMax }}" placeholder="Max &#8358;M" style="width:78px; height:38px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"></div>
+              <div style="display:flex; align-items:center; gap:6px;"><input value="{{ sizeMin }}" onChange="{{ onSizeMin }}" placeholder="Min sqm" style="width:78px; height:38px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"><span style="color:#4A4438; font-size:12px;">&ndash;</span><input value="{{ sizeMax }}" onChange="{{ onSizeMax }}" placeholder="Max sqm" style="width:78px; height:38px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"></div>
+              <select value="{{ sortVal }}" onChange="{{ onSortChange }}" style="height:38px; background:#191410; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12.5px; color:#C9BCA9;">
+                <sc-for list="{{ sortOptions }}" as="so" hint-placeholder-count="4">
+                  <option value="{{ so.key }}">{{ so.label }}</option>
+                </sc-for>
+              </select>
+              <sc-if value="{{ isFiltered }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ onClearFilters }}" style="font-size:12px; color:#C9A24B; cursor:pointer; padding:0 4px;">Clear filters</div>
+              </sc-if>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; flex-shrink:0;">
+              <sc-for list="{{ locChips }}" as="lc" hint-placeholder-count="5">
+                <div onClick="{{ lc.onClick }}" style="{{ lc.style }}">{{ lc.label }}</div>
+              </sc-for>
+            </div>
+
+            <div class="om-scroll" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-top:14px; padding-bottom:20px;">
+              <sc-for list="{{ galleryGroups }}" as="g" hint-placeholder-count="4">
+                <div style="margin-bottom:26px;">
+                  <div style="display:flex; align-items:baseline; gap:9px; margin-bottom:12px;"><span style="font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:600; color:#F3ECE1;">{{ g.name }}</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#6F6558;">{{ g.count }} listings</span></div>
+                  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+                    <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="0">
+                      <div style="background:#191410; border:1px solid rgba(255,255,255,0.08); border-radius:15px; overflow:hidden; transition:border-color 150ms ease, transform 150ms ease; cursor:pointer;" style-hover="border-color:rgba(201,162,75,0.4); transform:translateY(-2px);">
+                        <div style="position:relative; height:150px; background:linear-gradient(140deg,#241C12,#2F251A);">
+                          <sc-for list="{{ c.photoList }}" as="ph" hint-placeholder-count="0">
+                            <img src="{{ ph.url }}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+                          </sc-for>
+                          <sc-if value="{{ c.noPhoto }}" hint-placeholder-val="{{ true }}">
+                            <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 14px);"></div>
+                          </sc-if>
+                          <div style="position:absolute; left:0; right:0; bottom:0; height:64px; background:linear-gradient(to top, rgba(12,9,6,0.92), transparent);"></div>
+                          <span style="{{ c.statusStyle }}; position:absolute; top:11px; left:11px;">{{ c.statusLabel }}</span>
+                          <div style="position:absolute; top:11px; right:11px; padding:5px 10px; border-radius:999px; background:rgba(12,9,6,0.66); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); font-family:'IBM Plex Mono',monospace; font-size:12px; color:#F3ECE1;">{{ c.priceCompact }}</div>
+                          <div style="position:absolute; left:14px; bottom:10px; right:14px; font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:#F8F2E8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.title }}</div>
+                        </div>
+                        <div style="padding:12px 15px 14px;">
+                          <div style="font-size:12px; color:#A89E8F;">{{ c.metaText }}</div>
+                          <div style="font-size:11.5px; color:#6F6558; margin-top:4px;">{{ c.locEstateText }}</div>
+                          <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);"><span style="{{ c.docChip }}"><span style="{{ c.docDot }}"></span>{{ c.docLabel }}</span></div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ groupsEmptyGallery }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; color:#6F6558; gap:10px;"><i data-lucide="search-x" width="26" height="26"></i><span style="font-size:13px;">No listings match these filters.</span></div>
+              </sc-if>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================== 5d : THE REGISTRY =============================== -->
+    <div class="dv-opt" id="5d">
+      <div class="dv-olabel"><a class="dv-oid" href="#5d">5d</a><span class="dv-oname">The Registry</span>&nbsp;&middot;&nbsp;dense editorial rows, grouped per location</div>
+      <div class="dv-card">
+        <div data-screen-label="5d Land listings — Grid (Registry)" style="position:relative; width:1440px; height:900px; background:radial-gradient(120% 80% at 80% -10%, #1B140C 0%, #0C0906 60%); overflow:hidden; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#F3ECE1; -webkit-font-smoothing:antialiased;">
+          {{ rail }}
+          <div style="position:absolute; left:72px; top:0; right:0; bottom:0; display:flex; flex-direction:column; padding:24px 30px;">
+
+            <div style="display:flex; align-items:flex-end; justify-content:space-between; flex-shrink:0;">
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600; color:#F8F2E8;">Land listings</div>
+                <div style="font-size:12.5px; color:#8A7F6E; margin-top:2px;">{{ resultsLine }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; height:40px; padding:0 16px; background:#C9A24B; color:#17120C; border-radius:11px; font-size:13px; font-weight:600; cursor:pointer;"><i data-lucide="plus" width="16" height="16"></i>New listing</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:16px; flex-shrink:0;">
+              <sc-for list="{{ pulse }}" as="k" hint-placeholder-count="4">
+                <div style="background:#15100B; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 16px;">
+                  <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:#8A7F6E; font-weight:600;">{{ k.label }}</div>
+                  <div style="display:flex; align-items:baseline; gap:7px; margin-top:8px;"><span style="{{ k.valueStyle }}">{{ k.value }}</span><span style="font-size:12px; color:#8A7F6E;">{{ k.sub }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-top:14px; flex-shrink:0;">
+              <div style="display:flex; align-items:center; gap:8px; height:38px; width:220px; padding:0 12px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:10px; color:#6F6558;"><i data-lucide="search" width="15" height="15"></i><input value="{{ query }}" onInput="{{ onSearch }}" placeholder="Search listings" style="flex:1; background:transparent; border:none; font-size:12.5px; color:#F3ECE1;"></div>
+              <div style="display:flex; background:#15100B; border:1px solid rgba(255,255,255,0.08); border-radius:9px; padding:3px;">
+                <sc-for list="{{ useFilterTabs }}" as="u" hint-placeholder-count="4">
+                  <div onClick="{{ u.onClick }}" style="{{ u.style }}">{{ u.label }}</div>
+                </sc-for>
+              </div>
+              <select value="{{ estateFilter }}" onChange="{{ onEstateFilterChange }}" style="height:38px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12.5px; color:#C9BCA9;">
+                <sc-for list="{{ estateFilterOptions }}" as="ef" hint-placeholder-count="6">
+                  <option value="{{ ef.key }}">{{ ef.label }}</option>
+                </sc-for>
+              </select>
+              <div style="display:flex; align-items:center; gap:6px;"><input value="{{ priceMin }}" onChange="{{ onPriceMin }}" placeholder="Min &#8358;M" style="width:78px; height:38px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"><span style="color:#4A4438; font-size:12px;">&ndash;</span><input value="{{ priceMax }}" onChange="{{ onPriceMax }}" placeholder="Max &#8358;M" style="width:78px; height:38px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"></div>
+              <div style="display:flex; align-items:center; gap:6px;"><input value="{{ sizeMin }}" onChange="{{ onSizeMin }}" placeholder="Min sqm" style="width:78px; height:38px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"><span style="color:#4A4438; font-size:12px;">&ndash;</span><input value="{{ sizeMax }}" onChange="{{ onSizeMax }}" placeholder="Max sqm" style="width:78px; height:38px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12px; color:#F3ECE1;"></div>
+              <select value="{{ sortVal }}" onChange="{{ onSortChange }}" style="height:38px; background:#15100B; border:1px solid rgba(255,255,255,0.10); border-radius:9px; padding:0 10px; font-size:12.5px; color:#C9BCA9;">
+                <sc-for list="{{ sortOptions }}" as="so" hint-placeholder-count="4">
+                  <option value="{{ so.key }}">{{ so.label }}</option>
+                </sc-for>
+              </select>
+              <sc-if value="{{ isFiltered }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ onClearFilters }}" style="font-size:12px; color:#C9A24B; cursor:pointer; padding:0 4px;">Clear filters</div>
+              </sc-if>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; flex-shrink:0;">
+              <sc-for list="{{ locChips }}" as="lc" hint-placeholder-count="5">
+                <div onClick="{{ lc.onClick }}" style="{{ lc.style }}">{{ lc.label }}</div>
+              </sc-for>
+            </div>
+
+            <div style="display:grid; grid-template-columns:52px 1fr 170px 90px 100px 120px 116px 108px; gap:14px; padding:14px 10px 8px; margin-top:10px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0;">
+              <div></div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Listing</div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Estate</div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Size</div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Use</div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Price</div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Title</div>
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#6F6558; font-weight:600;">Status</div>
+            </div>
+
+            <div class="om-scroll" style="flex:1; overflow-y:auto; overflow-x:hidden; padding-bottom:20px;">
+              <sc-for list="{{ registryGroups }}" as="g" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex; align-items:baseline; gap:9px; padding:14px 10px 8px;"><span style="font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:#F3ECE1;">{{ g.name }}</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6F6558;">{{ g.count }}</span></div>
+                  <sc-for list="{{ g.items }}" as="r" hint-placeholder-count="0">
+                    <div style="display:grid; grid-template-columns:52px 1fr 170px 90px 100px 120px 116px 108px; gap:14px; align-items:center; padding:10px; border-radius:11px; cursor:pointer; transition:background 140ms ease;" style-hover="background:rgba(255,255,255,0.025);">
+                      <div style="width:44px; height:44px; border-radius:9px; overflow:hidden; background:linear-gradient(140deg,#241C12,#2F251A); position:relative;">
+                        <sc-for list="{{ r.photoList }}" as="ph" hint-placeholder-count="0"><img src="{{ ph.url }}" style="width:100%; height:100%; object-fit:cover; display:block;"></sc-for>
+                      </div>
+                      <div style="font-size:13.5px; font-weight:600; color:#F3ECE1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.title }}</div>
+                      <div style="font-size:12.5px; color:#8A7F6E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.estateText }}</div>
+                      <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#C9BCA9;">{{ r.sizeText }}</div>
+                      <div style="font-size:12.5px; color:#C9BCA9;">{{ r.useText }}</div>
+                      <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#F3ECE1;">{{ r.priceText }}</div>
+                      <div><span style="{{ r.docChip }}"><span style="{{ r.docDot }}"></span>{{ r.docLabel }}</span></div>
+                      <div><span style="{{ r.statusStyle }}">{{ r.statusLabel }}</span></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+              <sc-if value="{{ groupsEmptyRegistry }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; color:#6F6558; gap:10px;"><i data-lucide="search-x" width="26" height="26"></i><span style="font-size:13px;">No listings match these filters.</span></div>
+              </sc-if>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="dv-next">Try next: &ldquo;keep <a href="#5b">5b</a> for entry, <a href="#5d">5d</a> for the grid&rdquo; &middot; &ldquo;add a status filter to the bar&rdquo; &middot; &ldquo;click a card to open a full listing detail page&rdquo; &middot; &ldquo;let admins edit an existing listing, not just create&rdquo;</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 1440, &quot;height&quot;: 900 },
+  &quot;accent&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#C9A24B&quot;, &quot;options&quot;: [&quot;#C9A24B&quot;, &quot;#B98A3C&quot;, &quot;#A8894F&quot;, &quot;#C08A5E&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Theme&quot; }
+}">
+class Component extends DCLogic {
+  gold_ = '#C9A24B';
+
+  locationOptions = [
+    { key: 'banana', name: 'Banana Island' },
+    { key: 'ikoyi', name: 'Ikoyi' },
+    { key: 'vi', name: 'Victoria Island' },
+    { key: 'lekki', name: 'Lekki Phase 1' }
+  ];
+  estateOptions = ['Banana Island Estate', 'Parkview Estate', 'Osborne Estate', 'Chevron Drive Estate', 'Lekki Gardens Estate'];
+  useOptionsList = ['Residential', 'Commercial', 'Mixed-use'];
+  titleDocOptions = [
+    { key: 'coo', label: 'C of O', help: 'Certificate of Occupancy \u2014 full statutory title.', color: '#63A585' },
+    { key: 'consent', label: "Governor's Consent", help: 'Consent obtained to transfer an existing title.', color: '#D2A24E' },
+    { key: 'excision', label: 'Excision', help: 'Land excised from government acquisition, pre C of O.', color: '#B08BB0' },
+    { key: 'gazette', label: 'Gazette', help: 'Excision published in the official state gazette.', color: '#7CA3C7' },
+    { key: 'pending', label: 'Pending', help: 'Title documentation still in progress.', color: '#6F6558', hollow: true }
+  ];
+  statusDefs = {
+    'Available': { color: '#63A585', bg: 'rgba(99,165,133,0.14)' },
+    'Under offer': { color: '#D2A24E', bg: 'rgba(210,162,78,0.14)' },
+    'Sold': { color: '#9C8B6E', bg: 'rgba(156,139,110,0.16)' },
+    'Off-market': { color: '#C77E5F', bg: 'rgba(199,126,95,0.15)' },
+    'Coming soon': { color: '#7CA3C7', bg: 'rgba(124,163,199,0.15)' }
+  };
+  statusOrder = ['Available', 'Under offer', 'Sold', 'Off-market', 'Coming soon'];
+
+  seedListings() {
+    return [
+      { id: 'l1', title: 'Plot 14B, Bourdillon Close', locKey: 'banana', estate: 'Banana Island Estate', sizeSqm: 1200, use: 'Residential', price: 850000000, titleDoc: 'coo', status: 'Available', notes: 'Corner plot, dry, fenced.', photos: [] },
+      { id: 'l2', title: '5 Ocean Parade', locKey: 'banana', estate: 'Banana Island Estate', sizeSqm: 950, use: 'Residential', price: 610000000, titleDoc: 'consent', status: 'Under offer', notes: 'Waterfront glimpse, confirm reclamation status.', photos: [] },
+      { id: 'l3', title: 'Plot 22, Parkview Estate', locKey: 'ikoyi', estate: 'Parkview Estate', sizeSqm: 1800, use: 'Mixed-use', price: 1200000000, titleDoc: 'coo', status: 'Available', notes: 'Two road frontages.', photos: [] },
+      { id: 'l4', title: '9 Bourdillon Road', locKey: 'ikoyi', estate: 'Osborne Estate', sizeSqm: 700, use: 'Residential', price: 420000000, titleDoc: 'excision', status: 'Sold', notes: 'Sold to a repeat client.', photos: [] },
+      { id: 'l5', title: 'Plot 6, Ademola Adetokunbo', locKey: 'vi', estate: null, sizeSqm: 2000, use: 'Commercial', price: 1650000000, titleDoc: 'gazette', status: 'Available', notes: 'Zoned for a commercial tower.', photos: [] },
+      { id: 'l6', title: '14 Akin Adesola Street', locKey: 'vi', estate: 'Chevron Drive Estate', sizeSqm: 1100, use: 'Mixed-use', price: 780000000, titleDoc: 'consent', status: 'Off-market', notes: 'Owner reconsidering timing.', photos: [] },
+      { id: 'l7', title: 'Block 5, Lekki Gardens Estate', locKey: 'lekki', estate: 'Lekki Gardens Estate', sizeSqm: 650, use: 'Residential', price: 185000000, titleDoc: 'coo', status: 'Available', notes: 'Close to the estate gatehouse.', photos: [] },
+      { id: 'l8', title: 'Plot 30, Admiralty Way', locKey: 'lekki', estate: null, sizeSqm: 900, use: 'Residential', price: 260000000, titleDoc: 'pending', status: 'Coming soon', notes: 'Awaiting excision paperwork.', photos: [] },
+      { id: 'l9', title: '12 Freedom Way', locKey: 'lekki', estate: 'Lekki Gardens Estate', sizeSqm: 720, use: 'Residential', price: 215000000, titleDoc: 'coo', status: 'Under offer', notes: 'Two interested buyers.', photos: [] }
+    ];
+  }
+
+  state = {
+    listings: this.seedListings(),
+    draftTitle: '', draftLoc: '', draftEstate: '', estateSuggestOpen: false,
+    draftSizeVal: '', draftSizeUnit: 'sqm', draftUse: 'Residential', draftPrice: '',
+    draftTitleDoc: 'coo', draftStatus: 'Available', draftNotes: '', draftPhotos: [],
+    toast: null,
+    query: '', useFilter: 'all', estateFilter: 'all',
+    locFilter: { banana: true, ikoyi: true, vi: true, lekki: true },
+    priceMin: '', priceMax: '', sizeMin: '', sizeMax: '', sort: 'newest'
+  };
+
+  componentDidMount() { this.initIcons(); }
+  componentDidUpdate() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); }
+  componentWillUnmount() {
+    clearTimeout(this._t); clearTimeout(this._toastT); clearTimeout(this._estBlur);
+    this.state.draftPhotos.forEach((p) => { try { URL.revokeObjectURL(p.url); } catch (e) {} });
+  }
+  initIcons() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); else this._t = setTimeout(() => this.initIcons(), 80); }
+
+  get gold() { return (this.props && this.props.accent) || this.gold_; }
+
+  handleFiles(fileList) {
+    const files = Array.prototype.filter.call(fileList || [], (f) => f.type && f.type.indexOf('image/') === 0);
+    if (!files.length) return;
+    const added = files.map((f, i) => ({ id: 'p' + Date.now() + '_' + i, url: URL.createObjectURL(f) }));
+    this.setState((s) => ({ draftPhotos: s.draftPhotos.concat(added) }));
+  }
+  onDropOver(e) { e.preventDefault(); }
+  onDropFiles(e) { e.preventDefault(); this.handleFiles(e.dataTransfer.files); }
+  onFileInput(e) { this.handleFiles(e.target.files); e.target.value = ''; }
+  setCoverPhoto(id) {
+    this.setState((s) => {
+      const idx = s.draftPhotos.findIndex((p) => p.id === id);
+      if (idx <= 0) return null;
+      const arr = s.draftPhotos.slice();
+      const item = arr.splice(idx, 1)[0];
+      arr.unshift(item);
+      return { draftPhotos: arr };
+    });
+  }
+  removePhoto(id) {
+    this.setState((s) => {
+      const t = s.draftPhotos.find((p) => p.id === id);
+      if (t) { try { URL.revokeObjectURL(t.url); } catch (e) {} }
+      return { draftPhotos: s.draftPhotos.filter((p) => p.id !== id) };
+    });
+  }
+  photoDragStart(index) { return (e) => { this._dragFrom = index; try { e.dataTransfer.effectAllowed = 'move'; } catch (err) {} }; }
+  photoDragOver(e) { e.preventDefault(); }
+  photoDrop(index) {
+    return (e) => {
+      e.preventDefault();
+      const from = this._dragFrom; this._dragFrom = null;
+      if (from == null || from === index) return;
+      this.setState((s) => {
+        const arr = s.draftPhotos.slice();
+        const item = arr.splice(from, 1)[0];
+        arr.splice(index, 0, item);
+        return { draftPhotos: arr };
+      });
+    };
+  }
+
+  onEstateFocus() { this.setState({ estateSuggestOpen: true }); }
+  onEstateBlur() { clearTimeout(this._estBlur); this._estBlur = setTimeout(() => this.setState({ estateSuggestOpen: false }), 150); }
+  onEstateChange(e) { this.setState({ draftEstate: e.target.value, estateSuggestOpen: true }); }
+  pickEstate(name) { return (e) => { if (e && e.preventDefault) e.preventDefault(); clearTimeout(this._estBlur); this.setState({ draftEstate: name, estateSuggestOpen: false }); }; }
+
+  toSqm(v, unit) { if (unit === 'ha') return v * 10000; if (unit === 'acres') return v * 4046.86; return v; }
+  fmtSqm(n) { return Math.round(n).toLocaleString('en-NG') + ' sqm'; }
+  fmtNaira(n) { return '\u20a6' + Math.round(n).toLocaleString('en-NG'); }
+  fmtCompact(n) {
+    if (!n) return '\u2014';
+    if (n >= 1e9) return '\u20a6' + (Math.round((n / 1e9) * 100) / 100) + 'B';
+    if (n >= 1e6) return '\u20a6' + (Math.round((n / 1e6) * 10) / 10) + 'M';
+    return '\u20a6' + Math.round(n).toLocaleString('en-NG');
+  }
+
+  resetDraft() {
+    this.state.draftPhotos.forEach((p) => { try { URL.revokeObjectURL(p.url); } catch (e) {} });
+    this.setState({
+      draftTitle: '', draftLoc: '', draftEstate: '', estateSuggestOpen: false,
+      draftSizeVal: '', draftSizeUnit: 'sqm', draftUse: 'Residential', draftPrice: '',
+      draftTitleDoc: 'coo', draftStatus: 'Available', draftNotes: '', draftPhotos: []
+    });
+  }
+
+  missingFields() {
+    const s = this.state; const m = [];
+    if (!s.draftTitle.trim()) m.push('a title');
+    if (!s.draftLoc) m.push('a location');
+    if (!s.draftPhotos.length) m.push('a photo');
+    return m;
+  }
+
+  publish(force) {
+    const s = this.state;
+    if (!force && this.missingFields().length) return;
+    const sizeSqm = this.toSqm(parseFloat(s.draftSizeVal) || 0, s.draftSizeUnit);
+    const listing = {
+      id: 'n' + Date.now(),
+      title: s.draftTitle.trim() || 'Untitled listing',
+      locKey: s.draftLoc || 'banana',
+      estate: s.draftEstate.trim() || null,
+      sizeSqm: sizeSqm || 0,
+      use: s.draftUse,
+      price: parseFloat(s.draftPrice) || 0,
+      titleDoc: s.draftTitleDoc,
+      status: s.draftStatus,
+      notes: s.draftNotes,
+      photos: s.draftPhotos.slice()
+    };
+    this.setState((st) => ({ listings: [listing].concat(st.listings), toast: force ? 'Saved as draft \u2014 see it in the grid below' : 'Listing published \u2014 see it in the grid below' }));
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => this.setState({ toast: null }), 3400);
+    this.resetDraft();
+  }
+
+  toggleLoc(key) { this.setState((s) => ({ locFilter: { ...s.locFilter, [key]: !s.locFilter[key] } })); }
+  allLocsOn() { this.setState({ locFilter: { banana: true, ikoyi: true, vi: true, lekki: true } }); }
+  clearFilters() {
+    this.setState({ query: '', useFilter: 'all', estateFilter: 'all', locFilter: { banana: true, ikoyi: true, vi: true, lekki: true }, priceMin: '', priceMax: '', sizeMin: '', sizeMax: '', sort: 'newest' });
+  }
+  matchesFilters(l) {
+    const s = this.state;
+    if (!s.locFilter[l.locKey]) return false;
+    if (s.useFilter !== 'all' && l.use !== s.useFilter) return false;
+    if (s.estateFilter !== 'all' && (l.estate || '') !== s.estateFilter) return false;
+    const q = s.query.trim().toLowerCase();
+    if (q) {
+      const loc = this.locationOptions.find((x) => x.key === l.locKey);
+      const hay = (l.title + ' ' + (l.estate || '') + ' ' + (loc ? loc.name : '')).toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    const pMin = parseFloat(s.priceMin), pMax = parseFloat(s.priceMax);
+    const priceM = l.price / 1e6;
+    if (!isNaN(pMin) && priceM < pMin) return false;
+    if (!isNaN(pMax) && priceM > pMax) return false;
+    const sMin = parseFloat(s.sizeMin), sMax = parseFloat(s.sizeMax);
+    if (!isNaN(sMin) && l.sizeSqm < sMin) return false;
+    if (!isNaN(sMax) && l.sizeSqm > sMax) return false;
+    return true;
+  }
+  sortItems(arr) {
+    const s = this.state; const a = arr.slice();
+    if (s.sort === 'price-asc') a.sort((x, y) => x.price - y.price);
+    else if (s.sort === 'price-desc') a.sort((x, y) => y.price - x.price);
+    else if (s.sort === 'size-desc') a.sort((x, y) => y.sizeSqm - x.sizeSqm);
+    return a;
+  }
+
+  titleDocMeta(key) {
+    const d = this.titleDocOptions.find((o) => o.key === key) || this.titleDocOptions[this.titleDocOptions.length - 1];
+    return {
+      label: d.label,
+      chip: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 8px', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.10)', fontSize: '10px', letterSpacing: '0.04em', color: '#A89E8F', whiteSpace: 'nowrap' },
+      dot: { width: '5px', height: '5px', borderRadius: '50%', background: d.hollow ? 'transparent' : d.color, border: d.hollow ? ('1px solid ' + d.color) : '0', display: 'inline-block', flexShrink: 0 }
+    };
+  }
+  statusMeta(status) {
+    const d = this.statusDefs[status] || this.statusDefs['Available'];
+    return { label: status, style: { display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 600, color: d.color, background: d.bg, whiteSpace: 'nowrap' } };
+  }
+  locName(key) { const l = this.locationOptions.find((x) => x.key === key); return l ? l.name : key; }
+
+  rail() {
+    const R = React.createElement;
+    const icon = (name, active) => R('div', { key: name, style: { position: 'relative', width: '48px', height: '48px', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: active ? '#F3ECE1' : '#6F6558', background: active ? 'rgba(201,162,75,0.10)' : 'transparent', cursor: 'pointer' } },
+      active ? R('div', { style: { position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '3px', height: '20px', background: this.gold, borderRadius: '0 2px 2px 0' } }) : null,
+      R('i', { 'data-lucide': name, width: '21', height: '21' }));
+    return R('div', { style: { position: 'absolute', left: 0, top: 0, width: '72px', height: '100%', background: '#17120C', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', zIndex: 30 } },
+      R('div', { style: { width: '40px', height: '40px', borderRadius: '11px', background: this.gold, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#17120C', fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: '20px', marginBottom: '38px' } }, 'C'),
+      R('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' } },
+        icon('layout-dashboard', false), icon('map', false), icon('home', true), icon('file-text', false), icon('users', false), icon('trending-up', false)),
+      R('div', { style: { marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' } },
+        icon('settings', false),
+        R('div', { style: { width: '32px', height: '32px', borderRadius: '50%', background: '#221B14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A89E8F', fontSize: '11px', fontWeight: 600 } }, 'CO')));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const gold = this.gold;
+
+    const photos = s.draftPhotos.map((p, i) => ({
+      id: p.id, url: p.url, isCover: i === 0,
+      onSetCover: () => this.setCoverPhoto(p.id),
+      onRemove: () => this.removePhoto(p.id),
+      onDragStart: this.photoDragStart(i),
+      onDrop: this.photoDrop(i)
+    }));
+    const hasPhotosAny = photos.length > 0;
+
+    const estQuery = s.draftEstate.trim().toLowerCase();
+    const estateSuggestions = this.estateOptions
+      .filter((name) => !estQuery || name.toLowerCase().indexOf(estQuery) >= 0)
+      .slice(0, 6)
+      .map((name) => ({ name, onPick: this.pickEstate(name) }));
+
+    const sizeUnitDefs = [{ k: 'sqm', l: 'sqm' }, { k: 'ha', l: 'ha' }, { k: 'acres', l: 'acres' }];
+    const sizeUnitTabs = sizeUnitDefs.map((u) => {
+      const a = s.draftSizeUnit === u.k;
+      return { key: u.k, label: u.l, onClick: () => this.setState({ draftSizeUnit: u.k }),
+        style: { padding: '6px 12px', borderRadius: '7px', fontSize: '12px', fontWeight: a ? 600 : 500, cursor: 'pointer', color: a ? '#17120C' : '#8A7F6E', background: a ? gold : 'transparent', transition: 'all 140ms ease' } };
+    });
+    const sizeSqmPreview = s.draftSizeVal ? ('\u2248 ' + this.fmtSqm(this.toSqm(parseFloat(s.draftSizeVal) || 0, s.draftSizeUnit))) : '';
+
+    const useTabsDraft = this.useOptionsList.map((u) => {
+      const a = s.draftUse === u;
+      return { key: u, label: u, onClick: () => this.setState({ draftUse: u }),
+        style: { padding: '9px 15px', borderRadius: '9px', fontSize: '13px', fontWeight: a ? 600 : 500, cursor: 'pointer', color: a ? '#17120C' : '#C9BCA9', background: a ? gold : 'rgba(255,255,255,0.04)', border: '1px solid ' + (a ? gold : 'rgba(255,255,255,0.10)'), transition: 'all 140ms ease' } };
+    });
+
+    const priceFormattedPreview = s.draftPrice ? this.fmtNaira(parseFloat(s.draftPrice) || 0) : '';
+
+    const titleDocSelectOptions = this.titleDocOptions.map((o) => ({ key: o.key, label: o.label }));
+    const curDoc = this.titleDocOptions.find((o) => o.key === s.draftTitleDoc) || this.titleDocOptions[0];
+    const titleDocHelp = curDoc.help;
+
+    const statusTabsDraft = this.statusOrder.map((st) => {
+      const a = s.draftStatus === st; const d = this.statusDefs[st];
+      return { key: st, label: st, onClick: () => this.setState({ draftStatus: st }),
+        style: { padding: '9px 14px', borderRadius: '9px', fontSize: '12.5px', fontWeight: a ? 600 : 500, cursor: 'pointer', color: a ? d.color : '#8A7F6E', background: a ? d.bg : 'rgba(255,255,255,0.03)', border: '1px solid ' + (a ? (d.color + '55') : 'rgba(255,255,255,0.10)'), transition: 'all 140ms ease' } };
+    });
+
+    const missing = this.missingFields();
+    const canPublish = missing.length === 0;
+    const missingText = missing.length ? ('Needs ' + missing.join(', ') + ' to publish') : 'Ready to publish';
+
+    const previewLoc = s.draftLoc ? this.locName(s.draftLoc) : 'No location selected';
+    const previewStatusMeta = this.statusMeta(s.draftStatus);
+    const previewDocMeta = this.titleDocMeta(s.draftTitleDoc);
+    const checklist = [
+      { label: 'Title', done: !!s.draftTitle.trim() },
+      { label: 'Location', done: !!s.draftLoc },
+      { label: 'At least one photo', done: photos.length > 0 }
+    ].map((c) => ({ label: c.label, icon: c.done ? 'check-circle' : 'circle', iconStyle: { color: c.done ? '#63A585' : '#4A4438' } }));
+
+    const livePreview = {
+      hasPhoto: photos.length > 0, noPhoto: photos.length === 0,
+      photoUrl: photos.length > 0 ? photos[0].url : '',
+      photoList: photos.length > 0 ? [{ url: photos[0].url }] : [],
+      title: s.draftTitle.trim() || 'Untitled listing',
+      priceText: s.draftPrice ? this.fmtCompact(parseFloat(s.draftPrice) || 0) : 'Price not set',
+      metaText: (s.draftSizeVal ? this.fmtSqm(this.toSqm(parseFloat(s.draftSizeVal) || 0, s.draftSizeUnit)) : 'Size not set') + ' \u00b7 ' + s.draftUse,
+      locText: previewLoc, estateText: s.draftEstate.trim(), hasEstate: !!s.draftEstate.trim(),
+      statusStyle: 'display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; color:' + previewStatusMeta.style.color + '; background:' + previewStatusMeta.style.background,
+      statusLabel: previewStatusMeta.label,
+      docChip: previewDocMeta.chip, docDot: previewDocMeta.dot, docLabel: previewDocMeta.label,
+      checklist
+    };
+
+    const filtered = s.listings.filter((l) => this.matchesFilters(l));
+    const totalCount = s.listings.length;
+    const resultsCount = filtered.length;
+
+    const galleryGroups = this.locationOptions.filter((loc) => s.locFilter[loc.key]).map((loc) => {
+      const items = this.sortItems(filtered.filter((l) => l.locKey === loc.key)).map((l) => {
+        const sm = this.statusMeta(l.status); const dm = this.titleDocMeta(l.titleDoc);
+        const cover = l.photos && l.photos.length ? l.photos[0].url : '';
+        return {
+          id: l.id, title: l.title, hasPhoto: !!cover, noPhoto: !cover, photoUrl: cover, photoList: cover ? [{ url: cover }] : [],
+          priceCompact: this.fmtCompact(l.price), metaText: this.fmtSqm(l.sizeSqm) + ' \u00b7 ' + l.use,
+          locEstateText: l.estate ? (this.locName(l.locKey) + ' \u00b7 ' + l.estate) : this.locName(l.locKey),
+          statusStyle: sm.style, statusLabel: sm.label, docChip: dm.chip, docDot: dm.dot, docLabel: dm.label
+        };
+      });
+      return { key: loc.key, name: loc.name, count: items.length, items };
+    }).filter((g) => g.count > 0);
+
+    const registryGroups = this.locationOptions.filter((loc) => s.locFilter[loc.key]).map((loc) => {
+      const items = this.sortItems(filtered.filter((l) => l.locKey === loc.key)).map((l) => {
+        const sm = this.statusMeta(l.status); const dm = this.titleDocMeta(l.titleDoc);
+        const cover = l.photos && l.photos.length ? l.photos[0].url : '';
+        return {
+          id: l.id, title: l.title, hasPhoto: !!cover, photoUrl: cover, photoList: cover ? [{ url: cover }] : [],
+          estateText: l.estate || '\u2014', sizeText: this.fmtSqm(l.sizeSqm), useText: l.use,
+          priceText: this.fmtNaira(l.price), docChip: dm.chip, docDot: dm.dot, docLabel: dm.label,
+          statusStyle: sm.style, statusLabel: sm.label
+        };
+      });
+      return { key: loc.key, name: loc.name, count: items.length, items };
+    }).filter((g) => g.count > 0);
+
+    const useFilterDefs = [{ k: 'all', l: 'All uses' }].concat(this.useOptionsList.map((u) => ({ k: u, l: u })));
+    const useFilterTabs = useFilterDefs.map((u) => {
+      const a = s.useFilter === u.k;
+      return { key: u.k, label: u.l, onClick: () => this.setState({ useFilter: u.k }),
+        style: { padding: '7px 13px', borderRadius: '8px', fontSize: '12.5px', fontWeight: a ? 600 : 500, cursor: 'pointer', color: a ? '#17120C' : '#8A7F6E', background: a ? gold : 'transparent', transition: 'all 140ms ease' } };
+    });
+
+    const estatesInData = Array.from(new Set(s.listings.map((l) => l.estate).filter(Boolean))).sort();
+    const estateFilterOptions = [{ key: 'all', label: 'All estates' }].concat(estatesInData.map((e) => ({ key: e, label: e })));
+
+    const sortOptions = [{ key: 'newest', label: 'Newest' }, { key: 'price-asc', label: 'Price: Low to High' }, { key: 'price-desc', label: 'Price: High to Low' }, { key: 'size-desc', label: 'Size: Largest' }];
+
+    const allLocsActive = this.locationOptions.every((loc) => s.locFilter[loc.key]);
+    const locChipDefs = [{ key: 'all', label: 'All', active: allLocsActive, onClick: () => this.allLocsOn() }].concat(
+      this.locationOptions.map((loc) => ({ key: loc.key, label: loc.name, active: !!s.locFilter[loc.key], onClick: () => this.toggleLoc(loc.key) }))
+    );
+    const locChips = locChipDefs.map((c) => ({ key: c.key, label: c.label, onClick: c.onClick,
+      style: { padding: '7px 13px', borderRadius: '999px', fontSize: '12.5px', fontWeight: c.active ? 600 : 500, cursor: 'pointer', color: c.active ? '#17120C' : '#8A7F6E', background: c.active ? gold : 'rgba(255,255,255,0.04)', border: '1px solid ' + (c.active ? gold : 'rgba(255,255,255,0.10)'), transition: 'all 140ms ease' } }));
+
+    const isFiltered = !!(s.query || s.useFilter !== 'all' || s.estateFilter !== 'all' || s.priceMin || s.priceMax || s.sizeMin || s.sizeMax || !allLocsActive);
+
+    const availCount = s.listings.filter((l) => l.status === 'Available').length;
+    const totalValue = s.listings.reduce((a, l) => a + l.price, 0);
+    const avgSize = s.listings.length ? Math.round(s.listings.reduce((a, l) => a + l.sizeSqm, 0) / s.listings.length) : 0;
+    const valueStyle = { fontFamily: "'Cormorant Garamond',serif", fontSize: '27px', fontWeight: 600, color: '#F8F2E8', lineHeight: 1 };
+    const pulse = [
+      { label: 'Listings', value: totalCount, sub: 'tracked', valueStyle },
+      { label: 'Portfolio value', value: this.fmtCompact(totalValue), sub: 'asking total', valueStyle },
+      { label: 'Available', value: availCount, sub: 'ready to sell', valueStyle },
+      { label: 'Avg. size', value: this.fmtSqm(avgSize), sub: 'per plot', valueStyle }
+    ];
+
+    return {
+      rail: this.rail(),
+      listingsCountLine: totalCount + ' listings tracked across ' + this.locationOptions.length + ' locations',
+      toastShow: !!s.toast, toastText: s.toast || '',
+
+      locationOptions: this.locationOptions,
+      draftTitle: s.draftTitle, onTitleChange: (e) => this.setState({ draftTitle: e.target.value }),
+      draftLoc: s.draftLoc, onLocChange: (e) => this.setState({ draftLoc: e.target.value }),
+      draftEstate: s.draftEstate, onEstateChange: (e) => this.onEstateChange(e),
+      onEstateFocus: () => this.onEstateFocus(), onEstateBlur: () => this.onEstateBlur(),
+      estateSuggestOpen: s.estateSuggestOpen && estateSuggestions.length > 0, estateSuggestions,
+
+      sizeUnitTabs, draftSizeVal: s.draftSizeVal, onSizeVal: (e) => this.setState({ draftSizeVal: e.target.value }), sizeSqmPreview,
+      useTabsDraft,
+      draftPrice: s.draftPrice, onPriceChange: (e) => this.setState({ draftPrice: e.target.value }), priceFormattedPreview,
+      titleDocSelectOptions, draftTitleDoc: s.draftTitleDoc, onTitleDocChange: (e) => this.setState({ draftTitleDoc: e.target.value }), titleDocHelp,
+      statusTabsDraft,
+      draftNotes: s.draftNotes, onNotesChange: (e) => this.setState({ draftNotes: e.target.value }),
+
+      photos, hasPhotosAny,
+      onDropOver: (e) => this.onDropOver(e), onDropFiles: (e) => this.onDropFiles(e), onFileInput: (e) => this.onFileInput(e),
+      photoDragOverHandler: (e) => this.photoDragOver(e),
+
+      missingText, canPublish,
+      publishBtnStyle: { height: '38px', padding: '0 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: canPublish ? 'pointer' : 'default', background: canPublish ? gold : '#2A2118', color: canPublish ? '#17120C' : '#6F6558', transition: 'background 150ms ease' },
+      onPublish: () => this.publish(false), onSaveDraft: () => this.publish(true), onCancel: () => this.resetDraft(),
+
+      livePreview,
+
+      pulse,
+      query: s.query, onSearch: (e) => this.setState({ query: e.target.value }),
+      useFilterTabs, estateFilterOptions, estateFilter: s.estateFilter, onEstateFilterChange: (e) => this.setState({ estateFilter: e.target.value }),
+      sortOptions, sortVal: s.sort, onSortChange: (e) => this.setState({ sort: e.target.value }),
+      locChips,
+      priceMin: s.priceMin, onPriceMin: (e) => this.setState({ priceMin: e.target.value }),
+      priceMax: s.priceMax, onPriceMax: (e) => this.setState({ priceMax: e.target.value }),
+      sizeMin: s.sizeMin, onSizeMin: (e) => this.setState({ sizeMin: e.target.value }),
+      sizeMax: s.sizeMax, onSizeMax: (e) => this.setState({ sizeMax: e.target.value }),
+      isFiltered, onClearFilters: () => this.clearFilters(),
+      resultsLine: resultsCount + ' of ' + totalCount + ' listings shown',
+
+      galleryGroups, registryGroups, groupsEmptyGallery: galleryGroups.length === 0, groupsEmptyRegistry: registryGroups.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { SourcePill, StatusPill } from "@/components/Pills";
 import { confidenceColor, confidenceLevel, confidenceScore, formatDate, initials } from "@/lib/metrics";
 
-export default function LocationDetailClient({ neighborhood, neighborhoods = [], market, resources = [], isAdmin = false }) {
+export default function LocationDetailClient({ neighborhood, neighborhoods = [], market, resources = [], locationListings = [], isAdmin = false }) {
   const [record, setRecord] = useState(neighborhood);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(toDraft(neighborhood));
@@ -175,6 +175,24 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
           </section>
 
           <section className="focus-section">
+            <SectionHeading
+              title={`Land listings in ${record.name}`}
+              meta={`${locationListings.length} listings`}
+              action={<Link href={`/listings?location=${record.id}`}>View all listings <ArrowRight size={14} /></Link>}
+            />
+            {locationListings.length ? (
+              <div className="focus-listing-grid">
+                {locationListings.slice(0, 4).map((listing) => <LocationListingCard listing={listing} key={listing.id} />)}
+              </div>
+            ) : (
+              <div className="focus-listing-empty">
+                <strong>No active listings yet</strong>
+                <p>Published land listings for {record.name} will appear here when they are added.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="focus-section">
             <SectionHeading title="Team notes" />
             <div className="focus-note-list">
               {(record.notes || []).map((note, index) => (
@@ -216,6 +234,24 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
         </div>
       )}
     </div>
+  );
+}
+
+function LocationListingCard({ listing }) {
+  return (
+    <Link className="focus-listing-card" href={`/listings?location=${listing.neighborhoodId}`}>
+      <div className="focus-listing-media">
+        {listing.photos?.[0] ? <img src={listing.photos[0]} alt="" /> : null}
+        <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
+        <b>{formatListingPrice(listing.askingPrice)}</b>
+      </div>
+      <div className="focus-listing-body">
+        <h3>{listing.title}</h3>
+        <p>{formatNumber(listing.sizeSqm)} sqm · {listing.landUse}</p>
+        <p>{listing.estate || listing.neighborhoodName}</p>
+        <span className={`title-badge ${titleClass(listing.titleDocument)}`}><i />{listing.titleDocument}</span>
+      </div>
+    </Link>
   );
 }
 
@@ -388,11 +424,14 @@ function formatCompactPrice(value, currency = "NGN") {
   return `${Math.round(value)}`;
 }
 
-function SectionHeading({ title, meta }) {
+function SectionHeading({ title, meta, action }) {
   return (
     <div className="focus-section-head">
       <h2><i />{title}</h2>
-      {meta ? <span>{meta}</span> : null}
+      <div className="focus-section-actions">
+        {meta ? <span>{meta}</span> : null}
+        {action || null}
+      </div>
     </div>
   );
 }
@@ -414,4 +453,26 @@ function shortSignal(value = "") {
   if (/height/i.test(text)) return "Height sensitivity";
   if (/commercial/i.test(text)) return "Commercial control";
   return text.split(/\s+/).slice(0, 2).join(" ");
+}
+
+function formatListingPrice(value) {
+  const price = Number(value) || 0;
+  if (!price) return "Price not set";
+  if (price >= 1000000000) return `₦${Number((price / 1000000000).toFixed(1))}B`;
+  return `₦${Math.round(price / 1000000)}M`;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("en-US").format(Math.round(Number(value) || 0));
+}
+
+function statusClass(status) {
+  return String(status || "").toLowerCase().replace(/\s+/g, "-");
+}
+
+function titleClass(titleDocument) {
+  if (/consent/i.test(titleDocument)) return "consent";
+  if (/excision/i.test(titleDocument)) return "excision";
+  if (/gazette/i.test(titleDocument)) return "gazette";
+  return "cofo";
 }
