@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BarChart3, Database, FileText, Home, LayoutDashboard, Map, Settings } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
 
 const items = [
   { href: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -15,7 +14,7 @@ export default function AppShell({ active, children }) {
   return (
     <div className="app-shell">
       <aside className="rail">
-        <Link className="logo" href="/" aria-label="Square Meter home" title="Square Meter home">CW</Link>
+        <Link className="logo" href="/" aria-label="Squaremeter by CW home" title="Squaremeter by CW home">CW</Link>
         <nav aria-label="Main navigation">
           {items.map((item) => {
             const Icon = item.icon;
@@ -25,6 +24,7 @@ export default function AppShell({ active, children }) {
                 className={`rail-link ${active === item.key ? "active" : ""}`}
                 href={item.href}
                 aria-label={item.label}
+                aria-current={active === item.key ? "page" : undefined}
                 data-label={item.label}
                 title={item.label}
               >
@@ -34,7 +34,6 @@ export default function AppShell({ active, children }) {
           })}
         </nav>
         <div className="rail-foot">
-          <ThemeToggle />
           <Link className="rail-link" href="/admin/login" aria-label="Settings" data-label="Settings" title="Settings">
             <Settings size={21} />
           </Link>

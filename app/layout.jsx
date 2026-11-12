@@ -1,8 +1,19 @@
-import "./globals.css";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/components.css";
+import "./styles/shell.css";
+import "./styles/dashboard.css";
+import "./styles/map.css";
+import "./styles/detail.css";
+import "./styles/reports.css";
+import "./styles/data.css";
+import "./styles/forms.css";
+import "./styles/listings.css";
+import "./styles/landing.css";
 
 export const metadata = {
-  title: "CW Real Estate Intelligence",
-  description: "Planning intelligence dashboard for Lagos development decisions"
+  title: "Squaremeter by CW — Lagos land intelligence",
+  description: "Land market intelligence, estate records and curated plots across Lagos, from CW Real Estate."
 };
 
 export const viewport = {
@@ -12,12 +23,17 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="theme-light" suppressHydrationWarning>
+    <html lang="en">
       <head>
+        <link rel="preconnect" href="https://api.fontshare.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+          href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Instrument+Serif&display=swap"
           rel="stylesheet"
         />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />

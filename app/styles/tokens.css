@@ -1,0 +1,95 @@
+/* CW design tokens — measured from offplan.cwlagos.com / cwlagos.com.
+   Every stylesheet in app/styles reads from here. Do not hardcode colors elsewhere. */
+:root {
+  /* Navy (primary) */
+  --navy: #111d42;
+  --navy-500: #1c2350;
+  --navy-600: #161c44;
+  --navy-700: #111634;
+  --navy-300: #34406f;
+  --navy-200: #c3c7dc;
+  --navy-100: #dfe1ec;
+  --navy-50: #ecedf4;
+
+  /* Text */
+  --ink: #171a24;
+  --ink-soft: #23262f;
+  --muted: #6c6f79;
+  --faint: #a7acbc;
+
+  /* Surfaces */
+  --paper: #f6f4ef;
+  --paper-2: #f1f0eb;
+  --paper-3: #e9e8e2;
+  --card: #ffffff;
+  --line: #e3dfd4;
+  --line-soft: #ecece8;
+  --line-strong: #cfcabd;
+
+  /* Accent + status */
+  --gold: #9c844f;
+  --gold-soft: #c9b58c;
+  --gold-50: #fbf3e2;
+  --green: #1f9d6b;
+  --green-50: #e6f5ee;
+  --amber: #c98a1e;
+  --amber-50: #fbf3e2;
+  --red: #c8553d;
+  --red-50: #fbece8;
+  --blue: #3b6fd9;
+  --blue-50: #e9f0fc;
+  --wa: #25d366;
+
+  /* On-dark (rail, hero, CTA band) */
+  --on-navy: #ffffff;
+  --on-navy-soft: rgba(255, 255, 255, 0.78);
+  --on-navy-muted: rgba(255, 255, 255, 0.56);
+  --on-navy-line: rgba(255, 255, 255, 0.14);
+  --on-navy-fill: rgba(255, 255, 255, 0.1);
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-card: 24px;
+  --r-xl: 26px;
+  --r-band: 30px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(20, 24, 46, 0.05), 0 1px 1px rgba(20, 24, 46, 0.03);
+  --shadow-md: 0 10px 30px -12px rgba(20, 24, 46, 0.16), 0 2px 6px rgba(20, 24, 46, 0.05);
+  --shadow-lg: 0 26px 64px -24px rgba(20, 24, 46, 0.3), 0 8px 18px -10px rgba(20, 24, 46, 0.12);
+  --shadow-nav: 0 12px 36px rgba(17, 29, 66, 0.18);
+
+  /* Type */
+  --font-sans: "General Sans", "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: "Instrument Serif", "Times New Roman", serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Layout */
+  --container: 1180px;
+  --gutter: 24px;
+  --section-pad: 96px;
+  --rail-w: 68px;
+
+  /* ---- Legacy aliases (old --cw-* names). Being phased out: use the tokens above. ---- */
+  --cw-bg: var(--paper);
+  --cw-page: var(--card);
+  --cw-panel: var(--card);
+  --cw-panel-2: var(--paper-2);
+  --cw-border: var(--line);
+  --cw-border-strong: var(--line-strong);
+  --cw-text: var(--ink);
+  --cw-soft-text: var(--ink-soft);
+  --cw-muted: var(--muted);
+  --cw-faint: var(--faint);
+  --cw-gold: var(--navy);
+  --cw-gold-soft: var(--navy-50);
+  --cw-green: var(--navy);
+  --cw-green-soft: var(--navy-50);
+  --cw-green-mid: var(--navy-300);
+  --cw-rail: var(--navy);
+  --cw-rail-muted: var(--navy-200);
+  --cw-rail-active: #ffffff;
+}
