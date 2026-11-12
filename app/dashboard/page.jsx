@@ -42,14 +42,32 @@ export default async function DashboardPage() {
       <div className="briefing">
         <header className="brief-header">
           <div>
+            <nav className="cw-crumbs" aria-label="Breadcrumb">
+              <Link href="/">Squaremeter</Link>
+              <span aria-hidden="true">/</span>
+              <span>Dashboard</span>
+            </nav>
             <h1>Market intelligence dashboard</h1>
-            <p>{today} · {neighborhoods.length} tracked locations · {clientReports.length} published briefs · {stats.estateCount || estateReportCount} estate records</p>
+            <p className="brief-header-lede">{today} · {neighborhoods.length} tracked locations · {clientReports.length} published briefs · {stats.estateCount || estateReportCount} estate records</p>
           </div>
           <div className="brief-actions">
-            <Link className="brief-button" href="/admin/login">Admin login</Link>
-            <Link className="brief-button" href="/map"><Map size={15} /> Open map</Link>
+            <Link className="cw-btn cw-btn-soft cw-btn-sm" href="/admin/login">Admin login</Link>
+            <Link className="cw-btn cw-btn-navy cw-btn-sm" href="/map"><Map size={15} /> Open map</Link>
           </div>
         </header>
+
+        <section className="brief-band" aria-label="Briefing summary">
+          <div>
+            <p className="brief-band-label">Needs attention</p>
+            <h2>
+              {pending} {pending === 1 ? "approval" : "approvals"} pending, {changes.length} location {changes.length === 1 ? "signal" : "signals"} and {activity.length} client {activity.length === 1 ? "update" : "updates"} to review.
+            </h2>
+          </div>
+          <div className="brief-band-actions">
+            <Link className="cw-btn cw-btn-white cw-btn-sm" href="/reports">Review reports</Link>
+            <Link className="cw-btn cw-btn-ghost cw-btn-sm" href="/data">Open data</Link>
+          </div>
+        </section>
 
         <section className="brief-kpis">
           <Kpi label="Portfolio confidence" value={portfolioConfidence} sub="tracked intelligence" />
@@ -61,12 +79,12 @@ export default async function DashboardPage() {
 
         <section className="brief-grid">
           <div className="brief-left">
-            <article className="brief-card needs-card client-feed-card">
-              <CardTitle title="Latest client intelligence" count={activity.length} />
+            <article className="brief-card">
+              <CardTitle title="Latest client intelligence" count={activity.length} href="/reports" />
               <div className="client-intel-list">
                 {activity.map((item, index) => (
                   <Link className="client-intel-row" href={item.href || "/reports"} key={item.id || `${item.who}-${index}`}>
-                    <span className={item.gold ? "gold" : ""}>{item.who}</span>
+                    <span className={item.gold ? "is-highlight" : ""}>{item.who}</span>
                     <div>
                       <p>{item.text}</p>
                       <em>{item.when}</em>
@@ -76,8 +94,8 @@ export default async function DashboardPage() {
               </div>
             </article>
 
-            <article className="brief-card leaderboard-card">
-              <CardTitle title="Confidence leaderboard" />
+            <article className="brief-card">
+              <CardTitle title="Confidence leaderboard" meta="top locations" href="/map" linkLabel="Open map" />
               <div className="leaderboard">
                 {leaders.map((n, index) => {
                   const score = confidenceScore(n);
@@ -100,8 +118,8 @@ export default async function DashboardPage() {
           </div>
 
           <div className="brief-right">
-            <article className="brief-card reports-card">
-              <CardTitle title="Published report activity" meta={`${latestReports.length} latest`} />
+            <article className="brief-card">
+              <CardTitle title="Published report activity" meta={`${latestReports.length} latest`} href="/reports" />
               <div className="published-report-list">
                 {latestReports.map((report) => (
                   <Link className="published-report-row" href={`/reports?report=${report.id}`} key={report.id}>
@@ -110,19 +128,19 @@ export default async function DashboardPage() {
                       <strong>{report.siteTitle}</strong>
                       <p>{report.neighborhoodName} · {report.data?.reportType || report.use}</p>
                     </div>
-                    <em>{report.status === "Client viewed" ? "Viewed" : "Published"}</em>
+                    <em className={report.status === "Client viewed" ? "viewed" : ""}>{report.status === "Client viewed" ? "Viewed" : "Published"}</em>
                   </Link>
                 ))}
               </div>
             </article>
 
-            <article className="brief-card changes-card">
-              <CardTitle title="What changed" meta="location signals" />
+            <article className="brief-card">
+              <CardTitle title="What changed" meta="location signals" href="/signals" />
               {changes.map((item) => {
                 const Icon = signalIcons[item.icon] || Minus;
                 return (
                   <div className="change-row" key={item.id || item.text}>
-                    <span className={`change-icon ${item.tone}`}><Icon size={14} /></span>
+                    <span className={`change-icon ${item.tone || ""}`}><Icon size={14} /></span>
                     <div>
                       <p>{item.text}</p>
                       <em>{item.hood} · {item.when}</em>
@@ -132,8 +150,8 @@ export default async function DashboardPage() {
               })}
             </article>
 
-            <article className="brief-card trend-card">
-              <CardTitle title="Market trend snapshot" meta="price movement" />
+            <article className="brief-card">
+              <CardTitle title="Market trend snapshot" meta="price movement" href="/data" />
               <div className="trend-list">
                 {marketSnapshots.map(({ neighborhood, market, score }) => (
                   <Link className="trend-row" href={`/locations/${neighborhood.id}`} key={neighborhood.id}>
@@ -148,17 +166,19 @@ export default async function DashboardPage() {
               </div>
             </article>
 
-            <article className="brief-card pipeline-card">
+            <article className="brief-card">
               <CardTitle title="Approval pipeline" meta={`${approvalTotal} this week`} />
-              <div className="pipeline-bar">
-                <span className="approved" style={{ width: `${(approvalCounts.approved / approvalTotal) * 100}%` }} />
-                <span className="pending" style={{ width: `${(approvalCounts.pending / approvalTotal) * 100}%` }} />
-                <span className="denied" style={{ width: `${(approvalCounts.denied / approvalTotal) * 100}%` }} />
-              </div>
-              <div className="pipeline-legend">
-                <span><i className="approved" />Approved <b>{approvalCounts.approved}</b></span>
-                <span><i className="pending" />Pending <b>{approvalCounts.pending}</b></span>
-                <span><i className="denied" />Denied <b>{approvalCounts.denied}</b></span>
+              <div className="pipeline-body">
+                <div className="pipeline-bar">
+                  <span className="approved" style={{ width: `${(approvalCounts.approved / approvalTotal) * 100}%` }} />
+                  <span className="pending" style={{ width: `${(approvalCounts.pending / approvalTotal) * 100}%` }} />
+                  <span className="denied" style={{ width: `${(approvalCounts.denied / approvalTotal) * 100}%` }} />
+                </div>
+                <div className="pipeline-legend">
+                  <span><i className="approved" />Approved <b>{approvalCounts.approved}</b></span>
+                  <span><i className="pending" />Pending <b>{approvalCounts.pending}</b></span>
+                  <span><i className="denied" />Denied <b>{approvalCounts.denied}</b></span>
+                </div>
               </div>
             </article>
           </div>
@@ -178,17 +198,21 @@ const signalIcons = {
 function Kpi({ label, value, sub, tone }) {
   return (
     <article className="brief-kpi">
-      <span>{label}</span>
-      <div><strong>{value}</strong><em className={tone || ""}>{sub}</em></div>
+      <span className="brief-kpi-label">{label}</span>
+      <strong>{value}</strong>
+      <em className={tone || ""}>{sub}</em>
     </article>
   );
 }
 
-function CardTitle({ title, count, meta }) {
+function CardTitle({ title, count, meta, href, linkLabel = "View all" }) {
   return (
     <div className="brief-card-title">
-      <div><span /> <h2>{title}</h2></div>
-      {count ? <b>{count}</b> : meta ? <em>{meta}</em> : null}
+      <div>
+        <h2>{title}</h2>
+        {count ? <b>{count}</b> : meta ? <em>{meta}</em> : null}
+      </div>
+      {href ? <Link className="cw-link" href={href}>{linkLabel} <span aria-hidden="true">→</span></Link> : null}
     </div>
   );
 }

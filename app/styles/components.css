@@ -346,6 +346,20 @@ a.cw-card:hover,
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
+.cw-select {
+  padding-right: 40px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 23px) 50%, calc(100% - 18px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
 .cw-textarea {
   min-height: 120px;
   border-radius: var(--r-lg);
@@ -534,11 +548,6 @@ a.cw-card:hover,
   margin: 0 auto;
 }
 
-.action-icon.low {
-  color: var(--red);
-  background: var(--red-50);
-}
-
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -559,10 +568,6 @@ a.cw-card:hover,
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .kpi-grid {
-    grid-template-columns: 1fr;
   }
 
   .cw-cta-band {

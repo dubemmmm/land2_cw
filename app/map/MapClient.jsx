@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LocateFixed, Minus, Plus, Search } from "lucide-react";
+import { ChevronRight, LocateFixed, Minus, Plus, Search } from "lucide-react";
 import { averageConfidence, confidenceColor, confidenceLevel, confidenceScore } from "@/lib/metrics";
 
 export default function MapClient({ initialNeighborhoods }) {
@@ -42,7 +42,7 @@ export default function MapClient({ initialNeighborhoods }) {
       mapInstance.current = map;
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution: "© OpenStreetMap contributors"
+        attribution: "&copy; OpenStreetMap contributors"
       }).addTo(map);
       layerRef.current = L.layerGroup().addTo(map);
       drawPolygons(L, map, layerRef.current, trackedRecords, router);
@@ -102,25 +102,42 @@ export default function MapClient({ initialNeighborhoods }) {
 
   return (
     <div className="map-shell-pro">
-      <div className="map-canvas-pro" ref={mapRef} />
+      <div className="map-stage">
+        <div className="map-canvas-pro" ref={mapRef} />
+
+        <div className="map-pro-controls">
+          <button type="button" onClick={() => zoom(1)} aria-label="Zoom in"><Plus size={18} /></button>
+          <button type="button" onClick={() => zoom(-1)} aria-label="Zoom out"><Minus size={18} /></button>
+          <button type="button" onClick={recenter} aria-label="Recenter"><LocateFixed size={17} /></button>
+        </div>
+
+        <div className="map-pro-legend">
+          <span>Confidence</span>
+          <em><i className="high" />High</em>
+          <em><i className="medium" />Medium</em>
+          <em><i className="low" />Low</em>
+        </div>
+        <div className="map-pro-coords">6.4550° N&nbsp;&nbsp;3.4200° E · Lagos</div>
+      </div>
+
       <aside className="map-intel-panel">
         <header className="map-panel-head">
           <div>
             <h1>Locations</h1>
             <p>{trackedRecords.length} tracked · Lagos</p>
           </div>
-          <div>
+          <div className="map-panel-stat">
             <strong>{averageConfidence(trackedRecords)}</strong>
             <span>Avg confidence</span>
           </div>
         </header>
 
         <label className="map-search">
-          <Search size={15} />
+          <Search size={16} />
           <input placeholder="Search neighborhoods" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
 
-        <div className="map-filter-tabs">
+        <div className="cw-tabs map-filter-tabs">
           {["all", "high", "medium"].map((item) => (
             <button className={filter === item ? "active" : ""} type="button" key={item} onClick={() => setFilter(item)}>
               {item.charAt(0).toUpperCase() + item.slice(1)}
@@ -134,48 +151,40 @@ export default function MapClient({ initialNeighborhoods }) {
             const level = confidenceLevel(score);
             return (
               <button className="map-location-row" type="button" key={n.id} onClick={() => router.push(`/locations/${n.id}`)}>
-                <div className="map-score-ring" style={{ "--score": score, "--tone": confidenceColor(score) }}><span>{score}</span></div>
-                <div>
+                <div className="map-location-text">
                   <strong>{n.name}</strong>
                   <p>{n.jurisdiction} · {level}</p>
                 </div>
-                <em className={level.toLowerCase().replace(/\s+/g, "-")}>{level}</em>
-                <i>›</i>
+                <span className="map-location-score" title={`${level} confidence`}>
+                  <i style={{ background: confidenceColor(score) }} />
+                  {score}
+                </span>
+                <ChevronRight className="map-location-chevron" size={16} aria-hidden="true" />
               </button>
             );
           })}
+          {filtered.length === 0 && <p className="map-location-empty">No neighborhoods match this search.</p>}
         </div>
 
         <footer className="map-panel-foot">
           <span>Add a neighborhood to track</span>
-          <button type="button" onClick={() => setCreating(true)} aria-label="Add neighborhood"><Plus size={15} /></button>
+          <button className="cw-btn cw-btn-navy cw-btn-sm" type="button" onClick={() => setCreating(true)} aria-label="Add neighborhood">
+            <Plus size={16} />
+            Add
+          </button>
         </footer>
 
         {creating && (
           <form className="map-create-form" onSubmit={createLocation}>
-            <label>Neighborhood name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></label>
-            <label>Jurisdiction<input value={form.jurisdiction} onChange={(e) => setForm({ ...form, jurisdiction: e.target.value })} /></label>
-            <div>
-              <button type="submit">Create</button>
-              <button type="button" onClick={() => setCreating(false)}>Cancel</button>
+            <label className="cw-field">Neighborhood name<input className="cw-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></label>
+            <label className="cw-field">Jurisdiction<input className="cw-input" value={form.jurisdiction} onChange={(e) => setForm({ ...form, jurisdiction: e.target.value })} /></label>
+            <div className="map-create-actions">
+              <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit">Create</button>
+              <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => setCreating(false)}>Cancel</button>
             </div>
           </form>
         )}
       </aside>
-
-      <div className="map-pro-controls">
-        <button type="button" onClick={() => zoom(1)} aria-label="Zoom in"><Plus size={18} /></button>
-        <button type="button" onClick={() => zoom(-1)} aria-label="Zoom out"><Minus size={18} /></button>
-        <button type="button" onClick={recenter} aria-label="Recenter"><LocateFixed size={17} /></button>
-      </div>
-
-      <div className="map-pro-legend">
-        <span>Confidence</span>
-        <em><i className="high" />High</em>
-        <em><i className="medium" />Medium</em>
-        <em><i className="low" />Low</em>
-      </div>
-      <div className="map-pro-coords">6.4550° N&nbsp;&nbsp;3.4200° E · LAGOS</div>
     </div>
   );
 }
@@ -197,8 +206,10 @@ function drawPolygons(L, map, group, records, router) {
       .bindTooltip(`<strong>${n.name}</strong>&nbsp;&nbsp;<span>${score}</span>`, {
         permanent: true,
         direction: "center",
-        className: "map-dark-label"
+        className: "map-label"
       })
+      .on("mouseover", () => polygon.setStyle({ color: "#111D42", weight: 2.6, opacity: 1 }))
+      .on("mouseout", () => polygon.setStyle({ color, weight: 1.8, opacity: 0.9 }))
       .on("click", () => router.push(`/locations/${n.id}`));
 
     const center = n.geometry?.center;
@@ -212,7 +223,7 @@ function drawPolygons(L, map, group, records, router) {
 
       L.circleMarker(center, {
         radius: 6,
-        color: "#0c0906",
+        color: "#ffffff",
         weight: 2,
         fillColor: color,
         fillOpacity: 0.92

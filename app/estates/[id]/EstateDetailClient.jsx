@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Calculator, Link as LinkIcon, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, Link as LinkIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/metrics";
 
@@ -29,40 +29,56 @@ export default function EstateDetailClient({ estate, resources = [] }) {
     return { currentValue, projectedValue, gain, roi, targetYear };
   }, [currentPoint, currentYear, estate.priceValue, estate.trend, holdingYears, maxYear, plotSize]);
 
+  const sectionNumber = (index) => String(index).padStart(2, "0");
+  const comparisonNumber = sectionNumber(resources.length ? 5 : 4);
+
   return (
     <div className="estate-detail-page">
-      <header className="estate-hero">
-        <div>
-          <Link className="focus-back" href={`/locations/${estate.parentSlug}`}>
-            <ArrowLeft size={15} /> Back to {estate.parentName}
-          </Link>
-          <span className="market-lga"><i />{estate.lga}</span>
-          <h1>{estate.name}</h1>
-          <p>{estate.description}</p>
+      <header className="cw-pagehead estate-head">
+        <div className="estate-head-main">
+          <nav className="cw-crumbs" aria-label="Breadcrumb">
+            <Link href="/map">Map</Link>
+            <span aria-hidden="true">/</span>
+            <Link href={`/locations/${estate.parentSlug}`}>{estate.parentName}</Link>
+            <span aria-hidden="true">/</span>
+            <span>{estate.name}</span>
+          </nav>
+          <h1 className="cw-pagehead-title">{estate.name}</h1>
+          <p className="cw-lede">{estate.description}</p>
           <div className="market-tags">
-            {estate.highlights.map((item) => <span key={item}>{item}</span>)}
+            <span className="cw-chip market-lga"><i className="cw-dot" />{estate.lga}</span>
+            {estate.status ? <span className="cw-chip cw-chip-navy">{estate.status}</span> : null}
+            {estate.highlights.map((item) => <span className="cw-chip" key={item}>{item}</span>)}
           </div>
         </div>
-        <div className="estate-hero-metrics">
-          <Metric label={`${currentYear} price/sqm`} value={estate.priceLabel} />
-          <Metric label="Projected growth" value={estate.annualGrowthLabel} accent />
-          <Metric label="Mapped land" value={estate.totalLandLabel} />
-          <Metric label="Status" value={estate.status} />
+        <div className="estate-head-actions">
+          <Link className="cw-btn cw-btn-outline cw-btn-sm" href={`/locations/${estate.parentSlug}`}>
+            <ArrowLeft size={15} /> Back to {estate.parentName}
+          </Link>
         </div>
       </header>
 
+      <section className="cw-card estate-hero-metrics" aria-label="Key metrics">
+        <Metric label={`${currentYear} price/sqm`} value={estate.priceLabel} />
+        <Metric label="Projected growth" value={estate.annualGrowthLabel} accent />
+        <Metric label="Mapped land" value={estate.totalLandLabel} />
+        <Metric label="Status" value={estate.status} />
+      </section>
+
       <section className="estate-workspace">
-        <article className="estate-panel estate-projection-panel">
+        <article className="cw-card estate-panel estate-projection-panel">
           <div className="estate-section-head">
             <div>
-              <span><TrendingUp size={14} /> Projection model</span>
+              <p className="cw-label"><b>{sectionNumber(1)}</b>Projection model</p>
               <h2>Price projection</h2>
             </div>
-            <strong>{formatMoney(selectedPoint?.value, estate.trendCurrency)} / sqm</strong>
+            <strong>{formatMoney(selectedPoint?.value, estate.trendCurrency)} <small>/ sqm</small></strong>
           </div>
           {estate.trend?.length ? (
             <>
-              <ProjectionChart points={estate.trend} selectedYear={Number(selectedYear)} currency={estate.trendCurrency} />
+              <div className="estate-chart-scroll">
+                <ProjectionChart points={estate.trend} selectedYear={Number(selectedYear)} currency={estate.trendCurrency} />
+              </div>
               <div className="projection-slider">
                 <div>
                   <span>{minYear}</span>
@@ -75,6 +91,7 @@ export default function EstateDetailClient({ estate, resources = [] }) {
                   max={maxYear}
                   step="1"
                   value={selectedYear}
+                  aria-label="Projection year"
                   onChange={(event) => setSelectedYear(Number(event.target.value))}
                 />
                 <p>
@@ -88,24 +105,24 @@ export default function EstateDetailClient({ estate, resources = [] }) {
           )}
         </article>
 
-        <article className="estate-panel estate-calculator">
+        <article className="cw-card estate-panel estate-calculator">
           <div className="estate-section-head">
             <div>
-              <span><Calculator size={14} /> Investment model</span>
+              <p className="cw-label"><b>{sectionNumber(2)}</b>Investment model</p>
               <h2>Value calculator</h2>
             </div>
           </div>
-          <label>
+          <label className="cw-field">
             Plot size
-            <div>
-              <input type="number" min="1" value={plotSize} onChange={(event) => setPlotSize(event.target.value)} />
+            <div className="estate-calc-input">
+              <input className="cw-input" type="number" min="1" value={plotSize} onChange={(event) => setPlotSize(event.target.value)} />
               <span>sqm</span>
             </div>
           </label>
-          <label>
+          <label className="cw-field">
             Holding period
-            <div>
-              <input type="number" min="0" max={maxYear - currentYear} value={holdingYears} onChange={(event) => setHoldingYears(event.target.value)} />
+            <div className="estate-calc-input">
+              <input className="cw-input" type="number" min="0" max={maxYear - currentYear} value={holdingYears} onChange={(event) => setHoldingYears(event.target.value)} />
               <span>years</span>
             </div>
           </label>
@@ -115,14 +132,14 @@ export default function EstateDetailClient({ estate, resources = [] }) {
             <Metric label="Projected gain" value={formatMoney(calculator.gain, estate.trendCurrency)} />
             <Metric label="Estimated ROI" value={`${Math.round(calculator.roi)}%`} />
           </div>
-          <p>{estate.disclaimer}</p>
+          <p className="estate-disclaimer">{estate.disclaimer}</p>
         </article>
       </section>
 
-      <section className="estate-panel estate-facts-panel">
+      <section className="cw-card estate-panel estate-facts-panel">
         <div className="estate-section-head">
           <div>
-            <span>Estate data</span>
+            <p className="cw-label"><b>{sectionNumber(3)}</b>Estate data</p>
             <h2>Development profile</h2>
           </div>
         </div>
@@ -136,10 +153,10 @@ export default function EstateDetailClient({ estate, resources = [] }) {
       </section>
 
       {resources.length ? (
-        <section className="estate-panel estate-research-panel">
+        <section className="cw-card estate-panel estate-research-panel">
           <div className="estate-section-head">
             <div>
-              <span>Market research</span>
+              <p className="cw-label"><b>{sectionNumber(4)}</b>Market research</p>
               <h2>Attached intelligence</h2>
             </div>
           </div>
@@ -147,24 +164,31 @@ export default function EstateDetailClient({ estate, resources = [] }) {
         </section>
       ) : null}
 
-      <section className="estate-panel estate-comparison-panel">
+      <section className="cw-card estate-panel estate-comparison-panel">
         <div className="estate-section-head">
           <div>
-            <span>Comparable estates</span>
+            <p className="cw-label"><b>{comparisonNumber}</b>Comparable estates</p>
             <h2>Comparison with other estates in {estate.parentName}</h2>
           </div>
         </div>
         {estate.comparisons.length ? (
           <div className="estate-comparison-list">
+            <div className="estate-comparison-header" aria-hidden="true">
+              <span>Estate</span>
+              <span>Price</span>
+              <span>Growth</span>
+              <span>Land</span>
+              <span />
+            </div>
             {estate.comparisons.map((item) => (
               <Link href={`/estates/${item.slug}`} className="estate-comparison-row" key={item.id}>
                 <div>
                   <strong>{item.name}</strong>
                   <p>{item.primaryUse} · {item.status}</p>
                 </div>
-                <span>{item.priceLabel}</span>
-                <span>{item.annualGrowthLabel}</span>
-                <span>{item.landLabel}</span>
+                <span data-label="Price">{item.priceLabel}</span>
+                <span data-label="Growth">{item.annualGrowthLabel}</span>
+                <span data-label="Land">{item.landLabel}</span>
                 <ArrowRight size={15} />
               </Link>
             ))}
@@ -189,11 +213,11 @@ function ResourceList({ resources }) {
             <small>{resource.author} · {formatDate(resource.createdAt)}</small>
           </div>
           {resource.url ? (
-            <a href={resource.url} target="_blank" rel="noreferrer">
+            <a className="cw-btn cw-btn-soft cw-btn-sm" href={resource.url} target="_blank" rel="noreferrer">
               <LinkIcon size={15} /> Open
             </a>
           ) : resource.fileName ? (
-            <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">
+            <a className="cw-btn cw-btn-soft cw-btn-sm" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">
               <LinkIcon size={15} /> Open
             </a>
           ) : null}

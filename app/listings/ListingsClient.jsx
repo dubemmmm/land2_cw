@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Grid2X2, List, Plus, Search } from "lucide-react";
+import { ChevronDown, Grid2X2, LandPlot, List, MapPin, Plus, RotateCcw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const landUses = ["Residential", "Commercial", "Mixed-use"];
@@ -77,79 +77,136 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
     window.history.replaceState(null, "", queryString ? `/listings?${queryString}` : "/listings");
   }
 
+  function resetFilters() {
+    setQuery("");
+    setLandUse("all");
+    setEstate("all");
+    setMinPrice("");
+    setMaxPrice("");
+    setMinSize("");
+    setMaxSize("");
+    setSortBy("newest");
+    selectLocation("all");
+  }
+
   return (
     <section className="listings-page">
-      <header className="listings-header">
+      <header className="cw-pagehead listings-header">
         <div>
-          <h1>Land listings</h1>
-          <p>{visibleListings.length} of {initialListings.length} listings shown</p>
+          <nav className="cw-crumbs" aria-label="Breadcrumb">
+            <Link href="/">Squaremeter</Link>
+            <span aria-hidden="true">/</span>
+            <span>Listings</span>
+          </nav>
+          <h1 className="cw-pagehead-title">Land listings</h1>
+          <p className="cw-lede">{visibleListings.length} of {initialListings.length} listings shown, grouped by area.</p>
         </div>
         <div className="listing-header-actions">
-          <div className="listing-view-toggle" aria-label="Listing view">
-            <button className={view === "cards" ? "active" : ""} type="button" onClick={() => switchView("cards")} aria-label="Card view">
-              <Grid2X2 size={16} /> Cards
+          <div className="cw-tabs listing-view-toggle" role="group" aria-label="Listing view">
+            <button className={view === "cards" ? "active" : ""} type="button" onClick={() => switchView("cards")} aria-label="Card view" aria-pressed={view === "cards"}>
+              <Grid2X2 size={15} /> Cards
             </button>
-            <button className={view === "ledger" ? "active" : ""} type="button" onClick={() => switchView("ledger")} aria-label="Ledger view">
-              <List size={16} /> Ledger
+            <button className={view === "ledger" ? "active" : ""} type="button" onClick={() => switchView("ledger")} aria-label="Ledger view" aria-pressed={view === "ledger"}>
+              <List size={15} /> Ledger
             </button>
           </div>
-          <Link className="listing-new-btn" href={isAdmin ? "/listings/new" : "/admin/login?next=%2Flistings%2Fnew"}>
+          <Link className="cw-btn cw-btn-navy listing-new-btn" href={isAdmin ? "/listings/new" : "/admin/login?next=%2Flistings%2Fnew"}>
             <Plus size={16} /> New listing
           </Link>
         </div>
       </header>
 
-      <section className="listing-stats">
+      <section className="listing-stats" aria-label="Listing summary">
         <Metric label="Listings" value={stats.count} suffix="tracked" />
         <Metric label="Portfolio value" value={formatCompactPrice(stats.value)} suffix="asking total" />
         <Metric label="Available" value={stats.available} suffix="ready to sell" />
         <Metric label="Avg. size" value={formatNumber(stats.avgSize)} suffix="sqm per plot" />
       </section>
 
-      <section className="listing-filters">
-        <label className="listing-search">
-          <Search size={16} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search listings" />
-        </label>
-        <div className="listing-use-tabs">
-          <button className={landUse === "all" ? "active" : ""} type="button" onClick={() => setLandUse("all")}>All uses</button>
-          {landUses.map((use) => (
-            <button className={landUse === use ? "active" : ""} type="button" onClick={() => setLandUse(use)} key={use}>{use}</button>
-          ))}
-        </div>
-        <select value={estate} onChange={(event) => setEstate(event.target.value)} aria-label="Estate filter">
-          <option value="all">All estates</option>
-          {estateOptions.map((name) => <option value={name} key={name}>{name}</option>)}
-        </select>
-        <input value={minPrice} onChange={(event) => setMinPrice(event.target.value)} inputMode="numeric" placeholder="Min ₦M" />
-        <input value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} inputMode="numeric" placeholder="Max ₦M" />
-        <input value={minSize} onChange={(event) => setMinSize(event.target.value)} inputMode="numeric" placeholder="Min sqm" />
-        <input value={maxSize} onChange={(event) => setMaxSize(event.target.value)} inputMode="numeric" placeholder="Max sqm" />
-        <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort listings">
-          <option value="newest">Newest</option>
-          <option value="price-high">Price high</option>
-          <option value="price-low">Price low</option>
-          <option value="size-high">Size high</option>
-        </select>
-      </section>
-
-      <section className="listing-location-tabs" aria-label="Location filters">
-        <button className={location === "all" ? "active" : ""} type="button" onClick={() => selectLocation("all")}>All</button>
-        {locationOptions.map((neighborhood) => (
-          <button className={location === neighborhood.id ? "active" : ""} type="button" onClick={() => selectLocation(neighborhood.id)} key={neighborhood.id}>
-            {neighborhood.name}
+      <section className="listing-filters" aria-label="Listing filters">
+        <div className="listing-filter-fields">
+          <label className="cw-field listing-filter-search">
+            <span>Search</span>
+            <span className="listing-search">
+              <Search size={16} aria-hidden="true" />
+              <input className="cw-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Title, area, estate or document" />
+            </span>
+          </label>
+          <label className="cw-field listing-filter-estate">
+            <span>Estate</span>
+            <span className="listing-select">
+              <select className="cw-select" value={estate} onChange={(event) => setEstate(event.target.value)} aria-label="Estate filter">
+                <option value="all">All estates</option>
+                {estateOptions.map((name) => <option value={name} key={name}>{name}</option>)}
+              </select>
+              <ChevronDown size={16} aria-hidden="true" />
+            </span>
+          </label>
+          <div className="cw-field listing-filter-range" role="group" aria-label="Price range in millions of naira">
+            <span>Price (₦M)</span>
+            <div>
+              <input className="cw-input" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} inputMode="numeric" placeholder="Min" aria-label="Minimum price in millions of naira" />
+              <input className="cw-input" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} inputMode="numeric" placeholder="Max" aria-label="Maximum price in millions of naira" />
+            </div>
+          </div>
+          <div className="cw-field listing-filter-range" role="group" aria-label="Plot size range in square metres">
+            <span>Size (sqm)</span>
+            <div>
+              <input className="cw-input" value={minSize} onChange={(event) => setMinSize(event.target.value)} inputMode="numeric" placeholder="Min" aria-label="Minimum size in square metres" />
+              <input className="cw-input" value={maxSize} onChange={(event) => setMaxSize(event.target.value)} inputMode="numeric" placeholder="Max" aria-label="Maximum size in square metres" />
+            </div>
+          </div>
+          <label className="cw-field listing-filter-sort">
+            <span>Sort by</span>
+            <span className="listing-select">
+              <select className="cw-select" value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort listings">
+                <option value="newest">Newest</option>
+                <option value="price-high">Price high</option>
+                <option value="price-low">Price low</option>
+                <option value="size-high">Size high</option>
+              </select>
+              <ChevronDown size={16} aria-hidden="true" />
+            </span>
+          </label>
+          <button className="cw-btn cw-btn-navy listing-reset-btn" type="button" onClick={resetFilters}>
+            <RotateCcw size={15} /> Reset
           </button>
-        ))}
-      </section>
+        </div>
 
-      {view === "cards" ? <ListingCards groups={groups} isAdmin={isAdmin} /> : <ListingLedger groups={groups} isAdmin={isAdmin} />}
+        <div className="listing-chip-rows">
+          <div className="listing-chip-row">
+            <span>Land use</span>
+            <div className="listing-use-tabs" role="group" aria-label="Land use filters">
+              <button className={landUse === "all" ? "active" : ""} type="button" onClick={() => setLandUse("all")}>All uses</button>
+              {landUses.map((use) => (
+                <button className={landUse === use ? "active" : ""} type="button" onClick={() => setLandUse(use)} key={use}>{use}</button>
+              ))}
+            </div>
+          </div>
+          <div className="listing-chip-row">
+            <span>Area</span>
+            <div className="listing-location-tabs" role="group" aria-label="Location filters">
+              <button className={location === "all" ? "active" : ""} type="button" onClick={() => selectLocation("all")}>All areas</button>
+              {locationOptions.map((neighborhood) => (
+                <button className={location === neighborhood.id ? "active" : ""} type="button" onClick={() => selectLocation(neighborhood.id)} key={neighborhood.id}>
+                  {neighborhood.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {!visibleListings.length ? (
         <div className="listing-empty">
           <strong>No listings found</strong>
           <p>Adjust the filters or publish a new land listing.</p>
         </div>
-      ) : null}
+      ) : view === "cards" ? (
+        <ListingCards groups={groups} isAdmin={isAdmin} />
+      ) : (
+        <ListingLedger groups={groups} isAdmin={isAdmin} />
+      )}
     </section>
   );
 }
@@ -159,7 +216,7 @@ function ListingCards({ groups, isAdmin }) {
     <div className="listing-card-groups">
       {groups.map((group) => (
         <section className="listing-group" key={group.key}>
-          <h2>{group.name} <span>{group.listings.length} listings</span></h2>
+          <h2>{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></h2>
           <div className="listing-card-grid">
             {group.listings.map((listing) => <ListingCard listing={listing} isAdmin={isAdmin} key={listing.id} />)}
           </div>
@@ -170,69 +227,77 @@ function ListingCards({ groups, isAdmin }) {
 }
 
 function ListingCard({ listing, isAdmin }) {
+  const perSqm = formatPricePerSqm(listing.askingPrice, listing.sizeSqm);
   const content = (
     <article className="listing-card">
-      <ListingMedia listing={listing} />
-      <div className="listing-card-body">
-        <div>
-          <strong>{listing.title}</strong>
-          <p>{formatNumber(listing.sizeSqm)} sqm · {listing.landUse}</p>
-          <p>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""}</p>
-        </div>
-        <footer>
+      <div className="listing-media">
+        <ListingPhoto listing={listing} />
+        <div className="listing-media-chips">
+          <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
           <TitleBadge titleDocument={listing.titleDocument} />
           {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
-        </footer>
+        </div>
+        <span className="listing-media-place">
+          <MapPin size={13} aria-hidden="true" />
+          <span>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""}</span>
+        </span>
+      </div>
+      <div className="listing-card-body">
+        <b className="listing-card-price">{listing.askingPrice ? formatCompactPrice(listing.askingPrice) : "Price not set"}</b>
+        <strong>{listing.title}</strong>
+        <p className="listing-card-meta">
+          <span>{formatNumber(listing.sizeSqm)} sqm</span>
+          {perSqm ? <span>{perSqm}</span> : null}
+          <span>{listing.landUse}</span>
+        </p>
       </div>
     </article>
   );
-  return isAdmin ? <Link href={`/listings/new?id=${listing.id}`}>{content}</Link> : content;
+  return isAdmin ? <Link className="listing-card-link" href={`/listings/new?id=${listing.id}`}>{content}</Link> : content;
 }
 
-function ListingMedia({ listing, compact = false }) {
-  return (
-    <div className={`listing-media ${compact ? "compact" : ""}`}>
-      {listing.photos[0] ? <img src={listing.photos[0]} alt="" /> : <div className="listing-photo-fallback" />}
-      <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
-      <b>{listing.askingPrice ? formatCompactPrice(listing.askingPrice) : "Price not set"}</b>
-    </div>
-  );
+function ListingPhoto({ listing }) {
+  return listing.photos[0]
+    ? <img src={listing.photos[0]} alt="" />
+    : <div className="listing-photo-fallback" aria-hidden="true"><LandPlot size={26} strokeWidth={1.5} /></div>;
 }
 
 function ListingLedger({ groups, isAdmin }) {
   return (
     <div className="listing-ledger">
-      <div className="listing-ledger-head">
-        <span>Listing</span>
-        <span>Estate</span>
-        <span>Size</span>
-        <span>Use</span>
-        <span>Price</span>
-        <span>Title</span>
-        <span>Status</span>
+      <div className="listing-ledger-inner">
+        <div className="listing-ledger-head">
+          <span>Listing</span>
+          <span>Estate</span>
+          <span>Size</span>
+          <span>Use</span>
+          <span>Price</span>
+          <span>Title</span>
+          <span>Status</span>
+        </div>
+        {groups.map((group) => (
+          <section className="listing-ledger-group" key={group.key}>
+            <h2>{group.name} <span>{group.listings.length}</span></h2>
+            {group.listings.map((listing) => {
+              const row = (
+                <article className="listing-ledger-row">
+                  <div className="listing-ledger-title">
+                    <div className="listing-media compact"><ListingPhoto listing={listing} /></div>
+                    <strong>{listing.title}</strong>
+                  </div>
+                  <span>{listing.estate || "-"}</span>
+                  <span>{formatNumber(listing.sizeSqm)} sqm</span>
+                  <span>{listing.landUse}</span>
+                  <span>{formatFullPrice(listing.askingPrice)}</span>
+                  <TitleBadge titleDocument={listing.titleDocument} />
+                  <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
+                </article>
+              );
+              return isAdmin ? <Link href={`/listings/new?id=${listing.id}`} key={listing.id}>{row}</Link> : <div key={listing.id}>{row}</div>;
+            })}
+          </section>
+        ))}
       </div>
-      {groups.map((group) => (
-        <section className="listing-ledger-group" key={group.key}>
-          <h2>{group.name} <span>{group.listings.length}</span></h2>
-          {group.listings.map((listing) => {
-            const row = (
-              <article className="listing-ledger-row">
-                <div className="listing-ledger-title">
-                  <ListingMedia listing={listing} compact />
-                  <strong>{listing.title}</strong>
-                </div>
-                <span>{listing.estate || "-"}</span>
-                <span>{formatNumber(listing.sizeSqm)} sqm</span>
-                <span>{listing.landUse}</span>
-                <span>{formatFullPrice(listing.askingPrice)}</span>
-                <TitleBadge titleDocument={listing.titleDocument} />
-                <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
-              </article>
-            );
-            return isAdmin ? <Link href={`/listings/new?id=${listing.id}`} key={listing.id}>{row}</Link> : <div key={listing.id}>{row}</div>;
-          })}
-        </section>
-      ))}
     </div>
   );
 }
@@ -240,9 +305,8 @@ function ListingLedger({ groups, isAdmin }) {
 function Metric({ label, value, suffix }) {
   return (
     <article>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <em>{suffix}</em>
+      <strong className="cw-stat-num">{value}</strong>
+      <span className="cw-stat-label"><b>{label}</b> {suffix}</span>
     </article>
   );
 }
@@ -279,6 +343,14 @@ function formatCompactPrice(value) {
 function formatFullPrice(value) {
   const price = Number(value) || 0;
   return price ? `₦${new Intl.NumberFormat("en-US").format(price)}` : "-";
+}
+
+function formatPricePerSqm(price, size) {
+  const perSqm = (Number(price) || 0) / (Number(size) || 0);
+  if (!Number.isFinite(perSqm) || perSqm <= 0) return "";
+  if (perSqm >= 1000000) return `₦${trimDecimal(perSqm / 1000000)}M/sqm`;
+  if (perSqm >= 1000) return `₦${Math.round(perSqm / 1000)}k/sqm`;
+  return `₦${Math.round(perSqm)}/sqm`;
 }
 
 function formatNumber(value) {

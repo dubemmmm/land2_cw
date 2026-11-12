@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Database, ExternalLink, FileText, Link as LinkIcon, Pencil, Save, Share2 } from "lucide-react";
+import { ArrowRight, Database, ExternalLink, FileText, Link as LinkIcon, Pencil, Save, Share2 } from "lucide-react";
 import { useState } from "react";
 import { SourcePill, StatusPill } from "@/components/Pills";
 import { confidenceColor, confidenceLevel, confidenceScore, formatDate, initials } from "@/lib/metrics";
@@ -61,62 +61,71 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
     router.push(`/locations/${id}`);
   }
 
+  const sectionKeys = [
+    market ? "market" : null,
+    market?.estates?.length ? "estates" : null,
+    "build",
+    "rules",
+    "approvals",
+    "listings",
+    "notes",
+    resources.length ? "research" : null
+  ].filter(Boolean);
+  const sectionNumber = (key) => String(sectionKeys.indexOf(key) + 1).padStart(2, "0");
+
   return (
     <div className="focus-page">
-      <header className="focus-topbar">
-        <div className="focus-titlebar">
-          <Link className="focus-back" href="/map"><ArrowLeft size={15} /> Back to map</Link>
-          <span className="focus-divider" />
-          <select className="focus-location-select" value={record.id} onChange={(event) => switchLocation(event.target.value)} aria-label="Switch location">
+      <header className="cw-pagehead focus-head">
+        <div className="focus-head-main">
+          <nav className="cw-crumbs" aria-label="Breadcrumb">
+            <Link href="/map">Map</Link>
+            <span aria-hidden="true">/</span>
+            <span>{record.name}</span>
+          </nav>
+          <h1 className="cw-pagehead-title">{record.name}</h1>
+          {record.recommendation?.summary ? <p className="cw-lede">{record.recommendation.summary}</p> : null}
+          <div className="focus-tags">
+            <span className="cw-chip focus-score-chip">
+              <i className="cw-dot" style={{ background: tone }} />
+              {score} · {level}
+            </span>
+            {tags.map((tag) => <span className="cw-chip" key={tag}>{tag}</span>)}
+          </div>
+        </div>
+        <div className="focus-actions">
+          <select className="cw-select focus-location-select" value={record.id} onChange={(event) => switchLocation(event.target.value)} aria-label="Switch location">
             {(neighborhoods.length ? neighborhoods : [record]).map((item) => (
               <option value={item.id} key={item.id}>{item.name}</option>
             ))}
           </select>
-        </div>
-        <div className="focus-actions">
-          <button className="focus-icon-btn" type="button" onClick={shareLocation} aria-label="Copy location link"><Share2 size={16} /></button>
+          <button className="cw-icon-btn" type="button" onClick={shareLocation} aria-label="Copy location link"><Share2 size={16} /></button>
           {isAdmin ? (
             <>
-              <button className="focus-icon-btn" type="button" onClick={() => setEditing(true)} aria-label="Quick edit intelligence"><Pencil size={16} /></button>
-              <Link className="focus-icon-btn" href="/data" aria-label="Open full data admin"><Database size={16} /></Link>
+              <button className="cw-icon-btn" type="button" onClick={() => setEditing(true)} aria-label="Quick edit intelligence"><Pencil size={16} /></button>
+              <Link className="cw-icon-btn" href="/data" aria-label="Open full data admin"><Database size={16} /></Link>
             </>
           ) : null}
-          <Link className="focus-report-btn" href={`/reports?report=land-${record.id}`}><FileText size={15} /> Open report</Link>
+          <Link className="cw-btn cw-btn-navy cw-btn-sm" href={`/reports?report=land-${record.id}`}><FileText size={15} /> Open report</Link>
         </div>
       </header>
 
-      <section className="focus-grid">
+      <div className="focus-grid">
         <aside className="focus-left">
-          <article className="focus-hero-panel">
-            <div className="focus-score-chip">
-              <i style={{ background: tone }} />
-              <span>{score}</span>
-              <em>{level}</em>
+          <article className="cw-card focus-confidence-card">
+            <div className="focus-confidence-top">
+              <div className="focus-ring" style={{ "--score": score, "--tone": tone }}>
+                <span>{score}</span>
+              </div>
+              <div>
+                <span className="focus-eyebrow">Development confidence</span>
+                <h2 style={{ color: tone }}>{level} <small>{score} / 100</small></h2>
+              </div>
             </div>
-            <div>
-              <span>Satellite / aerial</span>
-              <h1>{record.name}</h1>
-              <p>{record.recommendation?.summary}</p>
-            </div>
+            <p>{record.recommendation?.confidenceReason}</p>
+            <footer>Last reviewed {formatDate(record.metadata?.lastReviewed)} · {record.metadata?.reviewedBy}</footer>
           </article>
 
-          <div className="focus-tags">
-            {tags.map((tag) => <span key={tag}>{tag}</span>)}
-          </div>
-
-          <article className="focus-confidence-card">
-            <div className="focus-ring" style={{ "--score": score, "--tone": tone }}>
-              <span>{score}</span>
-            </div>
-            <div>
-              <span className="focus-eyebrow">Development confidence</span>
-              <h2 style={{ color: tone }}>{level} <small>{score} / 100</small></h2>
-              <p>{record.recommendation?.confidenceReason}</p>
-              <footer>Last reviewed {formatDate(record.metadata?.lastReviewed)} · {record.metadata?.reviewedBy}</footer>
-            </div>
-          </article>
-
-          <article className="focus-mini-map">
+          <article className="cw-card focus-mini-map">
             <svg viewBox="0 0 520 220" role="img" aria-label={`${record.name} context map`}>
               <g className="focus-map-grid">
                 <path d="M0 86H520M0 166H520M102 0L120 220M300 0L318 220" />
@@ -130,11 +139,12 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
           </article>
         </aside>
 
-        <main className="focus-brief">
-          {market ? <MarketSection market={market} /> : null}
+        <div className="focus-brief">
+          {market ? <MarketSection market={market} number={sectionNumber("market")} /> : null}
+          {market?.estates?.length ? <EstateSection estates={market.estates} number={sectionNumber("estates")} /> : null}
 
-          <section className="focus-section">
-            <SectionHeading title="What you can build" />
+          <section className="cw-card focus-section">
+            <SectionHeading number={sectionNumber("build")} label="Planning" title="What you can build" />
             <div className="focus-build-grid">
               {(record.intelligence?.buildParameters || []).map((row) => (
                 <article className="focus-build-item" key={row.label}>
@@ -146,8 +156,8 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
             </div>
           </section>
 
-          <section className="focus-section">
-            <SectionHeading title="Regulations" meta={`${record.intelligence?.constraints?.length || 0} rules`} />
+          <section className="cw-card focus-section">
+            <SectionHeading number={sectionNumber("rules")} label="Rules" title="Regulations" meta={`${record.intelligence?.constraints?.length || 0} rules`} />
             <div className="focus-rule-list">
               {(record.intelligence?.constraints || []).map((row) => (
                 <div className="focus-rule-row" key={row.label}>
@@ -158,8 +168,8 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
             </div>
           </section>
 
-          <section className="focus-section">
-            <SectionHeading title="Approval history" />
+          <section className="cw-card focus-section">
+            <SectionHeading number={sectionNumber("approvals")} label="History" title="Approval history" />
             <div className="focus-timeline">
               {(record.approvals || []).map((row, index) => (
                 <article className="focus-history-row" key={`${row.date}-${index}`}>
@@ -174,11 +184,13 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
             </div>
           </section>
 
-          <section className="focus-section">
+          <section className="focus-section focus-section-open">
             <SectionHeading
+              number={sectionNumber("listings")}
+              label="Listings"
               title={`Land listings in ${record.name}`}
               meta={`${locationListings.length} listings`}
-              action={<Link href={`/listings?location=${record.id}`}>View all listings <ArrowRight size={14} /></Link>}
+              action={<Link className="cw-link" href={`/listings?location=${record.id}`}>View all listings <ArrowRight size={14} /></Link>}
             />
             {locationListings.length ? (
               <div className="focus-listing-grid">
@@ -192,8 +204,8 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
             )}
           </section>
 
-          <section className="focus-section">
-            <SectionHeading title="Team notes" />
+          <section className="cw-card focus-section">
+            <SectionHeading number={sectionNumber("notes")} label="Team" title="Team notes" />
             <div className="focus-note-list">
               {(record.notes || []).map((note, index) => (
                 <article className="focus-note-row" key={`${note.date}-${index}`}>
@@ -208,28 +220,28 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
           </section>
 
           {resources.length ? (
-            <section className="focus-section">
-              <SectionHeading title="Market research" meta={`${resources.length} resources`} />
+            <section className="cw-card focus-section">
+              <SectionHeading number={sectionNumber("research")} label="Research" title="Market research" meta={`${resources.length} resources`} />
               <ResourceList resources={resources} />
             </section>
           ) : null}
-        </main>
-      </section>
+        </div>
+      </div>
 
       {editing && (
-        <div className="focus-edit-card">
-          <div className="section-title">
+        <div className="focus-edit-card" role="dialog" aria-label="Edit intelligence">
+          <div className="focus-edit-head">
             <h2>Edit intelligence</h2>
-            <button className="btn" type="button" onClick={() => setEditing(false)}>Close</button>
+            <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => setEditing(false)}>Close</button>
           </div>
-          <form className="admin-form" onSubmit={save}>
-            <label>Recommendation headline<textarea value={draft.headline} onChange={(e) => setDraft({ ...draft, headline: e.target.value })} /></label>
-            <label>Best next action<textarea value={draft.bestNextAction} onChange={(e) => setDraft({ ...draft, bestNextAction: e.target.value })} /></label>
-            <label>Confidence score<input type="number" min="0" max="100" value={draft.confidence} onChange={(e) => setDraft({ ...draft, confidence: e.target.value })} /></label>
-            <label>Confidence reason<textarea value={draft.confidenceReason} onChange={(e) => setDraft({ ...draft, confidenceReason: e.target.value })} /></label>
-            <label>Risk level<select value={draft.riskLevel} onChange={(e) => setDraft({ ...draft, riskLevel: e.target.value })}>{["Low", "Medium", "High", "Unknown"].map((risk) => <option key={risk}>{risk}</option>)}</select></label>
-            <label>Reviewer<input value={draft.reviewedBy} onChange={(e) => setDraft({ ...draft, reviewedBy: e.target.value })} /></label>
-            <button className="btn primary" type="submit"><Save size={16} /> Save changes</button>
+          <form className="focus-edit-form" onSubmit={save}>
+            <label className="cw-field">Recommendation headline<textarea className="cw-textarea" value={draft.headline} onChange={(e) => setDraft({ ...draft, headline: e.target.value })} /></label>
+            <label className="cw-field">Best next action<textarea className="cw-textarea" value={draft.bestNextAction} onChange={(e) => setDraft({ ...draft, bestNextAction: e.target.value })} /></label>
+            <label className="cw-field">Confidence score<input className="cw-input" type="number" min="0" max="100" value={draft.confidence} onChange={(e) => setDraft({ ...draft, confidence: e.target.value })} /></label>
+            <label className="cw-field">Confidence reason<textarea className="cw-textarea" value={draft.confidenceReason} onChange={(e) => setDraft({ ...draft, confidenceReason: e.target.value })} /></label>
+            <label className="cw-field">Risk level<select className="cw-select" value={draft.riskLevel} onChange={(e) => setDraft({ ...draft, riskLevel: e.target.value })}>{["Low", "Medium", "High", "Unknown"].map((risk) => <option key={risk}>{risk}</option>)}</select></label>
+            <label className="cw-field">Reviewer<input className="cw-input" value={draft.reviewedBy} onChange={(e) => setDraft({ ...draft, reviewedBy: e.target.value })} /></label>
+            <button className="cw-btn cw-btn-navy" type="submit"><Save size={16} /> Save changes</button>
           </form>
         </div>
       )}
@@ -267,11 +279,11 @@ function ResourceList({ resources }) {
             <small>{resource.author} · {formatDate(resource.createdAt)}</small>
           </div>
           {resource.url ? (
-            <a href={resource.url} target="_blank" rel="noreferrer">
+            <a className="cw-btn cw-btn-soft cw-btn-sm" href={resource.url} target="_blank" rel="noreferrer">
               <LinkIcon size={15} /> Open
             </a>
           ) : resource.fileName ? (
-            <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">
+            <a className="cw-btn cw-btn-soft cw-btn-sm" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">
               <LinkIcon size={15} /> Open
             </a>
           ) : null}
@@ -281,7 +293,7 @@ function ResourceList({ resources }) {
   );
 }
 
-function MarketSection({ market }) {
+function MarketSection({ market, number }) {
   const primaryMetric = market.kind === "estate" ? `${market.currentYear} estate price/sqm` : `${market.currentYear} avg price/sqm`;
   const estatesLabel = market.estateSummary.total
     ? `${market.estateSummary.developing} developing · ${market.estateSummary.built} built`
@@ -290,16 +302,16 @@ function MarketSection({ market }) {
   const lastYear = market.trend?.at(-1)?.year;
 
   return (
-    <section className="focus-section market-section">
-      <SectionHeading title="Market intelligence" meta={market.asOfLabel || market.meta?.pricing_date} />
+    <section className="cw-card focus-section market-section">
+      <SectionHeading number={number} label="Market" title="Market intelligence" meta={market.asOfLabel || market.meta?.pricing_date} />
       <div className="market-overview">
-        <div>
-          <span className="market-lga"><i />{market.lga}</span>
+        <div className="market-summary">
+          <span className="cw-chip market-lga"><i className="cw-dot" />{market.lga}</span>
           <h3>{market.name}</h3>
           <p>{market.description}</p>
           {market.highlights?.length ? (
             <div className="market-tags">
-              {market.highlights.slice(0, 4).map((item) => <span key={item}>{item}</span>)}
+              {market.highlights.slice(0, 4).map((item) => <span className="cw-chip" key={item}>{item}</span>)}
             </div>
           ) : null}
         </div>
@@ -315,7 +327,7 @@ function MarketSection({ market }) {
         <div className="market-chart-card">
           <div className="market-chart-head">
             <div>
-              <h3>Price Trend - {market.name}</h3>
+              <h3>Price trend · {market.name}</h3>
               <p>Estimated average price per sqm from {firstYear} to {lastYear}. Dashed line is projected after {market.currentYear}.</p>
             </div>
             <div className="market-legend">
@@ -323,23 +335,28 @@ function MarketSection({ market }) {
               <span><i className="projected" />Projected</span>
             </div>
           </div>
-          <PriceTrendChart points={market.trend} currency={market.trendCurrency} />
+          <div className="market-chart-scroll">
+            <PriceTrendChart points={market.trend} currency={market.trendCurrency} />
+          </div>
         </div>
       ) : null}
+    </section>
+  );
+}
 
-      {market.estates?.length ? (
-        <div className="estate-section">
-          <div className="market-chart-head">
-            <div>
-              <h3>Estate intelligence</h3>
-              <p>Estate-level pricing, land mapped, use, status, and available plot details.</p>
-            </div>
-          </div>
-          <div className="estate-grid">
-            {market.estates.map((estate) => <EstateCard estate={estate} key={estate.id} />)}
-          </div>
-        </div>
-      ) : null}
+function EstateSection({ estates, number }) {
+  return (
+    <section className="focus-section focus-section-open estate-section">
+      <SectionHeading
+        number={number}
+        label="Estates"
+        title="Estate intelligence"
+        lede="Estate-level pricing, land mapped, use, status, and available plot details."
+        meta={`${estates.length} estates`}
+      />
+      <div className="estate-grid">
+        {estates.map((estate) => <EstateCard estate={estate} key={estate.id} />)}
+      </div>
     </section>
   );
 }
@@ -356,7 +373,7 @@ function MetricCard({ label, value, sub, accent = false }) {
 
 function EstateCard({ estate }) {
   return (
-    <Link className="estate-card estate-card-link" href={`/estates/${toEstateSlug(estate.id)}`}>
+    <Link className="cw-card estate-card estate-card-link" href={`/estates/${toEstateSlug(estate.id)}`}>
       <div>
         <span>{estate.location_label}</span>
         <h4>{estate.name}<ArrowRight size={15} /></h4>
@@ -403,7 +420,7 @@ function PriceTrendChart({ points, currency = "NGN" }) {
         </g>
       ))}
       <line className="market-now-line" x1={x(currentIndex)} x2={x(currentIndex)} y1={pad.top} y2={height - pad.bottom} />
-      <text className="market-now-text" x={x(currentIndex)} y={pad.top - 5} textAnchor="middle">NOW</text>
+      <text className="market-now-text" x={x(currentIndex)} y={pad.top - 5} textAnchor="middle">Now</text>
       <path className="market-historical-line" d={toPath(historical)} />
       <path className="market-projected-line" d={toPath(projected)} />
       {points.map((point, index) => (
@@ -424,10 +441,14 @@ function formatCompactPrice(value, currency = "NGN") {
   return `${Math.round(value)}`;
 }
 
-function SectionHeading({ title, meta, action }) {
+function SectionHeading({ number, label, title, lede, meta, action }) {
   return (
     <div className="focus-section-head">
-      <h2><i />{title}</h2>
+      <div>
+        <p className="cw-label">{number ? <b>{number}</b> : null}{label}</p>
+        <h2>{title}</h2>
+        {lede ? <p className="focus-section-lede">{lede}</p> : null}
+      </div>
       <div className="focus-section-actions">
         {meta ? <span>{meta}</span> : null}
         {action || null}

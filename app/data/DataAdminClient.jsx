@@ -1,13 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Check, Database, ExternalLink, Paperclip, Plus, Save, Trash2 } from "lucide-react";
+import { Building2, Check, Database, ExternalLink, FileText, Paperclip, Plus, Save, Trash2, UploadCloud } from "lucide-react";
 import { confidenceColor, confidenceLevel, confidenceScore, formatDate } from "@/lib/metrics";
 
 const sourceTypes = ["Official", "Estate", "Internal", "Historical", "Manual"];
 const outcomes = ["Approved", "Pending", "Denied", "Draft", "No data"];
 const resourceTypes = ["Research", "Attachment", "Planning memo", "Market report", "Comparable"];
 const visibilityTypes = ["Client", "Internal"];
+const sections = [
+  { key: "record", label: "Location record" },
+  { key: "resources", label: "Research & files" },
+  { key: "market", label: "Estates & prices" }
+];
 
 export default function DataAdminClient({
   initialRecords,
@@ -29,6 +35,7 @@ export default function DataAdminClient({
   const [estateDraft, setEstateDraft] = useState(defaultEstateDraft(initialRecords[0]?.id || ""));
   const [priceDraft, setPriceDraft] = useState(defaultPriceDraft(initialRecords[0]?.id || ""));
   const [status, setStatus] = useState("");
+  const [section, setSection] = useState("record");
   const selected = useMemo(() => records.find((record) => record.id === selectedId) || records[0] || null, [records, selectedId]);
   const score = confidenceScore(draft);
   const targetOptions = useMemo(() => (
@@ -246,26 +253,54 @@ export default function DataAdminClient({
   if (!draft) {
     return (
       <section className="data-page">
-        <button className="data-primary" type="button" onClick={createRecord}><Plus size={16} /> Create first location</button>
+        <header className="cw-pagehead">
+          <div>
+            <DataCrumbs />
+            <h1 className="cw-pagehead-title">Intelligence data</h1>
+            <p className="cw-lede">No locations yet. Create the first one to start entering intelligence.</p>
+          </div>
+          <button className="cw-btn cw-btn-navy" type="button" onClick={createRecord}><Plus size={16} /> Create first location</button>
+        </header>
       </section>
     );
   }
 
   return (
     <section className="data-page">
-      <header className="data-header">
+      <header className="cw-pagehead">
         <div>
-          <span><Database size={15} /> SQLite database</span>
-          <h1>Intelligence Data</h1>
-          <p>Enter neighborhood intelligence, planning rules, approvals, notes, and manual overrides.</p>
+          <DataCrumbs />
+          <h1 className="cw-pagehead-title">Intelligence data</h1>
+          <p className="cw-lede">Enter neighborhood intelligence, planning rules, approvals, notes, and manual overrides.</p>
         </div>
-        <div>
-          <span className="data-admin-badge">{adminEmail}</span>
-          <button className="data-button" type="button" onClick={logout}>Log out</button>
-          <button className="data-button" type="button" onClick={createRecord}><Plus size={16} /> New location</button>
-          <button className="data-primary" type="submit" form="data-editor"><Save size={16} /> Save data</button>
+        <div className="data-head-actions">
+          <span className="cw-chip data-admin-badge">{adminEmail}</span>
+          <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={logout}>Log out</button>
+          <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={createRecord}><Plus size={16} /> New location</button>
+          <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit" form="data-editor"><Save size={16} /> Save data</button>
         </div>
       </header>
+
+      <div className="data-toolbar">
+        <div className="cw-tabs data-tabs" role="tablist" aria-label="Data sections">
+          {sections.map((item) => (
+            <button
+              className={section === item.key ? "active" : ""}
+              type="button"
+              role="tab"
+              aria-selected={section === item.key}
+              key={item.key}
+              onClick={() => setSection(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="data-toolbar-meta">
+          {status ? <span className="data-status" role="status"><Check size={14} /> {status}</span> : null}
+          <span className="cw-chip"><Database size={13} /> SQLite database</span>
+        </div>
+      </div>
 
       <div className="data-grid">
         <aside className="data-sidebar">
@@ -288,7 +323,7 @@ export default function DataAdminClient({
         </aside>
 
         <div className="data-editor">
-          <form id="data-editor" className="data-editor-stack" onSubmit={saveRecord}>
+          <form id="data-editor" className="data-panel data-editor-stack" onSubmit={saveRecord} hidden={section !== "record"}>
             <section className="data-card data-basics">
             <div className="data-card-head">
               <div>
@@ -374,12 +409,13 @@ export default function DataAdminClient({
           />
 
             <div className="data-editor-actions">
-              <button className="data-danger" type="button" onClick={deleteRecord}><Trash2 size={16} /> Delete</button>
-              {status ? <span><Check size={15} /> {status}</span> : null}
-              <button className="data-primary" type="submit"><Save size={16} /> Save data</button>
+              <button className="cw-btn cw-btn-danger cw-btn-sm" type="button" onClick={deleteRecord}><Trash2 size={16} /> Delete</button>
+              {status ? <span className="data-status"><Check size={14} /> {status}</span> : null}
+              <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Save size={16} /> Save data</button>
             </div>
           </form>
 
+          <div className="data-panel" hidden={section !== "resources"}>
           <ResourceManager
             draft={resourceDraft}
             resources={resources}
@@ -390,7 +426,9 @@ export default function DataAdminClient({
             onDelete={deleteResource}
             onUpdate={updateResource}
           />
+          </div>
 
+          <div className="data-panel" hidden={section !== "market"}>
           <MarketManager
             estateDraft={estateDraft}
             marketEstates={marketEstates}
@@ -412,13 +450,14 @@ export default function DataAdminClient({
             onPriceDraftChange={setPriceDraft}
             onUpdateEstate={updateEstate}
           />
+          </div>
         </div>
 
         <aside className="data-events">
           <h2>Recent changes</h2>
           {events.map((event) => (
             <article key={event.id}>
-              <span>{event.action}</span>
+              <span className="cw-chip">{event.action}</span>
               <strong>{event.neighborhoodId || "System"}</strong>
               <p>{new Date(event.createdAt).toLocaleString()}</p>
             </article>
@@ -463,16 +502,17 @@ function ArrayEditor({ title, items, render, onAdd, onRemove }) {
   return (
     <section className="data-card">
       <div className="data-section-head">
-        <h2>{title}</h2>
-        <button type="button" onClick={onAdd}><Plus size={15} /> Add</button>
+        <h2>{title}<span className="data-count">{items.length}</span></h2>
+        <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={onAdd}><Plus size={15} /> Add</button>
       </div>
       <div className="data-array">
         {items.map((item, index) => (
           <article key={index}>
             {render(item, index)}
-            <button className="data-remove" type="button" onClick={() => onRemove(index)}><Trash2 size={14} /></button>
+            <button className="cw-icon-btn data-remove" type="button" aria-label="Remove row" title="Remove row" onClick={() => onRemove(index)}><Trash2 size={14} /></button>
           </article>
         ))}
+        {!items.length ? <p className="data-empty">Nothing added yet.</p> : null}
       </div>
     </section>
   );
@@ -493,7 +533,7 @@ function ResourceManager({ draft, resources, selectedId, targetOptions, onCreate
   }
 
   return (
-    <section className="data-card resource-admin">
+    <section className="data-card">
       <div className="data-section-head">
         <div>
           <h2>Attachments & market research</h2>
@@ -501,10 +541,10 @@ function ResourceManager({ draft, resources, selectedId, targetOptions, onCreate
         </div>
       </div>
 
-      <form className="resource-create-form" onSubmit={onCreate}>
+      <form className="data-form" onSubmit={onCreate}>
         <label className="data-field">
           <span>Target</span>
-          <select value={`${draft.targetType}:${draft.targetId}`} onChange={(event) => updateTarget(event.target.value)}>
+          <select className="cw-select" value={`${draft.targetType}:${draft.targetId}`} onChange={(event) => updateTarget(event.target.value)}>
             {targetOptions.map((target) => (
               <option value={`${target.type}:${target.id}`} key={`${target.type}:${target.id}`}>
                 {target.name} · {target.type === "estate" ? "Estate" : "Location"}
@@ -528,10 +568,10 @@ function ResourceManager({ draft, resources, selectedId, targetOptions, onCreate
           }))}
         />
         <Textarea label="Research summary" value={draft.summary} onChange={(value) => updateDraft("summary", value)} />
-        <button className="data-primary" type="submit"><Paperclip size={16} /> Add resource</button>
+        <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Paperclip size={16} /> Add resource</button>
       </form>
 
-      <div className="resource-list">
+      <div className="data-list">
         {visibleResources.map((resource) => (
           <ResourceRow
             key={resource.id}
@@ -542,7 +582,7 @@ function ResourceManager({ draft, resources, selectedId, targetOptions, onCreate
           />
         ))}
         {!visibleResources.length ? (
-          <p className="resource-empty">No attachments or market research have been added yet.</p>
+          <p className="data-empty">No attachments or market research have been added yet.</p>
         ) : null}
       </div>
     </section>
@@ -557,24 +597,28 @@ function ResourceRow({ resource, target, onDelete, onUpdate }) {
   }
 
   return (
-    <article className="resource-row">
+    <article className="data-item">
       <header>
-        <div>
-          <span>{resource.resourceType} · {resource.visibility}</span>
-          <strong>{target?.name || resource.targetId}</strong>
-          <small>{resource.author} · {new Date(resource.createdAt).toLocaleDateString()}</small>
+        <span className="data-item-icon">{resource.fileName ? <Paperclip size={18} /> : <FileText size={18} />}</span>
+        <div className="data-item-title">
+          <strong>{resource.title || target?.name || resource.targetId}</strong>
+          <small>{target?.name || resource.targetId} · {resource.author} · {new Date(resource.createdAt).toLocaleDateString()}</small>
+          <div className="data-item-chips">
+            <span className="cw-chip">{resource.resourceType}</span>
+            <span className="cw-chip">{resource.visibility}</span>
+          </div>
         </div>
-        <div>
+        <div className="data-item-actions">
           {resource.url ? (
-            <a href={resource.url} target="_blank" rel="noreferrer" aria-label="Open resource"><ExternalLink size={15} /></a>
+            <a className="cw-icon-btn" href={resource.url} target="_blank" rel="noreferrer" aria-label="Open resource" title="Open resource"><ExternalLink size={15} /></a>
           ) : null}
           {resource.fileName ? (
-            <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer" aria-label="Open attachment"><Paperclip size={15} /></a>
+            <a className="cw-icon-btn" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer" aria-label="Open attachment" title="Open attachment"><Paperclip size={15} /></a>
           ) : null}
-          <button className="data-remove" type="button" onClick={() => onDelete(resource.id)}><Trash2 size={14} /></button>
+          <button className="cw-icon-btn data-remove" type="button" aria-label="Remove resource" title="Remove resource" onClick={() => onDelete(resource.id)}><Trash2 size={14} /></button>
         </div>
       </header>
-      <div className="resource-edit-grid">
+      <div className="data-item-grid">
         <Field label="Title" value={draft.title} onChange={(value) => update("title", value)} />
         <Select label="Type" value={draft.resourceType} options={resourceTypes} onChange={(value) => update("resourceType", value)} />
         <Select label="Visibility" value={draft.visibility} options={visibilityTypes} onChange={(value) => update("visibility", value)} />
@@ -582,7 +626,7 @@ function ResourceRow({ resource, target, onDelete, onUpdate }) {
         <Field label="URL" value={draft.url} onChange={(value) => update("url", value)} />
         <Textarea label="Summary" value={draft.summary} onChange={(value) => update("summary", value)} />
       </div>
-      <button className="data-button" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save resource</button>
+      <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save resource</button>
     </article>
   );
 }
@@ -608,7 +652,7 @@ function MarketManager({
   const targets = uniqueTargets(targetOptions);
 
   return (
-    <section className="data-card market-admin">
+    <section className="data-card">
       <div className="data-section-head">
         <div>
           <h2>Estate & price intelligence</h2>
@@ -616,10 +660,10 @@ function MarketManager({
         </div>
       </div>
 
-      <form className="market-admin-form" onSubmit={onCreateEstate}>
+      <form className="data-form" onSubmit={onCreateEstate}>
         <label className="data-field">
           <span>Neighborhood</span>
-          <select value={estateDraft.neighborhoodId} onChange={(event) => onEstateDraftChange((current) => ({ ...current, neighborhoodId: event.target.value }))}>
+          <select className="cw-select" value={estateDraft.neighborhoodId} onChange={(event) => onEstateDraftChange((current) => ({ ...current, neighborhoodId: event.target.value }))}>
             {neighborhoods.map((record) => <option value={record.id} key={record.id}>{record.name}</option>)}
           </select>
         </label>
@@ -630,20 +674,20 @@ function MarketManager({
         <Field label="Available plots" value={estateDraft.availablePlots} onChange={(value) => onEstateDraftChange((current) => ({ ...current, availablePlots: value }))} />
         <Field label="Total land sqm" type="number" value={estateDraft.totalLandSqm} onChange={(value) => onEstateDraftChange((current) => ({ ...current, totalLandSqm: value }))} />
         <Textarea label="Estate description" value={estateDraft.description} onChange={(value) => onEstateDraftChange((current) => ({ ...current, description: value }))} />
-        <button className="data-primary" type="submit"><Plus size={16} /> Add estate</button>
+        <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Plus size={16} /> Add estate</button>
       </form>
 
-      <div className="market-admin-list">
+      <div className="data-list">
         {visibleEstates.map((estate) => (
           <EstateAdminRow key={estate.id} estate={estate} onDelete={onDeleteEstate} onUpdate={onUpdateEstate} />
         ))}
-        {!visibleEstates.length ? <p className="resource-empty">No editable estates have been added for this neighborhood yet.</p> : null}
+        {!visibleEstates.length ? <p className="data-empty">No editable estates have been added for this neighborhood yet.</p> : null}
       </div>
 
-      <form className="market-admin-form price-form" onSubmit={onCreatePricePoint}>
+      <form className="data-form" onSubmit={onCreatePricePoint}>
         <label className="data-field">
           <span>Price target</span>
-          <select value={`${priceDraft.targetType}:${priceDraft.targetId}`} onChange={(event) => {
+          <select className="cw-select" value={`${priceDraft.targetType}:${priceDraft.targetId}`} onChange={(event) => {
             const [targetType, targetId] = event.target.value.split(":");
             onPriceDraftChange((current) => ({ ...current, targetType, targetId }));
           }}>
@@ -658,21 +702,27 @@ function MarketManager({
         <Field label="Price / sqm" type="number" value={priceDraft.value} onChange={(value) => onPriceDraftChange((current) => ({ ...current, value }))} />
         <Select label="Currency" value={priceDraft.currency} options={["NGN", "USD"]} onChange={(value) => onPriceDraftChange((current) => ({ ...current, currency: value }))} />
         <Field label="Source" value={priceDraft.source} onChange={(value) => onPriceDraftChange((current) => ({ ...current, source: value }))} />
-        <button className="data-primary" type="submit"><Plus size={16} /> Save price point</button>
+        <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Plus size={16} /> Save price point</button>
       </form>
 
-      <div className="price-point-list">
+      <div className="data-table">
+        {visiblePrices.length ? (
+          <div className="data-table-head" aria-hidden="true">
+            <span>Year</span>
+            <span>Target · source</span>
+            <span>Price</span>
+            <span />
+          </div>
+        ) : null}
         {visiblePrices.sort((a, b) => b.year - a.year).map((point) => (
           <article key={point.id}>
-            <div>
-              <strong>{point.year}</strong>
-              <span>{targetName(targets, point)} · {point.source}</span>
-            </div>
+            <strong>{point.year}</strong>
+            <span>{targetName(targets, point)} · {point.source}</span>
             <b>{formatPricePoint(point)}</b>
-            <button className="data-remove" type="button" onClick={() => onDeletePricePoint(point.id)}><Trash2 size={14} /></button>
+            <button className="cw-icon-btn data-remove" type="button" aria-label="Remove price point" title="Remove price point" onClick={() => onDeletePricePoint(point.id)}><Trash2 size={14} /></button>
           </article>
         ))}
-        {!visiblePrices.length ? <p className="resource-empty">No yearly price points have been added for this neighborhood or its estates.</p> : null}
+        {!visiblePrices.length ? <p className="data-empty">No yearly price points have been added for this neighborhood or its estates.</p> : null}
       </div>
     </section>
   );
@@ -685,16 +735,22 @@ function EstateAdminRow({ estate, onDelete, onUpdate }) {
   }
 
   return (
-    <article className="resource-row estate-admin-row">
+    <article className="data-item">
       <header>
-        <div>
-          <span>Estate · {estate.neighborhoodId}</span>
+        <span className="data-item-icon"><Building2 size={18} /></span>
+        <div className="data-item-title">
           <strong>{estate.name}</strong>
           <small>{estate.primaryUse || "Use not set"} · {estate.status || "Status not set"}</small>
+          <div className="data-item-chips">
+            <span className="cw-chip">Estate</span>
+            <span className="cw-chip">{estate.neighborhoodId}</span>
+          </div>
         </div>
-        <button className="data-remove" type="button" onClick={() => onDelete(estate.id)}><Trash2 size={14} /></button>
+        <div className="data-item-actions">
+          <button className="cw-icon-btn data-remove" type="button" aria-label="Remove estate" title="Remove estate" onClick={() => onDelete(estate.id)}><Trash2 size={14} /></button>
+        </div>
       </header>
-      <div className="resource-edit-grid">
+      <div className="data-item-grid">
         <Field label="Name" value={draft.name} onChange={(value) => update("name", value)} />
         <Field label="Primary use" value={draft.primaryUse} onChange={(value) => update("primaryUse", value)} />
         <Field label="Status" value={draft.status} onChange={(value) => update("status", value)} />
@@ -703,8 +759,18 @@ function EstateAdminRow({ estate, onDelete, onUpdate }) {
         <Field label="Total land sqm" type="number" value={draft.totalLandSqm} onChange={(value) => update("totalLandSqm", value)} />
         <Textarea label="Description" value={draft.description} onChange={(value) => update("description", value)} />
       </div>
-      <button className="data-button" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save estate</button>
+      <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save estate</button>
     </article>
+  );
+}
+
+function DataCrumbs() {
+  return (
+    <nav className="cw-crumbs" aria-label="Breadcrumb">
+      <Link href="/dashboard">Dashboard</Link>
+      <span aria-hidden="true">/</span>
+      <span>Data</span>
+    </nav>
   );
 }
 
@@ -712,7 +778,7 @@ function Field({ label, value, onChange, type = "text" }) {
   return (
     <label className="data-field">
       <span>{label}</span>
-      <input type={type} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      <input className="cw-input" type={type} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
@@ -721,7 +787,7 @@ function Textarea({ label, value, onChange }) {
   return (
     <label className="data-field">
       <span>{label}</span>
-      <textarea value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      <textarea className="cw-textarea" value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
@@ -730,13 +796,18 @@ function FileField({ label, file, onChange }) {
   return (
     <label className="data-field data-file-field">
       <span>{label}</span>
-      <input
-        key={file ? "selected" : "empty"}
-        type="file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.txt"
-        onChange={(event) => onChange(event.target.files?.[0] || null)}
-      />
-      {file ? <em>{file.name}</em> : null}
+      <div className="data-dropzone">
+        <input
+          key={file ? "selected" : "empty"}
+          type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.txt"
+          onChange={(event) => onChange(event.target.files?.[0] || null)}
+        />
+        <UploadCloud size={22} />
+        <strong>Drop a document here, or click to browse</strong>
+        <small>PDF, Word, Excel, CSV, text or image</small>
+        {file ? <em>{file.name}</em> : null}
+      </div>
     </label>
   );
 }
@@ -745,7 +816,7 @@ function Select({ label, value, options, onChange }) {
   return (
     <label className="data-field">
       <span>{label}</span>
-      <select value={value || options[0]} onChange={(event) => onChange(event.target.value)}>
+      <select className="cw-select" value={value || options[0]} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => <option key={option}>{option}</option>)}
       </select>
     </label>

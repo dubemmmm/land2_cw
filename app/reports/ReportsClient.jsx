@@ -93,51 +93,60 @@ export default function ReportsClient({ reports, initialSelectedId, isAdmin = fa
   }
 
   return (
-    <section className="reports-split-page">
-      <section className="report-ledger-page">
-        <header className="report-ledger-header">
-          <div>
-            <h1>Reports</h1>
-            <p>{visibleReports.length} of {accessibleReports.length} briefs · grouped by location</p>
-            {isAdmin ? (
-              <nav className="report-tabs" aria-label="Report filters">
-                {filters.map((filter) => (
-                  <button
-                    className={statusFilter === filter.key ? "active" : ""}
-                    key={filter.key}
-                    onClick={() => setStatusFilter(filter.key)}
-                    type="button"
-                  >
-                    {filter.label} <b>{counts[filter.key]}</b>
-                  </button>
-                ))}
-              </nav>
-            ) : null}
-          </div>
-          <div className="report-ledger-tools">
-            <label className="report-search">
-              <Search size={15} />
-              <input
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search site, client, neighborhood..."
-                value={query}
-              />
-            </label>
-            {isAdmin ? <Link className="report-new-btn" href="/reports/new"><Plus size={15} /> New report</Link> : null}
-            <div className="report-filter-row">
-              {isAdmin ? (
-                <button className={changedOnly ? "active" : ""} onClick={() => setChangedOnly((value) => !value)} type="button">
-                  <i /> Changed since sent <b>{counts.changed}</b>
-                </button>
-              ) : null}
-              <em>Sort</em>
-              <button className={sortBy === "recent" ? "active" : ""} onClick={() => setSortBy("recent")} type="button">Recent</button>
-              <button className={sortBy === "confidence" ? "active" : ""} onClick={() => setSortBy("confidence")} type="button">Confidence</button>
-              <button className={sortBy === "az" ? "active" : ""} onClick={() => setSortBy("az")} type="button">A-Z</button>
-            </div>
-          </div>
-        </header>
+    <section className="reports-page">
+      <header className="cw-pagehead">
+        <div>
+          <nav className="cw-crumbs" aria-label="Breadcrumb">
+            <Link href="/dashboard">Portal</Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">Reports</span>
+          </nav>
+          <h1 className="cw-pagehead-title">Reports</h1>
+          <p className="cw-lede">{visibleReports.length} of {accessibleReports.length} briefs, grouped by location. Select one to preview the client-facing document.</p>
+        </div>
+        {isAdmin ? <Link className="cw-btn cw-btn-navy" href="/reports/new"><Plus size={16} /> New report</Link> : null}
+      </header>
 
+      <div className="report-ledger-tools">
+        {isAdmin ? (
+          <nav className="cw-tabs report-tabs" aria-label="Report filters">
+            {filters.map((filter) => (
+              <button
+                className={statusFilter === filter.key ? "active" : ""}
+                key={filter.key}
+                onClick={() => setStatusFilter(filter.key)}
+                type="button"
+              >
+                {filter.label} <b>{counts[filter.key]}</b>
+              </button>
+            ))}
+          </nav>
+        ) : null}
+        <label className="report-search">
+          <Search size={15} />
+          <input
+            aria-label="Search reports"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search site, client, neighborhood..."
+            value={query}
+          />
+        </label>
+        <div className="report-filter-row">
+          {isAdmin ? (
+            <button className={`report-changed-toggle ${changedOnly ? "active" : ""}`} onClick={() => setChangedOnly((value) => !value)} type="button">
+              <i /> Changed since sent <b>{counts.changed}</b>
+            </button>
+          ) : null}
+          <em>Sort</em>
+          <div className="cw-tabs report-sort">
+            <button className={sortBy === "recent" ? "active" : ""} onClick={() => setSortBy("recent")} type="button">Recent</button>
+            <button className={sortBy === "confidence" ? "active" : ""} onClick={() => setSortBy("confidence")} type="button">Confidence</button>
+            <button className={sortBy === "az" ? "active" : ""} onClick={() => setSortBy("az")} type="button">A-Z</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="reports-split">
         <div className={`report-table ${isAdmin ? "admin-mode" : "client-mode"}`}>
           <div className="report-table-head">
             <span>Report</span>
@@ -162,11 +171,12 @@ export default function ReportsClient({ reports, initialSelectedId, isAdmin = fa
                   type="button"
                 >
                   <div>
+                    {report.ref ? <span className="report-row-ref">{report.ref}</span> : null}
                     <strong>{report.siteTitle}</strong>
                     <p>{reportRowMeta(report)}</p>
                   </div>
                   <span className="report-confidence"><i style={{ "--tone": confidenceColor(report.score) }} /> <b>{report.score}</b> {report.level}</span>
-                  {isAdmin ? <StatusPill status={report.status} /> : null}
+                  {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
                   <span className="report-activity">
                     {isAdmin ? report.activity : "Published"}
                     {isAdmin && hasChanges(report) ? <em><GitCommitHorizontal size={12} /> {changeCount(report)} since sent</em> : null}
@@ -183,10 +193,9 @@ export default function ReportsClient({ reports, initialSelectedId, isAdmin = fa
             </div>
           ) : null}
         </div>
-      </section>
 
       {selected ? (
-        <ReportDetail report={selected} reports={accessibleReports} shareState={shareState} onSelect={selectReport} onShare={() => shareReport(selected)} isAdmin={isAdmin} embedded />
+        <ReportDetail key={selected.id} report={selected} reports={accessibleReports} shareState={shareState} onSelect={selectReport} onShare={() => shareReport(selected)} isAdmin={isAdmin} embedded />
       ) : (
         <section className="report-detail-screen embedded empty">
           <div className="report-select-empty">
@@ -196,6 +205,7 @@ export default function ReportsClient({ reports, initialSelectedId, isAdmin = fa
           </div>
         </section>
       )}
+      </div>
     </section>
   );
 }
@@ -211,18 +221,19 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, isAdmin 
   return (
     <section className={`report-detail-screen ${embedded ? "embedded" : ""}`}>
       <div className="report-detail-actions">
-        {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
-        {isAdmin ? <Link aria-label="Edit report" href={`/reports/${report.id}/edit`}><Pencil size={15} /></Link> : null}
-        {isAdmin ? <button aria-label="Copy client report link" onClick={onShare} type="button"><Share2 size={15} /></button> : null}
+        <span className="report-detail-label">Report preview</span>
         {shareState ? <em>{shareState}</em> : null}
+        {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
+        {isAdmin ? <Link aria-label="Edit report" className="cw-icon-btn" href={`/reports/${report.id}/edit`} title="Edit report"><Pencil size={15} /></Link> : null}
+        {isAdmin ? <button aria-label="Copy client report link" className="cw-icon-btn" onClick={onShare} title="Share client link" type="button"><Share2 size={15} /></button> : null}
       </div>
 
       <article className="report-paper">
         <header className="report-paper-head">
           <div className="report-brand">
-            <span>CW</span>
+            <span className="cw-mark">CW</span>
             <div>
-              <strong>CW Real Estate</strong>
+              <strong>Squaremeter by CW</strong>
               <p>Development brief</p>
             </div>
           </div>
@@ -347,9 +358,9 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, isAdmin 
                     <p>{resource.resourceType} · {resource.source}</p>
                   </div>
                   {resource.url ? (
-                    <a href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
                   ) : resource.fileName ? (
-                    <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
                   ) : null}
                 </article>
               ))}
@@ -388,14 +399,14 @@ function ReportDetail({ report, reports, shareState, onSelect, onShare, isAdmin 
 function SectionHeading({ title, meta }) {
   return (
     <div className="report-section-title">
-      <h2><i />{title}</h2>
+      <h2>{title}</h2>
       {meta ? <span>{meta}</span> : null}
     </div>
   );
 }
 
 function statusClass(status) {
-  return `report-detail-status ${String(status).toLowerCase().replace(/\s+/g, "-")}`;
+  return `cw-chip report-detail-status ${String(status).toLowerCase().replace(/\s+/g, "-")}`;
 }
 
 function reportRowMeta(report) {

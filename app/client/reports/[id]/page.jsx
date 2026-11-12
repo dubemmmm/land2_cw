@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Building2, ExternalLink, GitCommitHorizontal, User } from "lucide-react";
 import { SourcePill, StatusPill } from "@/components/Pills";
 import { confidenceColor, formatDate } from "@/lib/metrics";
 import { getReport, getReports } from "@/lib/reportStore";
+import PrintButton from "./PrintButton";
 
 export const dynamic = "force-dynamic";
 
@@ -18,13 +20,22 @@ export default async function ClientReportPage({ params }) {
   const rationale = report.data?.recommendationRationale || n.recommendation?.confidenceReason || "Verify source pricing, title, survey, estate rules, and approvals before committing capital.";
 
   return (
-    <main className="client-report-screen">
+    <div className="client-report-screen">
+      <header className="client-report-bar">
+        <Link className="client-report-brand" href="/">
+          <span className="cw-mark">CW</span>
+          <span>Squaremeter by CW</span>
+        </Link>
+        <PrintButton />
+      </header>
+
+      <main className="client-report-main">
       <article className="report-paper">
         <header className="report-paper-head">
           <div className="report-brand">
-            <span>CW</span>
+            <span className="cw-mark">CW</span>
             <div>
-              <strong>CW Real Estate</strong>
+              <strong>Squaremeter by CW</strong>
               <p>Development brief</p>
             </div>
           </div>
@@ -133,9 +144,9 @@ export default async function ClientReportPage({ params }) {
                     <p>{resource.resourceType} · {resource.source}</p>
                   </div>
                   {resource.url ? (
-                    <a href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
                   ) : resource.fileName ? (
-                    <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
                   ) : null}
                 </article>
               ))}
@@ -158,14 +169,21 @@ export default async function ClientReportPage({ params }) {
           </>
         ) : null}
       </article>
-    </main>
+      </main>
+
+      <footer className="client-report-legal">
+        © {new Date().getFullYear()} Squaremeter by CW Real Estate. Figures shown are estimates based on tracked market
+        data and may not reflect final transaction prices. Verify title, survey and approvals before committing capital.
+        Questions about this brief: <a href="mailto:hello@cwlagos.com">hello@cwlagos.com</a>
+      </footer>
+    </div>
   );
 }
 
 function SectionHeading({ title, meta }) {
   return (
     <div className="report-section-title">
-      <h2><i />{title}</h2>
+      <h2>{title}</h2>
       {meta ? <span>{meta}</span> : null}
     </div>
   );

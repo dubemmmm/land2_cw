@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,34 +33,36 @@ export default function LoginClient({ next = "/data", devCredentials = null }) {
     <main className="auth-screen">
       <section className="auth-panel">
         <div className="auth-brand">
-          <span>CW</span>
+          <span className="cw-mark">CW</span>
           <div>
-            <strong>CW Real Estate</strong>
+            <strong>Squaremeter by CW</strong>
             <p>Admin intelligence console</p>
           </div>
         </div>
         <div className="auth-heading">
-          <ShieldCheck size={18} />
           <h1>Admin sign in</h1>
           <p>Access is required to add, edit, or override intelligence data.</p>
         </div>
         <form onSubmit={login} className="auth-form">
           <label>
             <span>Email</span>
-            <input type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+            <input className="cw-input" type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
           </label>
           <label>
             <span>Password</span>
-            <input type="password" autoComplete="current-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+            <input className="cw-input" type="password" autoComplete="current-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
           </label>
-          {error ? <p>{error}</p> : null}
+          {error ? <p className="auth-error" role="alert">{error}</p> : null}
           {devCredentials ? (
             <small className="auth-dev-hint">
               Local default: {devCredentials.email} / {devCredentials.password}
             </small>
           ) : null}
-          <button type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
+          <button className="cw-btn cw-btn-navy" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
         </form>
+        <div className="auth-foot">
+          <Link className="cw-link" href="/">Back to Squaremeter</Link>
+        </div>
       </section>
     </main>
   );

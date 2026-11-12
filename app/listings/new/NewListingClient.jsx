@@ -117,18 +117,15 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
 
   return (
     <section className="listing-editor-page">
-      <header className="listing-editor-topbar">
+      <header className="cw-pagehead">
         <div>
-          <h1>{initialListing ? "Edit land listing" : "New land listing"}</h1>
-          <p>{listingsCount} listings tracked across {neighborhoods.length} locations</p>
-        </div>
-        <div className="listing-editor-actions">
-          <span>{missingText}</span>
-          <button type="button" onClick={clearForm}>Clear</button>
-          <button type="button" onClick={() => saveListing("Draft")} disabled={saving}><Save size={15} /> Save as draft</button>
-          <button className="primary" type="button" onClick={() => saveListing("Published")} disabled={!canPublish || saving}>
-            <UploadCloud size={15} /> Publish listing
-          </button>
+          <nav className="cw-crumbs" aria-label="Breadcrumb">
+            <Link href="/listings">Listings</Link>
+            <span aria-hidden="true">/</span>
+            <span>{initialListing ? "Edit listing" : "New listing"}</span>
+          </nav>
+          <h1 className="cw-pagehead-title">{initialListing ? "Edit land listing" : "New land listing"}</h1>
+          <p className="cw-lede">{listingsCount} listings tracked across {neighborhoods.length} locations</p>
         </div>
       </header>
 
@@ -136,7 +133,7 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
 
       <div className="listing-editor-shell">
         <form className="listing-editor-form" onSubmit={(event) => event.preventDefault()}>
-          <EditorSection title="Photos" meta={`${form.photos.length} added`}>
+          <EditorSection number="01" title="Photos" meta={`${form.photos.length} added`}>
             <div
               className="listing-dropzone"
               onDragOver={(event) => event.preventDefault()}
@@ -166,22 +163,22 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             ) : null}
           </EditorSection>
 
-          <EditorSection title="Basic info & classification">
+          <EditorSection number="02" title="Basic info & classification">
             <label className="listing-field full">
               <span>Title / plot address</span>
-              <input value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Plot 14B, Bourdillon Close" />
+              <input className="cw-input" value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Plot 14B, Bourdillon Close" />
             </label>
             <div className="listing-field-grid">
               <label className="listing-field">
                 <span>Location</span>
-                <select value={form.neighborhoodId} onChange={(event) => update("neighborhoodId", event.target.value)}>
+                <select className="cw-select" value={form.neighborhoodId} onChange={(event) => update("neighborhoodId", event.target.value)}>
                   <option value="">Select a location</option>
                   {neighborhoods.map((neighborhood) => <option value={neighborhood.id} key={neighborhood.id}>{neighborhood.name}</option>)}
                 </select>
               </label>
               <label className="listing-field">
                 <span>Estate <em>(optional)</em></span>
-                <input list="estate-suggestions" value={form.estate} onChange={(event) => update("estate", event.target.value)} placeholder="e.g. Lekki Gardens Estate" />
+                <input className="cw-input" list="estate-suggestions" value={form.estate} onChange={(event) => update("estate", event.target.value)} placeholder="e.g. Lekki Gardens Estate" />
                 <datalist id="estate-suggestions">
                   {matchingEstates.map((estate) => <option value={estate.name} key={estate.id} />)}
                 </datalist>
@@ -189,13 +186,13 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             </div>
           </EditorSection>
 
-          <EditorSection title="Specs">
+          <EditorSection number="03" title="Specs">
             <div className="listing-field-grid">
               <label className="listing-field">
                 <span>Land size</span>
                 <div className="listing-size-control">
-                  <input value={form.sizeValue} inputMode="decimal" onChange={(event) => update("sizeValue", event.target.value)} placeholder="1200" />
-                  <div>
+                  <input className="cw-input" value={form.sizeValue} inputMode="decimal" onChange={(event) => update("sizeValue", event.target.value)} placeholder="1200" />
+                  <div className="cw-tabs">
                     {sizeUnits.map((unit) => (
                       <button className={form.sizeUnit === unit ? "active" : ""} type="button" onClick={() => update("sizeUnit", unit)} key={unit}>{unit}</button>
                     ))}
@@ -207,7 +204,7 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
                 <span>Asking price</span>
                 <div className="listing-price-field">
                   <i>₦</i>
-                  <input value={form.askingPrice} inputMode="numeric" onChange={(event) => update("askingPrice", event.target.value)} placeholder="850000000" />
+                  <input className="cw-input" value={form.askingPrice} inputMode="numeric" onChange={(event) => update("askingPrice", event.target.value)} placeholder="850000000" />
                 </div>
                 <small>{form.askingPrice ? formatFullPrice(form.askingPrice) : "Price not set"}</small>
               </label>
@@ -222,10 +219,10 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             </div>
           </EditorSection>
 
-          <EditorSection title="Legal & status">
+          <EditorSection number="04" title="Legal & status">
             <label className="listing-field full">
               <span>Title document status</span>
-              <select value={form.titleDocument} onChange={(event) => update("titleDocument", event.target.value)}>
+              <select className="cw-select" value={form.titleDocument} onChange={(event) => update("titleDocument", event.target.value)}>
                 {titleDocuments.map((title) => <option key={title}>{title}</option>)}
               </select>
               <small>{titleDocumentHelp(form.titleDocument)}</small>
@@ -240,14 +237,25 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             </div>
           </EditorSection>
 
-          <EditorSection title="Description">
+          <EditorSection number="05" title="Description">
             <label className="listing-field full">
               <span>Internal notes</span>
-              <textarea value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Internal listing notes. Use this for access, owner, pricing context, or due diligence reminders." />
+              <textarea className="cw-textarea" value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Internal listing notes. Use this for access, owner, pricing context, or due diligence reminders." />
             </label>
           </EditorSection>
 
-          {error ? <p className="listing-form-error">{error}</p> : null}
+          {error ? <p className="listing-form-error" role="alert">{error}</p> : null}
+
+          <div className="listing-editor-actions">
+            <span>{missingText}</span>
+            <div>
+              <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={clearForm}>Clear</button>
+              <button className="cw-btn cw-btn-outline cw-btn-sm" type="button" onClick={() => saveListing("Draft")} disabled={saving}><Save size={15} /> Save as draft</button>
+              <button className="cw-btn cw-btn-navy cw-btn-sm" type="button" onClick={() => saveListing("Published")} disabled={!canPublish || saving}>
+                <UploadCloud size={15} /> Publish listing
+              </button>
+            </div>
+          </div>
         </form>
 
         <aside className="listing-editor-aside">
@@ -255,8 +263,8 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
           <article className="listing-preview-card">
             <div className="listing-preview-media">
               {form.photos[0] ? <img src={form.photos[0]} alt="" /> : <div><Image size={28} /><span>Add photos to preview the cover</span></div>}
-              <b>{form.listingStatus}</b>
-              <em>{form.askingPrice ? formatCompactPrice(form.askingPrice) : "Price not set"}</em>
+              <b className="cw-chip cw-chip-glass">{form.listingStatus}</b>
+              <em className="cw-chip cw-chip-glass">{form.askingPrice ? formatCompactPrice(form.askingPrice) : "Price not set"}</em>
             </div>
             <div className="listing-preview-body">
               <h2>{form.title || "Untitled listing"}</h2>
@@ -273,18 +281,18 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             <CheckItem done={requirements.photo} label="At least one photo" />
           </article>
 
-          <Link className="listing-back-link" href="/listings">Back to listings</Link>
+          <Link className="cw-link listing-back-link" href="/listings">Back to listings</Link>
         </aside>
       </div>
     </section>
   );
 }
 
-function EditorSection({ title, meta, children }) {
+function EditorSection({ number, title, meta, children }) {
   return (
     <section className="listing-editor-card">
       <header>
-        <div><i /> <h2>{title}</h2></div>
+        <h2 className="cw-label"><b>{number}</b>{title}</h2>
         {meta ? <span>{meta}</span> : null}
       </header>
       {children}
