@@ -58,7 +58,10 @@ export default function LoginClient({ next = "/data", devHint = false }) {
           <button className="cw-btn cw-btn-navy" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
         </form>
         <div className="auth-foot">
-          <Link className="cw-link" href="/">Back to the public site</Link>
+          <div className="auth-foot-rows">
+            <span>Not CW staff? <Link className="cw-link" href="/login">Sign in to your account</Link></span>
+            <Link className="cw-link" href="/">Back to the public site</Link>
+          </div>
         </div>
       </section>
     </main>

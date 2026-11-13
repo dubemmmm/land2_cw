@@ -9,6 +9,7 @@ import "./styles/detail.css";
 import "./styles/reports.css";
 import "./styles/data.css";
 import "./styles/forms.css";
+import "./styles/account.css";
 import "./styles/listings.css";
 import "./styles/landing.css";
 

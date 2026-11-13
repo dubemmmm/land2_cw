@@ -1,6 +1,7 @@
 import Link from "next/link";
+import AccountBadge from "@/components/AccountBadge";
 import CommandBar from "@/components/CommandBar";
-import { BarChart3, Database, FileText, Home, LayoutDashboard, Map, Settings } from "lucide-react";
+import { BarChart3, Database, FileText, Home, LayoutDashboard, Map, Settings, Users } from "lucide-react";
 
 const items = [
   { href: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -8,7 +9,8 @@ const items = [
   { href: "/map", key: "map", label: "Map", icon: Map },
   { href: "/reports", key: "reports", label: "Reports", icon: FileText },
   { href: "/data", key: "data", label: "Data", icon: Database },
-  { href: "/signals", key: "signals", label: "Signals", icon: BarChart3 }
+  { href: "/signals", key: "signals", label: "Signals", icon: BarChart3 },
+  { href: "/admin/accounts", key: "accounts", label: "Accounts", icon: Users }
 ];
 
 export default function AppShell({ active, children }) {
@@ -39,7 +41,7 @@ export default function AppShell({ active, children }) {
           <Link className="rail-link" href="/admin/login" aria-label="Settings" data-label="Settings" title="Settings">
             <Settings size={21} />
           </Link>
-          <span className="avatar">CO</span>
+          <AccountBadge variant="rail" />
         </div>
       </aside>
       <main className="page">{children}</main>

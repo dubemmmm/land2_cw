@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import AccountBadge from "@/components/AccountBadge";
 
 const defaultLinks = [
   { href: "/#prices", label: "Prices" },
@@ -36,6 +37,7 @@ export default function SiteNav({ links = defaultLinks, cta = { href: "/dashboar
           ))}
         </div>
         <div className="sq-nav-actions">
+          <AccountBadge />
           {cta ? <Link className="cw-btn cw-btn-navy cw-btn-sm" href={cta.href}>{cta.label}</Link> : null}
         </div>
       </nav>

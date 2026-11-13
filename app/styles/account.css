@@ -1,0 +1,439 @@
+/* Accounts: additions to the auth panel (forms.css), the account page and the admin accounts page. */
+
+/* ---------- Auth panel additions ---------- */
+.auth-panel-wide {
+  max-width: 460px;
+}
+
+a.auth-brand {
+  text-decoration: none;
+}
+
+.auth-roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.auth-roles legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--ink-soft);
+  font: 500 13.5px/1.3 var(--font-sans);
+}
+
+.auth-role {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.auth-role.is-on {
+  border-color: var(--navy);
+  box-shadow: inset 0 0 0 1px var(--navy);
+}
+
+.auth-role input {
+  margin: 3px 0 0;
+  accent-color: var(--navy);
+}
+
+.auth-role b {
+  display: block;
+  color: var(--ink);
+  font: 500 14.5px/1.3 var(--font-sans);
+}
+
+.auth-role small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font: 400 12.5px/1.4 var(--font-sans);
+}
+
+.auth-field-hint,
+.auth-field-error {
+  font: 400 13px/1.4 var(--font-sans);
+  font-style: normal;
+  color: var(--muted);
+}
+
+.auth-field-error {
+  color: var(--red);
+  font-weight: 500;
+}
+
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.auth-label-row .cw-link {
+  font-size: 13px;
+}
+
+.auth-notice,
+.auth-success {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font: 500 13.5px/1.45 var(--font-sans);
+}
+
+.auth-success {
+  border-color: var(--green);
+  background: var(--green-50);
+  color: var(--accent-600);
+}
+
+.auth-note {
+  margin-top: 20px;
+  color: var(--ink-soft);
+  font: 400 14.5px/1.55 var(--font-sans);
+}
+
+.auth-note p {
+  margin: 0 0 10px;
+}
+
+.auth-inline-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--navy);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.auth-foot,
+.auth-foot-rows {
+  color: var(--muted);
+  font: 400 14px/1.5 var(--font-sans);
+}
+
+.auth-foot-rows {
+  display: grid;
+  gap: 6px;
+}
+
+/* ---------- Top bar: who is signed in ---------- */
+.sq-nav-account {
+  min-width: 52px;
+  margin-right: 18px;
+  color: var(--ink);
+  font: 500 14.5px/1 var(--font-sans);
+  text-align: right;
+  text-decoration: none;
+}
+
+.sq-nav-account:hover {
+  color: var(--accent-600);
+}
+
+a.avatar {
+  text-decoration: none;
+}
+
+a.avatar:hover {
+  background: var(--on-navy-line);
+  color: var(--on-navy);
+}
+
+/* ---------- Account page ---------- */
+.acct-page {
+  padding: 48px 0 88px;
+  background: var(--paper);
+  min-height: 70vh;
+}
+
+.acct-container {
+  max-width: 980px;
+}
+
+.acct-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.acct-head h1 {
+  margin: 0;
+}
+
+.acct-head p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font: 400 15px/1.5 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.acct-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  padding: 16px 0 30px;
+}
+
+.acct-links a {
+  color: var(--navy);
+  font: 500 15px/1.4 var(--font-sans);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+}
+
+.acct-links a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.acct-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.acct-card {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+}
+
+.acct-card h2 {
+  margin: 0;
+  color: var(--ink);
+  font: 500 19px/1.25 var(--font-sans);
+  letter-spacing: -0.015em;
+}
+
+.acct-card .auth-form {
+  margin-top: 18px;
+}
+
+.acct-card .auth-form .cw-btn {
+  width: auto;
+  justify-self: start;
+}
+
+/* ---------- Admin: accounts ---------- */
+.acct-admin-lede {
+  max-width: 640px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font: 400 15px/1.5 var(--font-sans);
+}
+
+.acct-admin-error {
+  margin-bottom: 16px;
+}
+
+.acct-admin-card {
+  margin-bottom: 20px;
+  padding: 0;
+}
+
+.acct-admin-card h2 {
+  padding: 20px 24px 16px;
+}
+
+.acct-waiting {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acct-waiting li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+}
+
+.acct-waiting b {
+  display: block;
+  color: var(--ink);
+  font: 500 15.5px/1.3 var(--font-sans);
+}
+
+.acct-waiting span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font: 400 14px/1.45 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.acct-waiting a,
+.acct-table a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.acct-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.acct-tablewrap {
+  position: relative;
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+}
+
+.acct-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font: 400 14.5px/1.4 var(--font-sans);
+}
+
+.acct-table th,
+.acct-table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.acct-table th:first-child {
+  padding-left: 24px;
+}
+
+.acct-table td:last-child {
+  padding-right: 24px;
+}
+
+.acct-table td.acct-actions {
+  display: table-cell;
+  text-align: right;
+}
+
+.acct-table thead th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.acct-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+
+.acct-table tbody th {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.acct-table tbody th small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font: 400 13px/1.3 var(--font-sans);
+}
+
+.acct-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.acct-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--faint);
+}
+
+.acct-status-active::before {
+  background: var(--green);
+}
+
+.acct-status-pending_approval::before {
+  background: var(--amber);
+}
+
+.acct-status-suspended::before,
+.acct-status-declined::before {
+  background: var(--red);
+}
+
+.acct-empty {
+  margin: 0;
+  padding: 18px 24px 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 400 15px/1.5 var(--font-sans);
+}
+
+.acct-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .acct-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sq-nav-account {
+    margin-right: 14px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-roles {
+    grid-template-columns: 1fr;
+  }
+
+  .acct-page {
+    padding: 28px 0 56px;
+  }
+
+  .acct-head {
+    flex-direction: column;
+  }
+
+  .acct-card {
+    padding: 20px;
+  }
+
+  .acct-admin-card {
+    padding: 0;
+  }
+
+  .acct-waiting li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

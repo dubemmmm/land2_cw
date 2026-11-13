@@ -13,6 +13,23 @@ A Next.js planning intelligence dashboard for evaluating Lagos development locat
 - Admin-managed attachments and market research for locations and estates
 - SQLite-backed seed database created automatically at runtime
 
+## Accounts
+
+Buyers and agents can create their own accounts:
+
+- `/signup`, `/login`, `/forgot-password`, `/account` for buyers and agents.
+- A buyer can sign in once they confirm their email. An agent confirms their email and then waits for an admin to approve them at `/admin/accounts`.
+- The admin login at `/admin/login` is separate and still comes from `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+
+Accounts are stored apart from the rest of the data, through `@libsql/client`:
+
+- Locally: a file, `data/accounts.db` (no setup needed).
+- On Vercel: a Turso database. Set `ACCOUNTS_DB_URL` (`libsql://...`) and `ACCOUNTS_DB_TOKEN`. Without them, account pages fail on Vercel rather than writing to temporary storage.
+
+Emails (confirm address, reset password, agent approved) are sent through Resend when `RESEND_API_KEY` is set, from `MAIL_FROM`. Without the key they are printed in the server log, which is how to follow the links during local work. Set `APP_URL` to the public address so links in emails point to the right place.
+
+In production (`next start` or Vercel) `AUTH_SECRET`, `ADMIN_EMAIL` and `ADMIN_PASSWORD` are required. The development defaults below only work under `npm run dev`.
+
 ## Tech Stack
 
 - Next.js App Router
