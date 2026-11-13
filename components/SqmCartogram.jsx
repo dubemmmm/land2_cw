@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import PatternDefs, { patternFill } from "@/components/PatternDefs";
 
 // Lagos as squares: each location's area is proportional to its price per m².
 // `layout` comes from layoutCartogram() in lib/plot.js (computed on the server).
@@ -16,7 +15,6 @@ export default function SqmCartogram({ layout, onNavy = true }) {
   return (
     <figure className={`sq-carto ${onNavy ? "sq-on-navy" : ""}`}>
       <svg viewBox={`0 0 ${layout.width} ${layout.height}`} role="group" aria-label="Lagos locations drawn as squares sized by price per square metre">
-        <PatternDefs id="carto" color="currentColor" />
         {squares.map((item, index) => {
           const isActive = active?.id === item.id;
           return (
@@ -33,14 +31,12 @@ export default function SqmCartogram({ layout, onNavy = true }) {
                 <>
                   <image className="sq-carto-photo" href={item.photo} x={item.x} y={item.y} width={item.side} height={item.side} preserveAspectRatio="xMidYMid slice" />
                   <rect className="sq-carto-tint" x={item.x} y={item.y} width={item.side} height={item.side} />
-                  <g className="sq-carto-grade">
-                    <rect className="sq-carto-grade-bg" x={item.x + item.side - 22} y={item.y + 6} width="16" height="16" />
-                    <rect x={item.x + item.side - 22} y={item.y + 6} width="16" height="16" fill={patternFill(item.pattern, "carto")} />
-                  </g>
                 </>
               ) : (
-                <rect className="sq-carto-fill" x={item.x} y={item.y} width={item.side} height={item.side} fill={patternFill(item.pattern, "carto")} />
+                <rect className="sq-carto-fill" x={item.x} y={item.y} width={item.side} height={item.side} />
               )}
+              <circle className="sq-carto-grade-bg" cx={item.x + item.side - 13} cy={item.y + 13} r="7.5" />
+              <circle className={`sq-carto-grade sq-carto-${item.pattern}`} cx={item.x + item.side - 13} cy={item.y + 13} r="4.5" />
               <rect className="sq-carto-line" x={item.x} y={item.y} width={item.side} height={item.side} pathLength="1" />
               {[[0, 0], [1, 0], [0, 1], [1, 1]].map(([dx, dy]) => (
                 <rect className="sq-carto-beacon" key={`${dx}${dy}`} x={item.x + dx * item.side - 2.5} y={item.y + dy * item.side - 2.5} width="5" height="5" />

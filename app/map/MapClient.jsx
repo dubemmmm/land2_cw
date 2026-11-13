@@ -158,7 +158,7 @@ export default function MapClient({ initialNeighborhoods, prices = NO_PRICES }) 
         <div className="map-canvas" ref={mapRef} />
 
         <div className="map-key">
-          <p>Square size shows price per m². Fill shows data confidence.</p>
+          <p>Square size shows price per m². Colour shows data confidence.</p>
           <ConfidenceLegend />
         </div>
 

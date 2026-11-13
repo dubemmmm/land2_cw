@@ -79,9 +79,10 @@
 }
 
 .focus-conf .sq-pat {
-  width: 0.6em;
-  height: 0.6em;
-  margin-right: 0.3em;
+  width: 0.42em;
+  height: 0.42em;
+  margin-right: 0.28em;
+  vertical-align: 0.12em;
 }
 
 .focus-about {

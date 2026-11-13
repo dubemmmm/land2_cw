@@ -45,7 +45,7 @@ export default function BudgetScale({ items, initial = 500e6, maxPx = 220 }) {
           {barMetres} m
         </p>
       </div>
-      <ol className="sq-budget-row sq-grid">
+      <ol className="sq-budget-row">
         {rows.map((row) => (
           <li key={row.id}>
             <Link href={row.href} aria-label={`${row.name}: ${formatNaira(budget)} buys about ${formatSqm(row.sqm)} square metres`}>

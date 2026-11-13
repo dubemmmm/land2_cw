@@ -179,7 +179,7 @@ export default async function LandingPage() {
             <h2 className="cw-h2">We tell you how sure each figure is</h2>
             <p className="land-sub">
               A price is only as good as its sources. Every location carries a confidence score from 0 to 100,
-              and you will see it drawn the same way wherever a price appears.
+              and you will see it marked the same way wherever a price appears.
             </p>
             <ul className="land-key">
               {confidenceLegend.map((item) => (
@@ -247,9 +247,8 @@ export default async function LandingPage() {
   );
 }
 
-const distPatterns = ["solid", "hatch", "dot", "none"];
 
-// Share of a whole, drawn as one bar to scale. Segments are told apart by pattern.
+// Share of a whole, drawn as one bar to scale. Segments are shades of navy, darkest first.
 function Distribution({ title, total, entries }) {
   const sum = entries.reduce((acc, entry) => acc + entry.count, 0) || 1;
   return (
@@ -260,13 +259,13 @@ function Distribution({ title, total, entries }) {
       </header>
       <div className="land-dist-bar" role="img" aria-label={entries.map((entry) => `${entry.label} ${entry.count}`).join(", ")}>
         {entries.map((entry, index) => (
-          <i key={entry.label} className={`sq-pat-${distPatterns[index % distPatterns.length]}`} style={{ flexGrow: entry.count }} />
+          <i key={entry.label} className={`land-shade-${index % 4}`} style={{ flexGrow: entry.count }} />
         ))}
       </div>
       <ul>
         {entries.map((entry, index) => (
           <li key={entry.label}>
-            <i className={`sq-pat sq-pat-${distPatterns[index % distPatterns.length]}`} aria-hidden="true" />
+            <i className={`land-swatch land-shade-${index % 4}`} aria-hidden="true" />
             <span>{entry.label}</span>
             <b className="sq-fig">{entry.count}</b>
             <em className="sq-fig">{Math.round((entry.count / sum) * 100)}%</em>

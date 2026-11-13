@@ -372,33 +372,34 @@ a.sq-sheet:hover,
   flex-wrap: wrap;
 }
 
-/* ---------- Confidence patterns ----------
-   solid = verified, hatched = estimated, dotted = thin data, empty = no data.
-   The pattern is drawn in currentColor. */
+/* ---------- Confidence dot ----------
+   A small coloured dot shown beside the level and score ("High · 82").
+   Class suffixes are the values of confidencePattern() in lib/metrics.js:
+   solid = high, hatch = medium, dot = low, none = no data. */
 .sq-pat {
   display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 9px;
+  height: 9px;
   flex: none;
-  border: 1px solid currentColor;
-  color: var(--navy);
+  border-radius: 50%;
+  background: var(--faint);
 }
 
 .sq-pat-solid {
-  background: currentColor;
+  background: var(--green);
 }
 
 .sq-pat-hatch {
-  background: repeating-linear-gradient(135deg, currentColor 0 1.5px, transparent 1.5px 5px);
+  background: var(--amber);
 }
 
 .sq-pat-dot {
-  background: radial-gradient(currentColor 1px, transparent 1.3px) 0 0 / 5px 5px;
+  background: var(--muted);
 }
 
 .sq-pat-none {
   background: transparent;
-  border-style: dashed;
+  box-shadow: inset 0 0 0 1.5px var(--faint);
 }
 
 .sq-legend {
@@ -423,9 +424,19 @@ a.sq-sheet:hover,
   color: var(--on-navy-muted);
 }
 
-.sq-on-navy .sq-pat,
-.sq-legend.on-navy .sq-pat {
-  color: #ffffff;
+.sq-on-navy .sq-pat-solid,
+.sq-legend.on-navy .sq-pat-solid {
+  background: #4cc493;
+}
+
+.sq-on-navy .sq-pat-hatch,
+.sq-legend.on-navy .sq-pat-hatch {
+  background: #e7a93a;
+}
+
+.sq-on-navy .sq-pat-dot,
+.sq-legend.on-navy .sq-pat-dot {
+  background: var(--navy-200);
 }
 
 /* Title-document badge */

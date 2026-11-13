@@ -92,9 +92,7 @@
 
 /* ---------- Leaflet: price squares ----------
    Side length is set per marker (area follows price per m²).
-   Fill follows confidencePattern(): solid / hatch / dot / none,
-   the same patterns as .sq-pat-* but on a white ground so the map
-   does not show through. */
+   Colour follows data confidence: green high, amber medium, grey low, white none. */
 .map-sq-icon {
   border: 0;
   background: transparent;
@@ -105,22 +103,21 @@
   width: 100%;
   height: 100%;
   border: 1.5px solid var(--navy);
-  color: var(--navy);
+  border-radius: 3px;
   background-color: var(--card);
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9);
 }
 
 .map-sq-solid {
-  background-color: currentColor;
+  background-color: var(--green);
 }
 
 .map-sq-hatch {
-  background-image: repeating-linear-gradient(135deg, currentColor 0 1.5px, transparent 1.5px 5px);
+  background-color: var(--amber);
 }
 
 .map-sq-dot {
-  background-image: radial-gradient(currentColor 1px, transparent 1.3px);
-  background-size: 5px 5px;
+  background-color: var(--muted);
 }
 
 .map-sq-none {

@@ -207,7 +207,7 @@ export default async function ClientReportPage({ params }) {
   );
 }
 
-// Confidence is always shown as pattern swatch + level + score.
+// Confidence is always shown as coloured dot + level + score.
 function Confidence({ score, level, outOf = false }) {
   return (
     <span className="report-conf">
