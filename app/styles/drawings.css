@@ -139,37 +139,11 @@
   padding: 0;
 }
 
-/* photo cards: the plot drawing sits in a pegged inset, like a location plan */
-.sq-plotcard-inset {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 50%;
-  padding: 4px 4px 0;
-  border-radius: var(--r-md);
-  background: var(--sheet-grid), #ffffff;
-  box-shadow: 0 6px 18px -8px rgba(12, 21, 50, 0.5);
-  overflow: hidden;
-}
-
-.sq-plotcard-inset .sq-plot-note,
-.sq-plotcard-inset .sq-plot-north {
-  display: none;
-}
-
-.sq-plotcard-inset .sq-plot-area {
-  font-size: 15px;
-}
-
-.sq-plotcard-inset .sq-plot-scale text {
-  font-size: 10px;
-}
-
 .sq-plotcard-cap {
   position: absolute;
   left: 10px;
   bottom: 10px;
-  max-width: 45%;
+  max-width: 80%;
   padding: 5px 7px;
   border-radius: var(--r-sm);
   background: rgba(12, 21, 50, 0.78);
