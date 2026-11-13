@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CommandBar from "@/components/CommandBar";
 import { BarChart3, Database, FileText, Home, LayoutDashboard, Map, Settings } from "lucide-react";
 
 const items = [
@@ -15,6 +16,7 @@ export default function AppShell({ active, children }) {
     <div className="app-shell">
       <aside className="rail">
         <Link className="logo" href="/" aria-label="Squaremeter by CW home" title="Squaremeter by CW home">CW</Link>
+        <CommandBar />
         <nav aria-label="Main navigation">
           {items.map((item) => {
             const Icon = item.icon;

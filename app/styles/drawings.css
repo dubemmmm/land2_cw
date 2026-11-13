@@ -1,0 +1,595 @@
+/* The drawings: plot glyph, cartogram, budget scale, price trace, command bar.
+   Shared across pages; page stylesheets only size and place them. */
+
+/* ---------- PlotGlyph ---------- */
+.sq-plot {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--navy);
+}
+
+.sq-plot-std {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.sq-plot-fill {
+  fill: var(--navy);
+  fill-opacity: 0.06;
+}
+
+.sq-plot-line {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 1.5;
+  stroke-dasharray: 1;
+  animation: sq-draw 900ms cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+
+.sq-plot-beacon {
+  fill: var(--accent);
+}
+
+.sq-plot-area {
+  fill: var(--navy);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
+.sq-plot-note,
+.sq-plot-scale text,
+.sq-plot-north text {
+  fill: var(--muted);
+  font: 500 7px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.sq-plot-north path,
+.sq-plot-scale path {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+/* ---------- Plot card: a listing as a sheet (markup: a.sq-sheet.sq-plotcard) ---------- */
+.sq-plotcard-drawing {
+  position: relative;
+  background:
+    linear-gradient(var(--accent), var(--accent)) top left / 5px 5px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) top right / 5px 5px no-repeat,
+    var(--sheet-grid), var(--paper-2);
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+  padding: 34px 14px 6px;
+  border-bottom: 1px solid var(--line-strong);
+  overflow: hidden;
+}
+
+.sq-plotcard-drawing img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sq-plotcard-drawing .listing-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+
+.sq-plotcard-drawing .sq-stamp {
+  position: absolute;
+  top: 13px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.sq-plotcard-body {
+  padding: 18px 20px 20px;
+}
+
+.sq-plotcard-body h3 {
+  margin: 0;
+  font: 500 18px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
+}
+
+.sq-plotcard-body p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.sq-plotcard-body dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.sq-plotcard-body dl > div {
+  padding-top: 12px;
+}
+
+.sq-plotcard-body dl > div + div {
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+
+.sq-plotcard-body dt {
+  color: var(--muted);
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sq-plotcard-body dd {
+  margin: 8px 0 0;
+  color: var(--navy);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sq-plotcard-drawing .listing-draft-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+}
+
+/* ---------- SqmCartogram ---------- */
+.sq-carto {
+  margin: 0;
+  color: var(--navy);
+}
+
+.sq-carto.sq-on-navy {
+  color: #ffffff;
+}
+
+.sq-carto svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.sq-carto-plot {
+  cursor: pointer;
+  animation: sq-rise 500ms ease both;
+}
+
+.sq-carto-fill {
+  opacity: 0.5;
+  transition: opacity 160ms ease;
+}
+
+.sq-carto-line {
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-dasharray: 1;
+  animation: sq-draw 1100ms cubic-bezier(0.6, 0, 0.2, 1) both;
+  animation-delay: inherit;
+  transition: stroke 160ms ease, stroke-width 160ms ease;
+}
+
+.sq-carto-beacon {
+  fill: var(--accent);
+}
+
+.sq-on-navy .sq-carto-beacon {
+  fill: var(--accent-on-navy);
+}
+
+.sq-carto-name {
+  fill: currentColor;
+  opacity: 0.72;
+  font: 500 9.5px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 160ms ease;
+}
+
+.sq-carto-price rect {
+  fill: var(--card);
+  stroke: var(--navy);
+  stroke-width: 1;
+}
+
+.sq-on-navy .sq-carto-price rect {
+  fill: var(--blueprint);
+  stroke: none;
+}
+
+.sq-carto-price text {
+  fill: currentColor;
+  font: 500 11.5px/1 var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
+.sq-carto-plot.active .sq-carto-fill,
+.sq-carto-plot:hover .sq-carto-fill {
+  opacity: 0.95;
+}
+
+.sq-carto-plot.active .sq-carto-line {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.sq-on-navy .sq-carto-plot.active .sq-carto-line {
+  stroke: var(--accent-on-navy);
+}
+
+.sq-carto-plot.active .sq-carto-name {
+  opacity: 1;
+}
+
+.sq-carto-plot:focus-visible {
+  outline: none;
+}
+
+.sq-carto-readout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr;
+  margin-top: 18px;
+  border: 1px solid var(--line-strong);
+}
+
+.sq-on-navy .sq-carto-readout {
+  border-color: var(--on-navy-line);
+  background: rgba(14, 24, 56, 0.7);
+}
+
+.sq-carto-readout > div {
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border-right: 1px solid var(--line-strong);
+}
+
+.sq-on-navy .sq-carto-readout > div {
+  border-color: var(--on-navy-line);
+}
+
+.sq-carto-readout > div:last-child {
+  border-right: 0;
+}
+
+.sq-carto-readout span {
+  display: block;
+  color: var(--muted);
+  font: 500 9.5px/1 var(--font-mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.sq-on-navy .sq-carto-readout span {
+  color: var(--on-navy-muted);
+}
+
+.sq-carto-readout strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font: 500 15px/1.15 var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sq-carto-readout strong.sq-fig {
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 480px) {
+  .sq-carto-readout {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sq-carto-readout > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .sq-carto-readout > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .sq-on-navy .sq-carto-readout > div:nth-child(-n + 2) {
+    border-color: var(--on-navy-line);
+  }
+}
+
+/* ---------- BudgetScale ---------- */
+.sq-budget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sq-budget-scale {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--muted);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.sq-budget-scale i {
+  display: block;
+  height: 7px;
+  border: solid var(--navy);
+  border-width: 0 1px;
+  background: linear-gradient(var(--navy), var(--navy)) center / 100% 1px no-repeat;
+  transition: width 420ms cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+.sq-budget-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  margin: 0;
+  padding: 40px 32px 28px;
+  list-style: none;
+  border: 1px solid var(--navy);
+  overflow-x: auto;
+}
+
+.sq-budget-row li {
+  flex: none;
+  min-width: 96px;
+}
+
+.sq-budget-row a,
+.sq-budget-ref {
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+}
+
+.sq-budget-row .sq-budget-ref {
+  margin-left: auto;
+  padding-left: 28px;
+}
+
+.sq-budget-ref .sq-budget-square {
+  border: 1px dashed var(--muted);
+  background: none;
+}
+
+.sq-budget-ref strong,
+.sq-budget-ref b {
+  color: var(--muted);
+}
+
+.sq-budget-square {
+  display: block;
+  min-width: 3px;
+  min-height: 3px;
+  margin-bottom: 10px;
+  border: 1.5px solid var(--navy);
+  background: var(--beacons), rgba(17, 29, 66, 0.07);
+  background-origin: border-box;
+  transition: width 420ms cubic-bezier(0.3, 0.7, 0.2, 1), height 420ms cubic-bezier(0.3, 0.7, 0.2, 1),
+    background-color 140ms ease;
+}
+
+.sq-budget-row a:hover .sq-budget-square {
+  background: var(--beacons), var(--accent-50);
+  background-origin: border-box;
+  border-color: var(--accent);
+}
+
+.sq-budget-row strong {
+  color: var(--ink);
+  font: 500 14px/1.2 var(--font-sans);
+  white-space: nowrap;
+}
+
+.sq-budget-row b {
+  color: var(--navy);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.sq-budget-row small {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+@media (max-width: 720px) {
+  .sq-budget-row {
+    gap: 22px;
+    padding: 28px 18px 20px;
+  }
+}
+
+/* ---------- PriceTrace ---------- */
+.sq-trace {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sq-trace-base,
+.sq-trace-tick {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.sq-trace-year {
+  fill: var(--muted);
+  font: 500 10px/1 var(--font-mono);
+}
+
+.sq-trace-line {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 1.75;
+  stroke-dasharray: 1;
+  animation: sq-draw 1200ms cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+
+.sq-trace-line.projected {
+  stroke: var(--accent);
+  stroke-dasharray: 5 4;
+  animation: none;
+}
+
+.sq-trace-mark rect {
+  fill: var(--card);
+  stroke: var(--navy);
+  stroke-width: 1.5;
+}
+
+.sq-trace-mark.current rect {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.sq-trace-mark text {
+  fill: var(--ink);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
+/* ---------- CommandBar ---------- */
+.sq-cmd-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  padding: 14vh 16px 16px;
+  background: rgba(12, 21, 50, 0.42);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.sq-cmd {
+  width: min(600px, 100%);
+  border: 1px solid var(--navy);
+  background: var(--beacons), var(--card);
+  background-origin: border-box;
+  box-shadow: 6px 6px 0 var(--accent), var(--shadow-lg);
+  animation: sq-rise 160ms ease both;
+}
+
+.sq-cmd-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--navy);
+  color: var(--muted);
+}
+
+.sq-cmd-input input {
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: 400 16px/1 var(--font-sans);
+}
+
+.sq-cmd kbd {
+  padding: 4px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  font: 500 10px/1 var(--font-mono);
+  text-transform: uppercase;
+}
+
+.sq-cmd ul {
+  max-height: min(52vh, 420px);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.sq-cmd li button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  text-align: left;
+}
+
+.sq-cmd li button.active {
+  background: var(--navy);
+}
+
+.sq-cmd li span {
+  color: var(--accent);
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.sq-cmd li strong {
+  color: var(--ink);
+  font: 500 14.5px/1.2 var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sq-cmd li em {
+  color: var(--muted);
+  font: 400 11.5px/1 var(--font-mono);
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.sq-cmd li button.active span {
+  color: var(--accent-on-navy);
+}
+
+.sq-cmd li button.active strong {
+  color: #ffffff;
+}
+
+.sq-cmd li button.active em {
+  color: var(--on-navy-muted);
+}
+
+.sq-cmd-empty {
+  padding: 18px 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 520px) {
+  .sq-cmd li button {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .sq-cmd li em {
+    display: none;
+  }
+}

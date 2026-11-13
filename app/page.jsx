@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BarChart3, Building2, Check, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import SqmCartogram from "@/components/SqmCartogram";
+import BudgetScale from "@/components/BudgetScale";
+import PlotGlyph from "@/components/PlotGlyph";
+import ConfidenceLegend from "@/components/ConfidenceLegend";
 import { getLandBibleInventory } from "@/lib/landBible";
 import { getLandListings } from "@/lib/listingStore";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
-import { confidenceScore } from "@/lib/metrics";
+import { confidenceLegend, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
+import { formatNaira, formatSqm, layoutCartogram, realPhoto } from "@/lib/plot";
 import { getEstateMarketProfile, getLandMarketProfile, toEstateSlug } from "@/lib/landBible";
 
 export const dynamic = "force-dynamic";
@@ -23,44 +28,56 @@ export default async function LandingPage() {
   const featuredListings = listings
     .filter((listing) => listing.listingStatus === "Available")
     .slice(0, 3);
+  const plotScale = Math.max(0, ...featuredListings.map((listing) => Number(listing.sizeSqm) || 0));
   const landUseDistribution = countBy(estates, (estate) => normalizeUse(estate.primary_use));
   const developmentDistribution = countBy(estates, (estate) => /built/i.test(estate.status || "") ? "Fully built" : "Developing");
-
-  const [leadInsight, ...otherInsights] = insights;
+  const priced = buildPricedLocations(marketProfiles);
+  const cartogram = layoutCartogram(priced);
+  const indexYear = marketProfiles[0]?.market.currentYear || new Date().getFullYear();
 
   return (
     <main className="landing-page">
       <SiteNav />
 
-      <section className="landing-hero-wrap" id="overview">
-        <div className="landing-hero">
-          <div className="landing-hero-copy">
-            <h1><span>Invest in</span><span>Lagos land</span><span>with clarity.</span></h1>
-            <p>
-              Squaremeter helps clients understand where to buy land in Lagos, what each location is worth,
-              what planning risks to check, and which live plots are ready for review.
+      <section className="land-hero sq-blueprint sq-on-navy" id="index">
+        <div className="cw-container land-hero-grid">
+          <div className="land-hero-copy">
+            <p className="sq-anno"><b>Sheet 01</b>Lagos land price index · {indexYear}</p>
+            <h1>Lagos, measured by the <em>square metre.</em></h1>
+            <p className="land-hero-lede">
+              Squaremeter prices, maps and grades land across Lagos, so you can see what a location is worth,
+              how sure the figure is, and which plots are open for review before you commit capital.
             </p>
-            <div className="landing-actions">
-              <Link className="cw-btn cw-btn-white" href="/listings">View land listings <ArrowRight size={16} /></Link>
-              <Link className="cw-btn cw-btn-ghost" href="#intelligence">Explore intelligence</Link>
+            <div className="land-actions">
+              <Link className="cw-btn cw-btn-white" href="/listings">See plots for sale <ArrowRight size={16} /></Link>
+              <Link className="cw-btn cw-btn-ghost" href="#budget">What does my budget buy?</Link>
             </div>
+            <dl className="land-hero-stats">
+              {heroStats.map((stat) => (
+                <div key={stat.label}>
+                  <dt>{stat.label}</dt>
+                  <dd className="sq-fig">{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <div className="landing-hero-stats">
-            {heroStats.map((stat) => (
-              <article key={stat.label}>
-                <strong>{stat.value}</strong>
-                <span>{stat.label}</span>
-              </article>
-            ))}
-          </div>
+          {cartogram.squares.length ? (
+            <div className="land-hero-drawing">
+              <div className="land-hero-drawing-head">
+                <p className="sq-anno"><b>Fig. 01</b>Area of each square ∝ ₦ per m²</p>
+                <ConfidenceLegend onNavy />
+              </div>
+              <SqmCartogram layout={cartogram} />
+            </div>
+          ) : null}
         </div>
       </section>
 
       {marketTicker.length ? (
-        <div className="landing-market-ticker" aria-label="Market price highlights">
+        <div className="land-ticker" aria-label="Market price highlights">
           <div>
             {marketTicker.concat(marketTicker).map((item, index) => (
-              <Link href={item.href} key={`${item.href}-${item.name}-${index}`}>
+              <Link href={item.href} key={`${item.href}-${item.name}-${index}`} aria-hidden={index >= marketTicker.length ? "true" : undefined} tabIndex={index >= marketTicker.length ? -1 : undefined}>
                 <span>{item.name}</span>
                 <strong>{item.price}</strong>
                 <em>{item.growth}</em>
@@ -70,171 +87,186 @@ export default async function LandingPage() {
         </div>
       ) : null}
 
-      <section className="cw-section landing-explainer">
-        <div className="cw-container">
-          <div className="landing-split">
-            <div className="landing-section-head">
-              <p className="cw-label"><b>01</b>What Squaremeter does</p>
-              <h2 className="cw-h2">A client-facing guide for land decisions before capital is committed.</h2>
-              <p className="cw-lede">
-                Land buying in Lagos is not just a price conversation. Clients need to compare locations,
-                title documents, estate rules, price movement, development status, and approval risk.
-                Squaremeter turns those fragmented checks into a clear briefing layer before you speak to
-                vendors, agents, surveyors, or lawyers. It combines market intelligence, estate records,
-                title context, and curated listings in one decision workspace.
-              </p>
-              <div className="landing-actions">
-                <Link className="cw-btn cw-btn-navy" href="/listings">View land listings</Link>
-                <Link className="cw-btn cw-btn-outline" href="#intelligence">Explore intelligence</Link>
+      {priced.length ? (
+        <section className="cw-section" id="budget">
+          <div className="cw-container">
+            <div className="land-head">
+              <div>
+                <p className="sq-anno"><b>Fig. 02</b>One budget, every location, one scale</p>
+                <h2 className="cw-h2">What your money buys, <em>drawn to scale.</em></h2>
               </div>
+              <p className="cw-lede">
+                Pick a budget. Each square is the land it buys at today&rsquo;s estimated price per square metre.
+                A standard Lagos plot is 648 m².
+              </p>
             </div>
-            {leadInsight ? (
-              <article className="cw-imgcard landing-feature-card">
-                <span className="cw-chip cw-chip-glass">{leadInsight.label}</span>
-                <div className="cw-imgcard-cap">
-                  <strong>{leadInsight.title}</strong>
-                  <span>{leadInsight.meta} · {leadInsight.badge}</span>
-                </div>
-              </article>
-            ) : null}
+            <BudgetScale items={priced} />
           </div>
-          <div className="landing-explainer-grid">
-            <Feature icon={BarChart3} title="Market intelligence" text="Compare price per square meter, annual growth signals, mapped estate supply, and location confidence from the Land Bible and admin updates." />
-            <Feature icon={Building2} title="Curated land listings" text="Browse available plots with size, use, asking price, estate context, status, and title-document indicators before requesting deeper diligence." />
-            <Feature icon={ShieldCheck} title="Risk-aware decisions" text="See planning constraints, title status, approval history, and documents to request so attractive plots can be filtered through practical risk checks." />
-          </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="cw-section landing-insights">
+      <section className="cw-section" id="intelligence">
         <div className="cw-container">
-          <div className="landing-section-head">
-            <p className="cw-label"><b>02</b>Market signals</p>
-            <h2 className="cw-h2">Where the tracked market stands today.</h2>
+          <div className="land-head">
+            <div>
+              <p className="sq-anno"><b>Fig. 03</b>Market read</p>
+              <h2 className="cw-h2">Where the tracked market <em>stands today.</em></h2>
+            </div>
+            <p className="cw-lede">
+              Read from {neighborhoods.length} neighbourhoods and {estates.length} estates. These are directional
+              figures, not a substitute for legal, survey or valuation checks.
+            </p>
           </div>
-          <div className="landing-insight-grid">
-            {otherInsights.map((insight) => (
-              <article className="cw-card" key={insight.label}>
-                <span>{insight.label}</span>
+          <div className="land-signals">
+            {insights.map((insight, index) => (
+              <article className="sq-sheet" key={insight.label}>
+                <span className="land-signal-no sq-fig">{String(index + 1).padStart(2, "0")}</span>
+                <p>{insight.label}</p>
                 <h3>{insight.title}</h3>
-                <p>{insight.meta}</p>
-                <b className="cw-chip">{insight.badge}</b>
+                <small>{insight.meta}</small>
+                <b>{insight.badge}</b>
               </article>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="cw-section landing-analytics" id="intelligence">
-        <div className="cw-container">
-          <div className="landing-section-head">
-            <p className="cw-label"><b>03</b>Market intelligence</p>
-            <h2 className="cw-h2">Analytics that show how Lagos land supply is distributed.</h2>
-            <p className="cw-lede">
-              The intelligence layer tracks neighborhoods, estate development status, land-use patterns,
-              price movement, and available inventory. These are directional decision tools, not a substitute
-              for legal, survey, valuation, or planning verification.
-            </p>
-          </div>
-          <div className="landing-chart-grid">
-            <DonutPanel title="Land use distribution" total={estates.length} entries={landUseDistribution} />
-            <DonutPanel title="Development status" total={estates.length} entries={developmentDistribution} />
+          <div className="land-dists">
+            <Distribution title="Land use across tracked estates" total={estates.length} entries={landUseDistribution} />
+            <Distribution title="Development status" total={estates.length} entries={developmentDistribution} />
           </div>
         </div>
       </section>
 
-      <section className="cw-section landing-featured-listings">
+      <section className="cw-section" id="plots">
         <div className="cw-container">
-          <div className="landing-section-head inline">
+          <div className="land-head">
             <div>
-              <p className="cw-label"><b>04</b>Featured land listings</p>
-              <h2 className="cw-h2">Live plots ready for client review.</h2>
-              <p className="cw-lede">Start with available plots, then open the full listing page to filter by location, estate, use, price, and size.</p>
+              <p className="sq-anno"><b>Fig. 04</b>Plots open for review</p>
+              <h2 className="cw-h2">Live plots, <em>on one scale.</em></h2>
             </div>
-            <Link className="cw-btn cw-btn-outline" href="/listings">See more <ArrowRight size={16} /></Link>
+            <Link className="cw-btn cw-btn-outline" href="/listings">All plots <ArrowRight size={16} /></Link>
           </div>
           {featuredListings.length ? (
-            <div className="landing-listing-grid">
-              {featuredListings.map((listing) => (
-                <Link className="cw-imgcard landing-listing-card" href="/listings" key={listing.id}>
-                  {listing.photos?.[0] ? <img src={listing.photos[0]} alt="" /> : null}
-                  <div className="landing-listing-tags">
-                    <span className="cw-chip cw-chip-glass"><i className="cw-dot" />{listing.listingStatus}</span>
-                    <span className="cw-chip cw-chip-navy">{formatCompactPrice(listing.askingPrice)}</span>
-                  </div>
-                  <div className="cw-imgcard-cap">
-                    <strong>{listing.title}</strong>
-                    <span>{formatNumber(listing.sizeSqm)} sqm · {listing.landUse}</span>
-                    <span>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""}</span>
-                    {listing.titleDocument ? <em>{listing.titleDocument}</em> : null}
-                  </div>
-                </Link>
-              ))}
+            <div className="land-plots">
+              {featuredListings.map((listing) => {
+                const photo = realPhoto(listing.photos);
+                const perSqm = listing.sizeSqm ? listing.askingPrice / listing.sizeSqm : 0;
+                return (
+                  <Link className="sq-sheet sq-plotcard" href="/listings" key={listing.id}>
+                    <div className="sq-plotcard-drawing sq-grid">
+                      {photo ? <img src={photo} alt="" /> : <PlotGlyph sqm={listing.sizeSqm} scaleSqm={plotScale} />}
+                      <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
+                      {listing.titleDocument ? <span className="sq-stamp">{listing.titleDocument}</span> : null}
+                    </div>
+                    <div className="sq-plotcard-body">
+                      <h3>{listing.title}</h3>
+                      <p>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""} · {listing.landUse}</p>
+                      <dl>
+                        <div><dt>Area</dt><dd className="sq-fig">{formatSqm(listing.sizeSqm)} m²</dd></div>
+                        <div><dt>Per m²</dt><dd className="sq-fig">{formatNaira(perSqm)}</dd></div>
+                        <div><dt>Asking</dt><dd className="sq-fig">{formatNaira(listing.askingPrice)}</dd></div>
+                      </dl>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
-            <p className="cw-card landing-empty">No plots are marked available right now. New listings appear here as soon as they are published.</p>
+            <p className="sq-sheet land-empty">No plots are marked available right now. New listings appear here as soon as they are published.</p>
           )}
         </div>
       </section>
 
-      <section className="cw-section landing-why" id="why-lagos">
+      <section className="cw-section" id="method">
         <div className="cw-container">
-          <div className="landing-section-head">
-            <p className="cw-label"><b>05</b>Why invest in Lagos</p>
-            <h2 className="cw-h2">Land demand is supported by population, commerce, urban growth, and scarcity.</h2>
+          <div className="land-head">
+            <div>
+              <p className="sq-anno"><b>Fig. 05</b>Method</p>
+              <h2 className="cw-h2">Every figure says <em>how sure it is.</em></h2>
+            </div>
             <p className="cw-lede">
-              Lagos concentrates people, jobs, ports, financial services, technology, retail, and premium
-              residential demand. That creates long-term land pressure, but the best opportunities still
-              depend on title quality, infrastructure, access, flood risk, estate rules, and realistic resale demand.
+              Land buying in Lagos is not only a price conversation. Squaremeter joins price, title, estate rules
+              and planning risk in one place, and grades each location by how well its data is sourced.
             </p>
           </div>
-          <div className="landing-lagos-stats">
-            {lagosStats.map((stat) => (
-              <article key={stat.label}>
-                <strong>{stat.value}</strong>
-                <span>{stat.label}</span>
-              </article>
-            ))}
-          </div>
-          <div className="landing-reason-grid">
-            {lagosReasons.map((reason, index) => (
-              <article className="cw-card" key={reason.title}>
-                <b>{String(index + 1).padStart(2, "0")}</b>
-                <h3>{reason.title}</h3>
-                <p>{reason.text}</p>
-              </article>
-            ))}
+          <div className="land-method">
+            <ol className="land-spec">
+              {features.map((feature, index) => (
+                <li key={feature.title}>
+                  <span className="sq-fig">{String.fromCharCode(65 + index)}</span>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.text}</p>
+                </li>
+              ))}
+            </ol>
+            <aside className="sq-sheet land-key" aria-label="How data confidence is drawn">
+              <p className="sq-anno">Key · data confidence</p>
+              <ul>
+                {confidenceLegend.map((item) => (
+                  <li key={item.pattern}>
+                    <i className={`sq-pat sq-pat-${item.pattern}`} aria-hidden="true" />
+                    <strong>{item.level}</strong>
+                    <span className="sq-fig">{item.range}</span>
+                    <p>{item.meaning}</p>
+                  </li>
+                ))}
+              </ul>
+            </aside>
           </div>
         </div>
       </section>
 
-      <section className="cw-section cw-section-last landing-closing">
-        <div className="cw-container landing-closing-grid">
-          <article className="cw-card landing-explore-card">
-            <p className="cw-label"><b>06</b>Explore</p>
-            <h2 className="cw-h3">Use Squaremeter to compare Lagos land before you shortlist a plot.</h2>
-            <nav aria-label="Explore Squaremeter">
-              {exploreLinks.map((item) => (
+      <section className="cw-section" id="why-lagos">
+        <div className="cw-container">
+          <div className="land-head">
+            <div>
+              <p className="sq-anno"><b>Fig. 06</b>Why Lagos</p>
+              <h2 className="cw-h2">Demand is held up by people, commerce <em>and scarcity.</em></h2>
+            </div>
+            <p className="cw-lede">
+              Lagos concentrates people, jobs, ports and capital. That creates long-term pressure on land, but the
+              best plots still depend on title quality, access, flood risk and realistic resale demand.
+            </p>
+          </div>
+          <dl className="land-lagos-stats">
+            {lagosStats.map((stat) => (
+              <div key={stat.label}>
+                <dt>{stat.label}</dt>
+                <dd className="sq-fig">{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <ol className="land-reasons">
+            {lagosReasons.map((reason, index) => (
+              <li key={reason.title}>
+                <span className="sq-fig">{String(index + 1).padStart(2, "0")}</span>
+                <h3>{reason.title}</h3>
+                <p>{reason.text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="cw-section cw-section-last">
+        <div className="cw-container">
+          <div className="land-close sq-blueprint sq-on-navy">
+            <div className="land-close-copy">
+              <p className="sq-anno"><b>Next</b>Start with a plot, then check the ground around it</p>
+              <h2>Shortlist land with the <em>measurements in hand.</em></h2>
+              <div className="land-actions">
+                <Link className="cw-btn cw-btn-white" href="/listings">Browse plots <ArrowRight size={16} /></Link>
+                <Link className="cw-btn cw-btn-ghost" href="/map">Open the map</Link>
+              </div>
+            </div>
+            <nav className="land-close-index" aria-label="Explore Squaremeter">
+              {exploreLinks.map((item, index) => (
                 <Link href={item.href} key={item.href}>
+                  <span className="sq-fig">{String(index + 1).padStart(2, "0")}</span>
                   <span><strong>{item.title}</strong><small>{item.text}</small></span>
                   <ArrowUpRight size={18} />
                 </Link>
               ))}
             </nav>
-          </article>
-          <article className="landing-final-cta">
-            <span>Ready to inspect the market?</span>
-            <h2>Start with live plots, then check the ground around them.</h2>
-            <ul>
-              {closingChecks.map((item) => (
-                <li key={item}><Check size={16} />{item}</li>
-              ))}
-            </ul>
-            <div className="landing-actions">
-              <Link className="cw-btn cw-btn-white" href="/listings">Browse listings</Link>
-              <Link className="cw-btn cw-btn-ghost" href="/map">Open map</Link>
-            </div>
-          </article>
+          </div>
         </div>
       </section>
 
@@ -243,37 +275,61 @@ export default async function LandingPage() {
   );
 }
 
-function Feature({ icon: Icon, title, text }) {
+const distPatterns = ["solid", "hatch", "dot", "none"];
+
+// Share of a whole, drawn as one bar to scale. Segments are told apart by pattern.
+function Distribution({ title, total, entries }) {
+  const sum = entries.reduce((acc, entry) => acc + entry.count, 0) || 1;
   return (
-    <article className="cw-card">
-      <i><Icon size={20} /></i>
-      <h3>{title}</h3>
-      <p>{text}</p>
+    <article className="land-dist">
+      <header>
+        <h3>{title}</h3>
+        <span className="sq-fig">{total} estates</span>
+      </header>
+      <div className="land-dist-bar" role="img" aria-label={entries.map((entry) => `${entry.label} ${entry.count}`).join(", ")}>
+        {entries.map((entry, index) => (
+          <i key={entry.label} className={`sq-pat-${distPatterns[index % distPatterns.length]}`} style={{ flexGrow: entry.count }} />
+        ))}
+      </div>
+      <ul>
+        {entries.map((entry, index) => (
+          <li key={entry.label}>
+            <i className={`sq-pat sq-pat-${distPatterns[index % distPatterns.length]}`} aria-hidden="true" />
+            <span>{entry.label}</span>
+            <b className="sq-fig">{entry.count}</b>
+            <em className="sq-fig">{Math.round((entry.count / sum) * 100)}%</em>
+          </li>
+        ))}
+      </ul>
     </article>
   );
 }
 
-// CSS variable strings: they feed inline conic-gradient / legend swatch styles.
-const chartColors = ["var(--navy)", "var(--gold)", "var(--navy-200)", "var(--green)", "var(--muted)"];
+function buildPricedLocations(marketProfiles) {
+  return marketProfiles
+    .filter((item) => Number(item.market.priceValue) > 0 && item.market.trendCurrency !== "USD")
+    .map(({ neighborhood, market }) => {
+      const score = confidenceScore(neighborhood);
+      const center = neighborhood.geometry?.center || [];
+      return {
+        id: neighborhood.id,
+        name: neighborhood.name,
+        href: `/locations/${neighborhood.id}`,
+        priceValue: market.priceValue,
+        priceLabel: cleanPriceLabel(market.priceLabel),
+        priceShort: formatNaira(market.priceValue),
+        growthLabel: market.annualGrowthLabel && market.annualGrowthLabel !== "N/A" ? market.annualGrowthLabel : "—",
+        confidence: score,
+        confidenceLevel: confidenceLevel(score),
+        pattern: confidencePattern(score),
+        lat: Number(center[0]),
+        lng: Number(center[1])
+      };
+    });
+}
 
-function DonutPanel({ title, total, entries }) {
-  const colors = chartColors;
-  const gradient = buildConic(entries, colors);
-  return (
-    <article className="cw-card landing-chart-panel">
-      <h3>{title}</h3>
-      <div className="landing-chart-body">
-        <div className="landing-donut" style={{ background: gradient }}>
-          <span><strong>{total}</strong><em>total</em></span>
-        </div>
-        <div className="landing-chart-legend">
-          {entries.map((entry, index) => (
-            <p key={entry.label}><i style={{ background: colors[index % colors.length] }} /><span>{entry.label}</span><b>{entry.count}</b></p>
-          ))}
-        </div>
-      </div>
-    </article>
-  );
+function statusClass(status = "") {
+  return String(status).toLowerCase().replace(/\s+/g, "-");
 }
 
 function buildHeroStats(neighborhoods, estates, marketProfiles) {
@@ -282,33 +338,34 @@ function buildHeroStats(neighborhoods, estates, marketProfiles) {
   return [
     { label: "Neighborhoods", value: neighborhoods.length },
     { label: "Estates tracked", value: estates.length },
-    { label: "Avg price / sqm", value: avgPrice ? formatPerSqm(avgPrice) : "Under review" },
-    { label: "sqm mapped", value: totalLand ? `${Math.round(totalLand / 1000000)}M` : "Updating" }
+    { label: "Avg price / m²", value: avgPrice ? formatNaira(avgPrice) : "Under review" },
+    { label: "m² mapped", value: totalLand ? `${Math.round(totalLand / 1000000)}M` : "Updating" }
   ];
 }
 
 function buildInsightCards(marketProfiles, estates) {
   const sortedGrowth = [...marketProfiles].sort((a, b) => (b.market.annualGrowth || 0) - (a.market.annualGrowth || 0));
-  const sortedPrice = [...marketProfiles].filter((item) => item.market.priceValue).sort((a, b) => a.market.priceValue - b.market.priceValue);
+  // Dollar-priced markets are left out: they cannot be ranked against naira prices.
+  const sortedPrice = [...marketProfiles].filter((item) => item.market.priceValue && item.market.trendCurrency !== "USD").sort((a, b) => a.market.priceValue - b.market.priceValue);
   const premium = [...sortedPrice].reverse()[0];
   const developing = estates.filter((estate) => /develop/i.test(estate.status || "")).length;
   return [
     {
       label: "Top appreciating area",
       title: sortedGrowth[0]?.neighborhood.name || "Banana Island",
-      meta: sortedGrowth[0]?.market.parentName || sortedGrowth[0]?.neighborhood.jurisdiction || "Tracked market",
+      meta: cleanPriceLabel(sortedGrowth[0]?.market.priceLabel) || "Tracked market",
       badge: `${sortedGrowth[0]?.market.annualGrowthLabel || "~15%"} est. annual growth`
     },
     {
       label: "Best entry point",
       title: sortedPrice[0]?.neighborhood.name || "Ajah",
-      meta: sortedPrice[0]?.market.priceLabel || "Entry pricing under review",
-      badge: "Lower entry band"
+      meta: cleanPriceLabel(sortedPrice[0]?.market.priceLabel) || "Entry pricing under review",
+      badge: "Lowest tracked naira price"
     },
     {
       label: "Premium market",
       title: premium?.neighborhood.name || "Ikoyi",
-      meta: premium?.market.priceLabel || "Premium pricing under review",
+      meta: cleanPriceLabel(premium?.market.priceLabel) || "Premium pricing under review",
       badge: `${premium?.market.annualGrowthLabel || "~15%"} est. annual growth`
     },
     {
@@ -345,7 +402,7 @@ function buildMarketTicker(marketProfiles, estates) {
 }
 
 function cleanPriceLabel(value = "") {
-  return String(value).replace("/sqm est.", "/sqm").replace(" est.", "");
+  return String(value || "").replace("/sqm est.", "/m² est.").replace("/sqm", "/m²");
 }
 
 function countBy(items, getLabel) {
@@ -364,40 +421,8 @@ function normalizeUse(value = "") {
   return value || "Other";
 }
 
-function buildConic(entries, colors) {
-  const total = entries.reduce((sum, entry) => sum + entry.count, 0) || 1;
-  let cursor = 0;
-  const stops = entries.map((entry, index) => {
-    const start = cursor;
-    const end = cursor + (entry.count / total) * 100;
-    cursor = end;
-    return `${colors[index % colors.length]} ${start}% ${end}%`;
-  });
-  return `conic-gradient(${stops.join(", ")})`;
-}
-
 function average(values) {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
-}
-
-function formatCompactPrice(value) {
-  const price = Number(value) || 0;
-  if (!price) return "N/A";
-  if (price >= 1000000000) return `₦${Number((price / 1000000000).toFixed(1))}B`;
-  if (price >= 1000000) return `₦${Math.round(price / 1000000)}M`;
-  if (price >= 1000) return `₦${Math.round(price / 1000)}K`;
-  return `₦${Math.round(price)}`;
-}
-
-function formatPerSqm(value) {
-  const price = Number(value) || 0;
-  if (price >= 1000000) return `₦${Number((price / 1000000).toFixed(1))}M`;
-  if (price >= 1000) return `₦${Math.round(price / 1000)}K`;
-  return `₦${Math.round(price)}`;
-}
-
-function formatNumber(value) {
-  return new Intl.NumberFormat("en-US").format(Math.round(Number(value) || 0));
 }
 
 const lagosStats = [
@@ -412,14 +437,14 @@ const lagosStats = [
 const exploreLinks = [
   { href: "/listings", title: "Land listings", text: "Available plots with size, use, price and title document." },
   { href: "/map", title: "Lagos map", text: "Neighborhoods and estates in their real locations." },
-  { href: "#intelligence", title: "Market intelligence", text: "Land-use and development patterns across tracked estates." },
+  { href: "#intelligence", title: "Market read", text: "Land-use and development patterns across tracked estates." },
   { href: "/dashboard", title: "Intelligence portal", text: "The full briefing workspace for each location." }
 ];
 
-const closingChecks = [
-  "Price per square meter and growth signals by location",
-  "Title document and estate context on every plot",
-  "Planning constraints and approval history to verify"
+const features = [
+  { title: "Price by the square metre", text: "Compare price per m², annual growth and mapped estate supply across locations, from the Land Bible and admin updates." },
+  { title: "Plots with their papers", text: "Browse available plots with size, use, asking price, estate and the title document recorded for each listing." },
+  { title: "Risk before commitment", text: "See planning constraints, approval history and the documents to request, so an attractive plot is checked against practical risk." }
 ];
 
 const lagosReasons = [

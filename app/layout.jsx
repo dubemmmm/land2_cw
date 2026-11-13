@@ -2,6 +2,7 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/components.css";
 import "./styles/shell.css";
+import "./styles/drawings.css";
 import "./styles/dashboard.css";
 import "./styles/map.css";
 import "./styles/detail.css";

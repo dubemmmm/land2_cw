@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Grid2X2, LandPlot, List, MapPin, Plus, RotateCcw, Search } from "lucide-react";
+import { ChevronDown, Grid2X2, List, Plus, RotateCcw, Search } from "lucide-react";
+import PlotGlyph from "@/components/PlotGlyph";
+import { formatNaira, formatSqm, realPhoto } from "@/lib/plot";
 import { useMemo, useState } from "react";
 
 const landUses = ["Residential", "Commercial", "Mixed-use"];
@@ -212,13 +214,15 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
 }
 
 function ListingCards({ groups, isAdmin }) {
+  // One scale for every plot on the page, so sizes can be compared by eye.
+  const scaleSqm = Math.max(0, ...groups.flatMap((group) => group.listings.map((listing) => Number(listing.sizeSqm) || 0)));
   return (
     <div className="listing-card-groups">
       {groups.map((group) => (
         <section className="listing-group" key={group.key}>
           <h2>{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></h2>
           <div className="listing-card-grid">
-            {group.listings.map((listing) => <ListingCard listing={listing} isAdmin={isAdmin} key={listing.id} />)}
+            {group.listings.map((listing) => <ListingCard listing={listing} isAdmin={isAdmin} scaleSqm={scaleSqm} key={listing.id} />)}
           </div>
         </section>
       ))}
@@ -226,40 +230,31 @@ function ListingCards({ groups, isAdmin }) {
   );
 }
 
-function ListingCard({ listing, isAdmin }) {
-  const perSqm = formatPricePerSqm(listing.askingPrice, listing.sizeSqm);
+function ListingCard({ listing, isAdmin, scaleSqm }) {
+  const photo = realPhoto(listing.photos);
+  const perSqm = listing.sizeSqm && listing.askingPrice ? listing.askingPrice / listing.sizeSqm : 0;
   const content = (
-    <article className="listing-card">
-      <div className="listing-media">
-        <ListingPhoto listing={listing} />
-        <div className="listing-media-chips">
-          <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
-          <TitleBadge titleDocument={listing.titleDocument} />
-          {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
-        </div>
-        <span className="listing-media-place">
-          <MapPin size={13} aria-hidden="true" />
-          <span>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""}</span>
-        </span>
+    <>
+      <div className="sq-plotcard-drawing sq-grid">
+        {photo ? <img src={photo} alt="" /> : <PlotGlyph sqm={listing.sizeSqm} scaleSqm={scaleSqm} />}
+        <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
+        {listing.titleDocument ? <span className="sq-stamp">{listing.titleDocument}</span> : null}
+        {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
       </div>
-      <div className="listing-card-body">
-        <b className="listing-card-price">{listing.askingPrice ? formatCompactPrice(listing.askingPrice) : "Price not set"}</b>
-        <strong>{listing.title}</strong>
-        <p className="listing-card-meta">
-          <span>{formatNumber(listing.sizeSqm)} sqm</span>
-          {perSqm ? <span>{perSqm}</span> : null}
-          <span>{listing.landUse}</span>
-        </p>
+      <div className="sq-plotcard-body">
+        <h3>{listing.title}</h3>
+        <p>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""} · {listing.landUse}</p>
+        <dl>
+          <div><dt>Area</dt><dd className="sq-fig">{formatSqm(listing.sizeSqm)} m²</dd></div>
+          <div><dt>Per m²</dt><dd className="sq-fig">{formatNaira(perSqm)}</dd></div>
+          <div><dt>Asking</dt><dd className="sq-fig">{listing.askingPrice ? formatNaira(listing.askingPrice) : "Not set"}</dd></div>
+        </dl>
       </div>
-    </article>
+    </>
   );
-  return isAdmin ? <Link className="listing-card-link" href={`/listings/new?id=${listing.id}`}>{content}</Link> : content;
-}
-
-function ListingPhoto({ listing }) {
-  return listing.photos[0]
-    ? <img src={listing.photos[0]} alt="" />
-    : <div className="listing-photo-fallback" aria-hidden="true"><LandPlot size={26} strokeWidth={1.5} /></div>;
+  return isAdmin
+    ? <Link className="sq-sheet sq-plotcard" href={`/listings/new?id=${listing.id}`}>{content}</Link>
+    : <article className="sq-sheet sq-plotcard">{content}</article>;
 }
 
 function ListingLedger({ groups, isAdmin }) {
@@ -282,7 +277,7 @@ function ListingLedger({ groups, isAdmin }) {
               const row = (
                 <article className="listing-ledger-row">
                   <div className="listing-ledger-title">
-                    <div className="listing-media compact"><ListingPhoto listing={listing} /></div>
+                    <div className="listing-ledger-thumb sq-grid">{realPhoto(listing.photos) ? <img src={realPhoto(listing.photos)} alt="" /> : <i aria-hidden="true" />}</div>
                     <strong>{listing.title}</strong>
                   </div>
                   <span>{listing.estate || "-"}</span>

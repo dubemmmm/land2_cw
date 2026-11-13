@@ -34,6 +34,16 @@ h4 {
   letter-spacing: -0.02em;
 }
 
+/* One phrase per headline may be set in the serif italic. */
+h1 em,
+h2 em,
+h3 em {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
 button,
 input,
 textarea,
@@ -57,7 +67,7 @@ svg {
 }
 
 :focus-visible {
-  outline: 2px solid var(--navy);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

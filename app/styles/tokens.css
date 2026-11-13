@@ -1,75 +1,114 @@
-/* CW design tokens — measured from offplan.cwlagos.com / cwlagos.com.
+/* Squaremeter tokens — "Drawn to scale".
+   Family link to CW: navy ink, General Sans, the round CW mark.
+   Squaremeter's own: laterite accent, squared corners, mono figures, survey-sheet grid.
    Every stylesheet in app/styles reads from here. Do not hardcode colors elsewhere. */
 :root {
-  /* Navy (primary) */
+  /* Navy — the ink the sheet is drawn in */
   --navy: #111d42;
   --navy-500: #1c2350;
   --navy-600: #161c44;
-  --navy-700: #111634;
+  --navy-700: #0c1532;
   --navy-300: #34406f;
   --navy-200: #c3c7dc;
   --navy-100: #dfe1ec;
   --navy-50: #ecedf4;
+  --blueprint: #0e1838;
+
+  /* Laterite — Lagos red earth; boundaries, beacons, emphasis */
+  --accent: #c4502a;
+  --accent-600: #a5411f;
+  --accent-50: #f8ebe4;
+  --accent-on-navy: #f2916a;
 
   /* Text */
   --ink: #171a24;
   --ink-soft: #23262f;
-  --muted: #6c6f79;
+  --muted: #666a76;
   --faint: #a7acbc;
 
   /* Surfaces */
   --paper: #f6f4ef;
-  --paper-2: #f1f0eb;
-  --paper-3: #e9e8e2;
+  --paper-2: #f0eee7;
+  --paper-3: #e8e5dc;
   --card: #ffffff;
-  --line: #e3dfd4;
-  --line-soft: #ecece8;
-  --line-strong: #cfcabd;
+  --line: #dedacd;
+  --line-soft: #ebe8df;
+  --line-strong: #c4bfb0;
 
-  /* Accent + status */
-  --gold: #9c844f;
-  --gold-soft: #c9b58c;
-  --gold-50: #fbf3e2;
-  --green: #1f9d6b;
-  --green-50: #e6f5ee;
-  --amber: #c98a1e;
-  --amber-50: #fbf3e2;
-  --red: #c8553d;
-  --red-50: #fbece8;
+  /* Status (never used as brand colour) */
+  --green: #1f8a5f;
+  --green-50: #e6f3ec;
+  --amber: #b97a12;
+  --amber-50: #faf1dc;
+  --red: #b3261e;
+  --red-50: #fbe9e7;
   --blue: #3b6fd9;
   --blue-50: #e9f0fc;
   --wa: #25d366;
 
-  /* On-dark (rail, hero, CTA band) */
+  /* On-navy (rail, blueprint sheets) */
   --on-navy: #ffffff;
   --on-navy-soft: rgba(255, 255, 255, 0.78);
   --on-navy-muted: rgba(255, 255, 255, 0.56);
-  --on-navy-line: rgba(255, 255, 255, 0.14);
-  --on-navy-fill: rgba(255, 255, 255, 0.1);
+  --on-navy-line: rgba(255, 255, 255, 0.16);
+  --on-navy-fill: rgba(255, 255, 255, 0.08);
 
-  /* Radii */
-  --r-sm: 8px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-card: 24px;
-  --r-xl: 26px;
-  --r-band: 30px;
-  --r-full: 999px;
+  /* Radii — squared. Only true circles use --r-round. */
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 4px;
+  --r-card: 4px;
+  --r-xl: 6px;
+  --r-band: 6px;
+  --r-ctl: 3px;
+  --r-round: 999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(20, 24, 46, 0.05), 0 1px 1px rgba(20, 24, 46, 0.03);
-  --shadow-md: 0 10px 30px -12px rgba(20, 24, 46, 0.16), 0 2px 6px rgba(20, 24, 46, 0.05);
-  --shadow-lg: 0 26px 64px -24px rgba(20, 24, 46, 0.3), 0 8px 18px -10px rgba(20, 24, 46, 0.12);
+  /* Shadows — floating things only. --shadow-ink is the hard offset used on hover. */
+  --shadow-sm: 0 1px 2px rgba(20, 24, 46, 0.05);
+  --shadow-md: 0 10px 30px -12px rgba(20, 24, 46, 0.18), 0 2px 6px rgba(20, 24, 46, 0.05);
+  --shadow-lg: 0 26px 64px -24px rgba(20, 24, 46, 0.32), 0 8px 18px -10px rgba(20, 24, 46, 0.12);
   --shadow-nav: 0 12px 36px rgba(17, 29, 66, 0.18);
+  --shadow-ink: 3px 3px 0 var(--accent);
 
   /* Type */
   --font-sans: "General Sans", "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-display: "Instrument Serif", "Times New Roman", serif;
   --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
 
+  /* Sheet grid: 1 small square = 8px, 1 major square = 40px */
+  --grid-minor: rgba(17, 29, 66, 0.045);
+  --grid-major: rgba(17, 29, 66, 0.085);
+  --grid-minor-on-navy: rgba(255, 255, 255, 0.045);
+  --grid-major-on-navy: rgba(255, 255, 255, 0.09);
+  --sheet-grid:
+    linear-gradient(var(--grid-major) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(var(--grid-minor) 1px, transparent 1px) 0 0 / 8px 8px,
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px) 0 0 / 8px 8px;
+  --sheet-grid-on-navy:
+    linear-gradient(var(--grid-major-on-navy) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, var(--grid-major-on-navy) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(var(--grid-minor-on-navy) 1px, transparent 1px) 0 0 / 8px 8px,
+    linear-gradient(90deg, var(--grid-minor-on-navy) 1px, transparent 1px) 0 0 / 8px 8px;
+
+  /* Corner beacons: four 5px laterite pegs, one per corner. Layer above a surface colour. */
+  --beacons:
+    linear-gradient(var(--accent), var(--accent)) top left / 5px 5px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) top right / 5px 5px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom left / 5px 5px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom right / 5px 5px no-repeat;
+
   /* Layout */
-  --container: 1180px;
+  --container: 1240px;
   --gutter: 24px;
-  --section-pad: 96px;
+  --section-pad: 104px;
   --rail-w: 68px;
+  --nav-h: 68px;
+
+  /* Legacy aliases: page stylesheets from round one still read these.
+     Removed once every page stylesheet is rewritten. */
+  --gold: var(--accent);
+  --gold-soft: var(--accent-on-navy);
+  --gold-50: var(--accent-50);
+  --r-full: var(--r-ctl);
 }
