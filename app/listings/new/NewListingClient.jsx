@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, Image, Save, Star, Trash2, UploadCloud, X } from "lucide-react";
+import { CheckCircle2, Save, Star, UploadCloud, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import PlotGlyph from "@/components/PlotGlyph";
+import { formatNaira, formatSqm } from "@/lib/plot";
 
 const sizeUnits = ["sqm", "ha", "acres"];
+const sizeUnitLabels = { sqm: "m²", ha: "ha", acres: "acres" };
 const landUses = ["Residential", "Commercial", "Mixed-use"];
 const titleDocuments = ["C of O", "Governor's Consent", "Excision", "Gazette", "Deed of Assignment", "Registered Survey"];
 const listingStatuses = ["Available", "Under offer", "Sold", "Off-market", "Coming soon"];
@@ -41,6 +44,8 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
   const canPublish = requirements.title && requirements.location && requirements.photo;
   const missingText = missingRequirements(requirements);
   const sizeSqm = toSqm(form.sizeValue, form.sizeUnit);
+  const askingPrice = Number(form.askingPrice) || 0;
+  const pricePerSqm = sizeSqm > 0 && askingPrice > 0 ? askingPrice / sizeSqm : 0;
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -125,129 +130,135 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             <span>{initialListing ? "Edit listing" : "New listing"}</span>
           </nav>
           <h1 className="cw-pagehead-title">{initialListing ? "Edit land listing" : "New land listing"}</h1>
-          <p className="cw-lede">{listingsCount} listings tracked across {neighborhoods.length} locations</p>
+          <p className="cw-lede">
+            A listing needs a title, a location and at least one photo before it can be published. {listingsCount} listings are on file across {neighborhoods.length} locations.
+          </p>
         </div>
       </header>
 
-      {toast ? <div className="listing-toast"><CheckCircle2 size={16} /> {toast}</div> : null}
-
       <div className="listing-editor-shell">
         <form className="listing-editor-form" onSubmit={(event) => event.preventDefault()}>
-          <EditorSection number="01" title="Photos" meta={`${form.photos.length} added`}>
-            <div
-              className="listing-dropzone"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                readFiles(event.dataTransfer.files);
-              }}
-            >
-              <input type="file" accept="image/*" multiple onChange={(event) => readFiles(event.target.files)} />
-              <UploadCloud size={25} />
-              <span>Drag photos here, or click to browse</span>
-              <small>JPG or PNG · set cover with the star button</small>
-            </div>
-            {form.photos.length ? (
-              <div className="listing-photo-strip">
-                {form.photos.map((photo, index) => (
-                  <figure key={`${photo.slice(0, 24)}-${index}`}>
-                    <img src={photo} alt="" />
-                    {index === 0 ? <b>Cover</b> : null}
-                    <figcaption>
-                      <button type="button" onClick={() => setCover(index)} aria-label="Set as cover"><Star size={12} /></button>
-                      <button type="button" onClick={() => removePhoto(index)} aria-label="Remove photo"><X size={12} /></button>
-                    </figcaption>
-                  </figure>
-                ))}
+          <div className="listing-editor-card">
+            <EditorSection title="Photos" meta={`${form.photos.length} of 8 added`}>
+              <div
+                className="listing-dropzone"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  readFiles(event.dataTransfer.files);
+                }}
+              >
+                <input type="file" accept="image/*" multiple aria-label="Add photos" onChange={(event) => readFiles(event.target.files)} />
+                <UploadCloud size={22} aria-hidden="true" />
+                <span>Drag photos here, or click to browse</span>
+                <small>JPG or PNG. The first photo is the cover; use the star to change it.</small>
               </div>
-            ) : null}
-          </EditorSection>
+              {form.photos.length ? (
+                <div className="listing-photo-strip">
+                  {form.photos.map((photo, index) => (
+                    <figure key={`${photo.slice(0, 24)}-${index}`}>
+                      <img src={photo} alt="" />
+                      {index === 0 ? <b>Cover</b> : null}
+                      <figcaption>
+                        <button type="button" onClick={() => setCover(index)} aria-label="Set as cover" title="Set as cover"><Star size={13} /></button>
+                        <button type="button" onClick={() => removePhoto(index)} aria-label="Remove photo" title="Remove photo"><X size={13} /></button>
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : null}
+            </EditorSection>
 
-          <EditorSection number="02" title="Basic info & classification">
-            <label className="listing-field full">
-              <span>Title / plot address</span>
-              <input className="cw-input" value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Plot 14B, Bourdillon Close" />
-            </label>
-            <div className="listing-field-grid">
+            <EditorSection title="Where it is">
               <label className="listing-field">
-                <span>Location</span>
-                <select className="cw-select" value={form.neighborhoodId} onChange={(event) => update("neighborhoodId", event.target.value)}>
-                  <option value="">Select a location</option>
-                  {neighborhoods.map((neighborhood) => <option value={neighborhood.id} key={neighborhood.id}>{neighborhood.name}</option>)}
-                </select>
+                <span>Title or plot address</span>
+                <input className="cw-input" value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Plot 14B, Bourdillon Close" />
               </label>
-              <label className="listing-field">
-                <span>Estate <em>(optional)</em></span>
-                <input className="cw-input" list="estate-suggestions" value={form.estate} onChange={(event) => update("estate", event.target.value)} placeholder="e.g. Lekki Gardens Estate" />
-                <datalist id="estate-suggestions">
-                  {matchingEstates.map((estate) => <option value={estate.name} key={estate.id} />)}
-                </datalist>
-              </label>
-            </div>
-          </EditorSection>
+              <div className="listing-field-grid">
+                <label className="listing-field">
+                  <span>Location</span>
+                  <select className="cw-select" value={form.neighborhoodId} onChange={(event) => update("neighborhoodId", event.target.value)}>
+                    <option value="">Select a location</option>
+                    {neighborhoods.map((neighborhood) => <option value={neighborhood.id} key={neighborhood.id}>{neighborhood.name}</option>)}
+                  </select>
+                </label>
+                <label className="listing-field">
+                  <span>Estate <em>(optional)</em></span>
+                  <input className="cw-input" list="estate-suggestions" value={form.estate} onChange={(event) => update("estate", event.target.value)} placeholder="e.g. Lekki Gardens Estate" />
+                  <datalist id="estate-suggestions">
+                    {matchingEstates.map((estate) => <option value={estate.name} key={estate.id} />)}
+                  </datalist>
+                </label>
+              </div>
+            </EditorSection>
 
-          <EditorSection number="03" title="Specs">
-            <div className="listing-field-grid">
-              <label className="listing-field">
-                <span>Land size</span>
-                <div className="listing-size-control">
-                  <input className="cw-input" value={form.sizeValue} inputMode="decimal" onChange={(event) => update("sizeValue", event.target.value)} placeholder="1200" />
-                  <div className="cw-tabs">
-                    {sizeUnits.map((unit) => (
-                      <button className={form.sizeUnit === unit ? "active" : ""} type="button" onClick={() => update("sizeUnit", unit)} key={unit}>{unit}</button>
-                    ))}
+            <EditorSection title="Size and price">
+              <div className="listing-field-grid">
+                <div className="listing-field">
+                  <label htmlFor="listing-size">Land size</label>
+                  <div className="listing-size-control">
+                    <input id="listing-size" className="cw-input" value={form.sizeValue} inputMode="decimal" onChange={(event) => update("sizeValue", event.target.value)} placeholder="1200" />
+                    <div className="cw-tabs" role="group" aria-label="Size unit">
+                      {sizeUnits.map((unit) => (
+                        <button className={form.sizeUnit === unit ? "active" : ""} type="button" aria-pressed={form.sizeUnit === unit} onClick={() => update("sizeUnit", unit)} key={unit}>{sizeUnitLabels[unit]}</button>
+                      ))}
+                    </div>
                   </div>
+                  <small>{sizeHint(sizeSqm, form.sizeUnit)}</small>
                 </div>
-                <small>{sizeSqm ? `${formatNumber(sizeSqm)} sqm normalized` : "Enter a plot size"}</small>
-              </label>
+                <div className="listing-field">
+                  <label htmlFor="listing-price">Asking price</label>
+                  <div className="listing-price-field">
+                    <i aria-hidden="true">₦</i>
+                    <input id="listing-price" className="cw-input" value={form.askingPrice} inputMode="numeric" onChange={(event) => update("askingPrice", event.target.value)} placeholder="850000000" />
+                  </div>
+                  <small>{form.askingPrice ? formatFullPrice(form.askingPrice) : "Digits only, in naira"}</small>
+                </div>
+              </div>
+              <div className="listing-field">
+                <span id="listing-use-label">Land use</span>
+                <div className="listing-choice-row" role="group" aria-labelledby="listing-use-label">
+                  {landUses.map((use) => (
+                    <button className={form.landUse === use ? "active" : ""} type="button" aria-pressed={form.landUse === use} onClick={() => update("landUse", use)} key={use}>{use}</button>
+                  ))}
+                </div>
+              </div>
+            </EditorSection>
+
+            <EditorSection title="Title and status">
               <label className="listing-field">
-                <span>Asking price</span>
-                <div className="listing-price-field">
-                  <i>₦</i>
-                  <input className="cw-input" value={form.askingPrice} inputMode="numeric" onChange={(event) => update("askingPrice", event.target.value)} placeholder="850000000" />
-                </div>
-                <small>{form.askingPrice ? formatFullPrice(form.askingPrice) : "Price not set"}</small>
+                <span>Title document</span>
+                <select className="cw-select" value={form.titleDocument} onChange={(event) => update("titleDocument", event.target.value)}>
+                  {titleDocuments.map((title) => <option key={title}>{title}</option>)}
+                </select>
+                <small>{titleDocumentHelp(form.titleDocument)}</small>
               </label>
-            </div>
-            <div className="listing-field">
-              <span>Land use</span>
-              <div className="listing-choice-row">
-                {landUses.map((use) => (
-                  <button className={form.landUse === use ? "active" : ""} type="button" onClick={() => update("landUse", use)} key={use}>{use}</button>
-                ))}
+              <div className="listing-field">
+                <span id="listing-status-label">Listing status</span>
+                <div className="listing-choice-row" role="group" aria-labelledby="listing-status-label">
+                  {listingStatuses.map((status) => (
+                    <button className={form.listingStatus === status ? "active" : ""} type="button" aria-pressed={form.listingStatus === status} onClick={() => update("listingStatus", status)} key={status}>{status}</button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </EditorSection>
+            </EditorSection>
 
-          <EditorSection number="04" title="Legal & status">
-            <label className="listing-field full">
-              <span>Title document status</span>
-              <select className="cw-select" value={form.titleDocument} onChange={(event) => update("titleDocument", event.target.value)}>
-                {titleDocuments.map((title) => <option key={title}>{title}</option>)}
-              </select>
-              <small>{titleDocumentHelp(form.titleDocument)}</small>
-            </label>
-            <div className="listing-field">
-              <span>Listing status</span>
-              <div className="listing-choice-row wrap">
-                {listingStatuses.map((status) => (
-                  <button className={form.listingStatus === status ? "active" : ""} type="button" onClick={() => update("listingStatus", status)} key={status}>{status}</button>
-                ))}
-              </div>
-            </div>
-          </EditorSection>
-
-          <EditorSection number="05" title="Description">
-            <label className="listing-field full">
-              <span>Internal notes</span>
-              <textarea className="cw-textarea" value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Internal listing notes. Use this for access, owner, pricing context, or due diligence reminders." />
-            </label>
-          </EditorSection>
-
-          {error ? <p className="listing-form-error" role="alert">{error}</p> : null}
+            <EditorSection title="Internal notes">
+              <label className="listing-field">
+                <span>Notes <em>(not shown to clients)</em></span>
+                <textarea className="cw-textarea" value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Access, owner, pricing context or due diligence reminders." />
+              </label>
+            </EditorSection>
+          </div>
 
           <div className="listing-editor-actions">
-            <span>{missingText}</span>
+            {error ? (
+              <p className="listing-form-error" role="alert">{error}</p>
+            ) : toast ? (
+              <p className="listing-toast" role="status"><CheckCircle2 size={16} aria-hidden="true" /> {toast}</p>
+            ) : (
+              <p>{missingText}</p>
+            )}
             <div>
               <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={clearForm}>Clear</button>
               <button className="cw-btn cw-btn-outline cw-btn-sm" type="button" onClick={() => saveListing("Draft")} disabled={saving}><Save size={15} /> Save as draft</button>
@@ -258,28 +269,56 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
           </div>
         </form>
 
-        <aside className="listing-editor-aside">
-          <span className="listing-aside-label">Live preview</span>
-          <article className="listing-preview-card">
-            <div className="listing-preview-media">
-              {form.photos[0] ? <img src={form.photos[0]} alt="" /> : <div><Image size={28} /><span>Add photos to preview the cover</span></div>}
-              <b className="cw-chip cw-chip-glass">{form.listingStatus}</b>
-              <em className="cw-chip cw-chip-glass">{form.askingPrice ? formatCompactPrice(form.askingPrice) : "Price not set"}</em>
-            </div>
-            <div className="listing-preview-body">
-              <h2>{form.title || "Untitled listing"}</h2>
-              <p>{sizeSqm ? `${formatNumber(sizeSqm)} sqm` : "Size not set"} · {form.landUse}</p>
-              <p>{selectedLocation?.name || "No location selected"}{form.estate ? ` · ${form.estate}` : ""}</p>
-              <TitleBadge titleDocument={form.titleDocument} />
-            </div>
-          </article>
+        <aside className="listing-editor-aside" aria-label="Listing summary">
+          <section className="listing-summary">
+            <h2>Summary so far</h2>
+            {form.photos[0] ? <img className="listing-summary-cover" src={form.photos[0]} alt="Cover photo" /> : null}
+            <p className="listing-summary-title">{form.title || "Untitled listing"}</p>
+            <p className="listing-summary-place">{selectedLocation?.name || "No location selected"}{form.estate ? ` · ${form.estate}` : ""}</p>
 
-          <article className="listing-publish-check">
-            <h2>Before you publish</h2>
+            <figure className="listing-summary-plot">
+              <PlotGlyph sqm={sizeSqm} />
+              <figcaption>
+                {sizeSqm
+                  ? "Drawn from the size you entered. The area is to scale; the outline is indicative."
+                  : "Enter a land size to see the plot drawn to scale."}
+              </figcaption>
+            </figure>
+
+            <dl className="listing-summary-facts">
+              <div>
+                <dt>Size</dt>
+                <dd className={sizeSqm ? "" : "is-empty"}>{sizeSqm ? `${formatSqm(sizeSqm)} m²` : "Not set"}</dd>
+              </div>
+              <div>
+                <dt>Asking price</dt>
+                <dd className={askingPrice ? "" : "is-empty"}>{askingPrice ? formatFullPrice(askingPrice) : "Not set"}</dd>
+              </div>
+              <div className="listing-summary-key">
+                <dt>Price per m²</dt>
+                <dd className={pricePerSqm ? "" : "is-empty"}>{pricePerSqm ? formatNaira(pricePerSqm) : "Needs size and price"}</dd>
+              </div>
+              <div>
+                <dt>Land use</dt>
+                <dd>{form.landUse}</dd>
+              </div>
+              <div>
+                <dt>Title document</dt>
+                <dd>{form.titleDocument}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{form.listingStatus}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="listing-publish-check">
+            <h2>Needed to publish</h2>
             <CheckItem done={requirements.title} label="Title" />
             <CheckItem done={requirements.location} label="Location" />
             <CheckItem done={requirements.photo} label="At least one photo" />
-          </article>
+          </section>
 
           <Link className="cw-link listing-back-link" href="/listings">Back to listings</Link>
         </aside>
@@ -288,11 +327,11 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
   );
 }
 
-function EditorSection({ number, title, meta, children }) {
+function EditorSection({ title, meta, children }) {
   return (
-    <section className="listing-editor-card">
+    <section className="listing-editor-group">
       <header>
-        <h2 className="cw-label"><b>{number}</b>{title}</h2>
+        <h2>{title}</h2>
         {meta ? <span>{meta}</span> : null}
       </header>
       {children}
@@ -301,11 +340,11 @@ function EditorSection({ number, title, meta, children }) {
 }
 
 function CheckItem({ done, label }) {
-  return <p className={done ? "done" : ""}><i /> {label}</p>;
-}
-
-function TitleBadge({ titleDocument }) {
-  return <span className={`title-badge ${titleClass(titleDocument)}`}><i />{titleDocument}</span>;
+  return (
+    <p className={done ? "done" : ""}>
+      <i aria-hidden="true" /> {label}
+    </p>
+  );
 }
 
 function missingRequirements(requirements) {
@@ -328,6 +367,11 @@ function toSqm(value, unit) {
   return Math.round(size);
 }
 
+function sizeHint(sizeSqm, unit) {
+  if (!sizeSqm) return "Enter the plot size";
+  return unit === "sqm" ? `${formatSqm(sizeSqm)} m²` : `Equals ${formatSqm(sizeSqm)} m²`;
+}
+
 function titleDocumentHelp(titleDocument) {
   if (titleDocument === "C of O") return "Certificate of Occupancy, full statutory title.";
   if (titleDocument === "Governor's Consent") return "Transfer title with governor consent recorded.";
@@ -336,25 +380,7 @@ function titleDocumentHelp(titleDocument) {
   return "Verify title documents before sharing final advice.";
 }
 
-function formatCompactPrice(value) {
-  const price = Number(value) || 0;
-  if (!price) return "Price not set";
-  if (price >= 1000000000) return `₦${Number((price / 1000000000).toFixed(1))}B`;
-  return `₦${Math.round(price / 1000000)}M`;
-}
-
 function formatFullPrice(value) {
   const price = Number(value) || 0;
   return price ? `₦${new Intl.NumberFormat("en-US").format(price)}` : "Price not set";
-}
-
-function formatNumber(value) {
-  return new Intl.NumberFormat("en-US").format(Math.round(Number(value) || 0));
-}
-
-function titleClass(titleDocument) {
-  if (/consent/i.test(titleDocument)) return "consent";
-  if (/excision/i.test(titleDocument)) return "excision";
-  if (/gazette/i.test(titleDocument)) return "gazette";
-  return "cofo";
 }

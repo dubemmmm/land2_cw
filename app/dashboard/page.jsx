@@ -1,13 +1,18 @@
 import Link from "next/link";
-import { FileText, Map, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { Map, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import ConfidenceLegend from "@/components/ConfidenceLegend";
+import SqmCartogram from "@/components/SqmCartogram";
 import { getDashboardData } from "@/lib/dashboardStore";
 import { getLandMarketProfile } from "@/lib/landBible";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getReports } from "@/lib/reportStore";
-import { averageConfidence, confidenceColor, confidenceScore } from "@/lib/metrics";
+import { averageConfidence, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
+import { formatNaira, layoutCartogram } from "@/lib/plot";
 
 export const dynamic = "force-dynamic";
+
+const UPDATES_SHOWN = 8;
 
 export default async function DashboardPage() {
   const [neighborhoods, reports, dashboard] = await Promise.all([getNeighborhoods(), getReports(), getDashboardData()]);
@@ -21,9 +26,10 @@ export default async function DashboardPage() {
   const clientReports = reports.filter((report) => report.clientVisible || ["Published", "Client viewed"].includes(report.status));
   const latestReports = clientReports.slice(0, 5);
   const estateReportCount = reports.filter((report) => report.sourceType === "estate").length;
-  const marketSnapshots = neighborhoods
+  const marketProfiles = neighborhoods
     .map((neighborhood) => ({ neighborhood, market: getLandMarketProfile(neighborhood.id), score: confidenceScore(neighborhood) }))
-    .filter((item) => item.market)
+    .filter((item) => item.market);
+  const marketSnapshots = [...marketProfiles]
     .sort((a, b) => (b.market.annualGrowth || 0) - (a.market.annualGrowth || 0))
     .slice(0, 4);
   const avgGrowth = marketSnapshots.length
@@ -37,18 +43,28 @@ export default async function DashboardPage() {
   const approvalTotal = Math.max(1, approvalCounts.approved + approvalCounts.pending + approvalCounts.denied);
   const today = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
 
+  const priceRows = buildPriceRows(marketProfiles);
+  const cartogram = layoutCartogram(buildCartogramItems(marketProfiles));
+  const publishedCount = stats.publishedReports || clientReports.length;
+  const newThisWeek = stats.reportsPublishedThisWeek || 0;
+  const editedThisWeek = stats.reportsEditedThisWeek || 0;
+  const dataUpdates = stats.dataUpdatesThisWeek || dashboard.newSignalCount || changes.length;
+  const estateRecords = stats.estateCount || estateReportCount;
+  const shownUpdates = activity.slice(0, UPDATES_SHOWN);
+  const earlierUpdates = activity.slice(UPDATES_SHOWN);
+
   return (
     <AppShell active="dashboard">
       <div className="briefing">
-        <header className="brief-header">
+        <header className="cw-pagehead brief-head">
           <div>
             <nav className="cw-crumbs" aria-label="Breadcrumb">
               <Link href="/">Squaremeter</Link>
               <span aria-hidden="true">/</span>
               <span>Dashboard</span>
             </nav>
-            <h1>Market intelligence dashboard</h1>
-            <p className="brief-header-lede">{today} · {neighborhoods.length} tracked locations · {clientReports.length} published briefs · {stats.estateCount || estateReportCount} estate records</p>
+            <h1 className="cw-pagehead-title">Dashboard</h1>
+            <p className="brief-head-date">{today}</p>
           </div>
           <div className="brief-actions">
             <Link className="cw-btn cw-btn-soft cw-btn-sm" href="/admin/login">Admin login</Link>
@@ -56,129 +72,167 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        <section className="brief-band" aria-label="Briefing summary">
-          <div>
-            <p className="brief-band-label">Needs attention</p>
-            <h2>
-              {pending} {pending === 1 ? "approval" : "approvals"} pending, {changes.length} location {changes.length === 1 ? "signal" : "signals"} and {activity.length} client {activity.length === 1 ? "update" : "updates"} to review.
-            </h2>
-          </div>
-          <div className="brief-band-actions">
-            <Link className="cw-btn cw-btn-white cw-btn-sm" href="/reports">Review reports</Link>
-            <Link className="cw-btn cw-btn-ghost cw-btn-sm" href="/data">Open data</Link>
-          </div>
+        <section className="brief-summary" aria-label="What needs attention">
+          <p className="brief-summary-lead">
+            <a href="#approvals"><b>{pending}</b> {plural(pending, "approval is", "approvals are")} pending</a>,{" "}
+            <Link href="/signals"><b>{changes.length}</b> location {plural(changes.length, "signal has", "signals have")} come in</Link> and{" "}
+            <a href="#client-updates"><b>{activity.length}</b> client {plural(activity.length, "update is", "updates are")} waiting for review</a>.
+          </p>
+          <p className="brief-summary-rest">
+            <Link href="/reports"><b>{publishedCount}</b> {plural(publishedCount, "report is", "reports are")} published</Link>
+            {" "}({newThisWeek} new this week, {editedThisWeek} edited), and{" "}
+            <Link href="/data"><b>{dataUpdates}</b> data {plural(dataUpdates, "update has", "updates have")} been logged</Link> across land and locations.
+            Squaremeter tracks {neighborhoods.length} {plural(neighborhoods.length, "location", "locations")} and {estateRecords} estate {plural(estateRecords, "record", "records")}.
+          </p>
         </section>
 
-        <section className="brief-kpis">
-          <Kpi label="Portfolio confidence" value={portfolioConfidence} sub="tracked intelligence" />
-          <Kpi label="Published reports" value={stats.publishedReports || clientReports.length} sub={`${stats.reportsPublishedThisWeek || 0} new this week`} tone="up" />
-          <Kpi label="Edited reports" value={stats.reportsEditedThisWeek || 0} sub="admin updates" />
-          <Kpi label="Data updates" value={stats.dataUpdatesThisWeek || dashboard.newSignalCount || changes.length} sub="land + locations" />
-          <Kpi label="Avg market growth" value={`${avgGrowth || 0}%`} sub="tracked trend" tone="up" />
+        <section className="brief-card brief-prices" aria-labelledby="brief-prices-title">
+          <div className="brief-card-title">
+            <div>
+              <h2 id="brief-prices-title">Prices by location</h2>
+              <p>
+                {priceRows.length} {plural(priceRows.length, "location", "locations")} priced.
+                {marketSnapshots.length ? ` The ${marketSnapshots.length === 1 ? "fastest-growing location is" : `${marketSnapshots.length} fastest-growing average`} about ${avgGrowth}% a year.` : ""}
+              </p>
+            </div>
+            <Link className="cw-link" href="/data">Open data <span aria-hidden="true">→</span></Link>
+          </div>
+          {priceRows.length ? (
+            <div className={`brief-prices-body ${cartogram.squares.length ? "" : "is-table-only"}`}>
+              {cartogram.squares.length ? (
+                <div className="brief-prices-figure">
+                  <SqmCartogram layout={cartogram} onNavy={false} />
+                  <p className="brief-note">Each square is sized by its naira price per m². Point at a square to read its figures.</p>
+                </div>
+              ) : null}
+              <div className="brief-prices-table">
+                <div className="brief-table-wrap">
+                  <table className="brief-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Location</th>
+                        <th scope="col">Price per m²</th>
+                        <th scope="col">Growth per year</th>
+                        <th scope="col">Data confidence</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {priceRows.map((row) => (
+                        <tr key={row.id}>
+                          <th scope="row"><Link href={row.href}>{row.name}</Link></th>
+                          <td className="sq-fig">{row.price}</td>
+                          <td className="sq-fig">{row.growth}</td>
+                          <td>
+                            <span className="brief-conf">
+                              <i className={`sq-pat sq-pat-${row.pattern}`} aria-hidden="true" />
+                              {row.level}{row.score ? ` · ${row.score}` : ""}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="brief-prices-foot">
+                  <ConfidenceLegend withRange />
+                  <p className="brief-note">
+                    The {leaders.length === 1 ? "best-documented location scores" : `${leaders.length} best-documented locations average`} <b className="sq-fig">{portfolioConfidence}</b> out of 100.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="brief-empty">No location has a price on record yet.</p>
+          )}
         </section>
 
         <section className="brief-grid">
-          <div className="brief-left">
-            <article className="brief-card">
-              <CardTitle title="Latest client intelligence" count={activity.length} href="/reports" />
-              <div className="client-intel-list">
-                {activity.map((item, index) => (
-                  <Link className="client-intel-row" href={item.href || "/reports"} key={item.id || `${item.who}-${index}`}>
-                    <span className={item.gold ? "is-highlight" : ""}>{item.who}</span>
-                    <div>
-                      <p>{item.text}</p>
-                      <em>{item.when}</em>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </article>
-
-            <article className="brief-card">
-              <CardTitle title="Confidence leaderboard" meta="top locations" href="/map" linkLabel="Open map" />
-              <div className="leaderboard">
-                {leaders.map((n, index) => {
-                  const score = confidenceScore(n);
-                  const width = Math.max(6, score);
-                  const down = index === 0 || index === 3;
-                  return (
-                    <Link className="dash-leader" href={`/locations/${n.id}`} key={n.id}>
-                      <span>{index + 1}</span>
-                      <div>
-                        <strong>{n.name}</strong>
-                        <i><span style={{ width: `${width}%`, background: confidenceColor(score) }} /></i>
-                      </div>
-                      <em className={down ? "down" : "up"}>{down ? "▼" : "▲"} {index === 2 ? 1 : 4}</em>
-                      <b>{score}</b>
-                    </Link>
-                  );
-                })}
-              </div>
+          <div className="brief-col">
+            <article className="brief-card" id="client-updates">
+              <CardTitle title="Client updates" meta={`${activity.length} to review`} href="/reports" />
+              {activity.length ? (
+                <>
+                  <ul className="brief-list">
+                    {shownUpdates.map((item, index) => <UpdateRow item={item} key={item.id || `${item.who}-${index}`} />)}
+                  </ul>
+                  {earlierUpdates.length ? (
+                    <details className="brief-more">
+                      <summary>Show {earlierUpdates.length} earlier {plural(earlierUpdates.length, "update", "updates")}</summary>
+                      <ul className="brief-list">
+                        {earlierUpdates.map((item, index) => <UpdateRow item={item} key={item.id || `${item.who}-earlier-${index}`} />)}
+                      </ul>
+                    </details>
+                  ) : null}
+                </>
+              ) : (
+                <p className="brief-empty">No client updates to review.</p>
+              )}
             </article>
           </div>
 
-          <div className="brief-right">
+          <div className="brief-col">
             <article className="brief-card">
-              <CardTitle title="Published report activity" meta={`${latestReports.length} latest`} href="/reports" />
-              <div className="published-report-list">
-                {latestReports.map((report) => (
-                  <Link className="published-report-row" href={`/reports?report=${report.id}`} key={report.id}>
-                    <span><FileText size={14} /></span>
-                    <div>
-                      <strong>{report.siteTitle}</strong>
-                      <p>{report.neighborhoodName} · {report.data?.reportType || report.use}</p>
-                    </div>
-                    <em className={report.status === "Client viewed" ? "viewed" : ""}>{report.status === "Client viewed" ? "Viewed" : "Published"}</em>
-                  </Link>
-                ))}
-              </div>
+              <CardTitle
+                title="Published reports"
+                meta={`${publishedCount} published · ${newThisWeek} new this week · ${editedThisWeek} edited`}
+                href="/reports"
+              />
+              {latestReports.length ? (
+                <ul className="brief-list">
+                  {latestReports.map((report) => (
+                    <li key={report.id}>
+                      <Link className="brief-row" href={`/reports?report=${report.id}`}>
+                        <span className="brief-row-main">
+                          <strong>{report.siteTitle}</strong>
+                          <small>{report.neighborhoodName} · {report.data?.reportType || report.use}</small>
+                        </span>
+                        <span className="brief-row-side">{report.status === "Client viewed" ? "Viewed by client" : "Published"}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="brief-empty">No reports have been published yet.</p>
+              )}
             </article>
 
             <article className="brief-card">
-              <CardTitle title="What changed" meta="location signals" href="/signals" />
-              {changes.map((item) => {
-                const Icon = signalIcons[item.icon] || Minus;
-                return (
-                  <div className="change-row" key={item.id || item.text}>
-                    <span className={`change-icon ${item.tone || ""}`}><Icon size={14} /></span>
-                    <div>
-                      <p>{item.text}</p>
-                      <em>{item.hood} · {item.when}</em>
-                    </div>
-                  </div>
-                );
-              })}
+              <CardTitle title="What changed" meta={`${changes.length} location ${plural(changes.length, "signal", "signals")}`} href="/signals" />
+              {changes.length ? (
+                <ul className="brief-list">
+                  {changes.map((item) => {
+                    const Icon = signalIcons[item.icon] || Minus;
+                    return (
+                      <li className="brief-row" key={item.id || item.text}>
+                        <span className="brief-row-main">
+                          <span className="brief-change">
+                            <Icon className={`brief-change-icon ${item.tone || ""}`} size={15} aria-hidden="true" />
+                            {item.text}
+                          </span>
+                          <small>{item.hood} · {item.when}</small>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="brief-empty">No location signals yet.</p>
+              )}
             </article>
 
-            <article className="brief-card">
-              <CardTitle title="Market trend snapshot" meta="price movement" href="/data" />
-              <div className="trend-list">
-                {marketSnapshots.map(({ neighborhood, market, score }) => (
-                  <Link className="trend-row" href={`/locations/${neighborhood.id}`} key={neighborhood.id}>
-                    <div>
-                      <strong>{neighborhood.name}</strong>
-                      <p>{market.priceLabel || "Pricing under review"} · {market.annualGrowthLabel || "N/A"} growth</p>
-                    </div>
-                    <i><span style={{ width: `${Math.max(8, Math.min(100, Math.round((market.annualGrowth || 0) * 500)))}%` }} /></i>
-                    <b>{score}</b>
-                  </Link>
-                ))}
-              </div>
-            </article>
-
-            <article className="brief-card">
-              <CardTitle title="Approval pipeline" meta={`${approvalTotal} this week`} />
-              <div className="pipeline-body">
-                <div className="pipeline-bar">
+            <article className="brief-card" id="approvals">
+              <CardTitle title="Approvals" meta={`${approvalCounts.approved + approvalCounts.pending + approvalCounts.denied} on record`} />
+              <div className="brief-approvals">
+                <div className="brief-approvals-bar" aria-hidden="true">
                   <span className="approved" style={{ width: `${(approvalCounts.approved / approvalTotal) * 100}%` }} />
                   <span className="pending" style={{ width: `${(approvalCounts.pending / approvalTotal) * 100}%` }} />
                   <span className="denied" style={{ width: `${(approvalCounts.denied / approvalTotal) * 100}%` }} />
                 </div>
-                <div className="pipeline-legend">
-                  <span><i className="approved" />Approved <b>{approvalCounts.approved}</b></span>
-                  <span><i className="pending" />Pending <b>{approvalCounts.pending}</b></span>
-                  <span><i className="denied" />Denied <b>{approvalCounts.denied}</b></span>
-                </div>
+                <dl className="brief-approvals-counts">
+                  <div><dt><i className="approved" aria-hidden="true" />Approved</dt><dd className="sq-fig">{approvalCounts.approved}</dd></div>
+                  <div><dt><i className="pending" aria-hidden="true" />Pending</dt><dd className="sq-fig">{approvalCounts.pending}</dd></div>
+                  <div><dt><i className="denied" aria-hidden="true" />Denied</dt><dd className="sq-fig">{approvalCounts.denied}</dd></div>
+                </dl>
               </div>
             </article>
           </div>
@@ -195,22 +249,76 @@ const signalIcons = {
   up: TrendingUp
 };
 
-function Kpi({ label, value, sub, tone }) {
+function plural(count, one, many) {
+  return Number(count) === 1 ? one : many;
+}
+
+function cleanPriceLabel(value = "") {
+  return String(value || "").replace("/sqm est.", "/m² est.").replace("/sqm", "/m²");
+}
+
+function growthLabel(market) {
+  return market.annualGrowthLabel && market.annualGrowthLabel !== "N/A" ? market.annualGrowthLabel : "—";
+}
+
+// Table rows: every location with a market profile, dearest first.
+function buildPriceRows(marketProfiles) {
+  return [...marketProfiles]
+    .sort((a, b) => (Number(b.market.priceValue) || 0) - (Number(a.market.priceValue) || 0))
+    .map(({ neighborhood, market, score }) => ({
+      id: neighborhood.id,
+      name: neighborhood.name,
+      href: `/locations/${neighborhood.id}`,
+      price: cleanPriceLabel(market.priceLabel).replace("/m² est.", "").replace("/m²", "") || "Under review",
+      growth: growthLabel(market),
+      score,
+      level: confidenceLevel(score),
+      pattern: confidencePattern(score)
+    }));
+}
+
+// Cartogram items: naira-priced locations only, same shape as the landing page
+// (without photographs, so the squares are filled with the confidence pattern).
+function buildCartogramItems(marketProfiles) {
+  return marketProfiles
+    .filter((item) => Number(item.market.priceValue) > 0 && item.market.trendCurrency !== "USD")
+    .map(({ neighborhood, market, score }) => {
+      const center = neighborhood.geometry?.center || [];
+      return {
+        id: neighborhood.id,
+        name: neighborhood.name,
+        href: `/locations/${neighborhood.id}`,
+        priceValue: market.priceValue,
+        priceLabel: cleanPriceLabel(market.priceLabel),
+        priceShort: formatNaira(market.priceValue),
+        growthLabel: growthLabel(market),
+        confidence: score,
+        confidenceLevel: confidenceLevel(score),
+        pattern: confidencePattern(score),
+        photo: null,
+        lat: Number(center[0]),
+        lng: Number(center[1])
+      };
+    });
+}
+
+function UpdateRow({ item }) {
   return (
-    <article className="brief-kpi">
-      <span className="brief-kpi-label">{label}</span>
-      <strong>{value}</strong>
-      <em className={tone || ""}>{sub}</em>
-    </article>
+    <li>
+      <Link className="brief-row" href={item.href || "/reports"}>
+        <span className="brief-row-main">{item.text}</span>
+        <span className="brief-row-side">{item.when}</span>
+      </Link>
+    </li>
   );
 }
 
-function CardTitle({ title, count, meta, href, linkLabel = "View all" }) {
+function CardTitle({ title, meta, href, linkLabel = "View all" }) {
   return (
     <div className="brief-card-title">
       <div>
         <h2>{title}</h2>
-        {count ? <b>{count}</b> : meta ? <em>{meta}</em> : null}
+        {meta ? <p>{meta}</p> : null}
       </div>
       {href ? <Link className="cw-link" href={href}>{linkLabel} <span aria-hidden="true">→</span></Link> : null}
     </div>

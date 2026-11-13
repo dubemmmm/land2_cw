@@ -1,4 +1,4 @@
-/* Land listings page (app/listings). Builds on components.css primitives. */
+/* Land listings index (app/listings). Builds on components.css primitives. */
 
 /* ---------- Page + head ---------- */
 .listings-page {
@@ -8,9 +8,21 @@
   color: var(--ink);
 }
 
-.listings-header .cw-lede {
+.listings-header {
+  margin-bottom: 24px;
+}
+
+/* The summary sentence: the figures are the dark words */
+.listings-summary {
+  max-width: 68ch;
   margin-top: 12px;
   font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.listings-summary strong {
+  color: var(--ink);
+  font-weight: 500;
 }
 
 .listing-header-actions {
@@ -22,46 +34,21 @@
 }
 
 .listing-view-toggle button {
-  display: inline-flex;
-  align-items: center;
   gap: 7px;
   min-height: 38px;
-  transition: background 140ms ease, color 140ms ease;
 }
 
-/* ---------- Stats row ---------- */
-.listing-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.listing-stats article {
-  min-width: 0;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-
-.listing-stats .cw-stat-label b {
-  color: var(--ink-soft);
-  font-weight: 500;
-}
-
-/* ---------- Filter panel ---------- */
+/* ---------- Filters: one row of fields, then two rows of toggles ---------- */
 .listing-filters {
-  margin-bottom: 40px;
-  padding: 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--card);
+  margin-bottom: 36px;
 }
 
 .listing-filter-fields {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .listing-filter-fields .cw-field {
@@ -69,326 +56,277 @@
 }
 
 .listing-filter-search {
-  flex: 2 1 240px;
+  flex: 2 1 220px;
 }
 
 .listing-filter-estate {
-  flex: 1.2 1 180px;
+  flex: 1 1 170px;
 }
 
 .listing-filter-range {
-  flex: 1.2 1 190px;
+  flex: 1 1 170px;
 }
 
 .listing-filter-sort {
-  flex: 1 1 150px;
+  flex: 1 1 170px;
 }
 
 .listing-filter-range > div {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .listing-filters .cw-input,
 .listing-filters .cw-select {
   min-width: 0;
-  min-height: 46px;
-  padding-top: 0;
-  padding-bottom: 0;
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 14.5px;
 }
 
-.listing-search,
-.listing-select {
-  position: relative;
-  display: block;
-}
-
-.listing-search svg,
-.listing-select svg {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--muted);
-  pointer-events: none;
-}
-
-.listing-search svg {
-  left: 17px;
-}
-
-.listing-search .cw-input {
-  padding-left: 42px;
-}
-
-.listing-select svg {
-  right: 16px;
-}
-
-.listing-select .cw-select {
-  padding-right: 40px;
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: none;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.listing-reset-btn {
+.listing-filters .listing-reset-btn {
   flex: none;
-  min-height: 46px;
-  padding: 0 24px;
+  min-height: 40px;
+  padding: 0 16px;
+  gap: 8px;
+  font-size: 14px;
 }
 
-/* Quick-filter chips */
-.listing-chip-rows {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line-soft);
-}
-
-.listing-chip-row {
+.listing-toggle-row {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
-.listing-chip-row > span {
+.listing-toggle-row + .listing-toggle-row {
+  margin-top: 8px;
+}
+
+.listing-toggle-row > span {
   flex: none;
   width: 64px;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 36px;
+  font: 500 12.5px/32px var(--font-sans);
 }
 
-.listing-use-tabs,
-.listing-location-tabs {
+.listing-toggles {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
-.listing-use-tabs button,
-.listing-location-tabs button {
-  min-height: 36px;
-  padding: 0 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-full);
+.listing-toggles button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
   background: var(--card);
   color: var(--ink-soft);
   font: 500 13.5px/1 var(--font-sans);
   white-space: nowrap;
+  cursor: pointer;
   transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
 }
 
-.listing-use-tabs button:hover,
-.listing-location-tabs button:hover {
-  border-color: var(--line-strong);
+.listing-toggles button:hover {
+  border-color: var(--navy-300);
 }
 
-.listing-use-tabs button.active,
-.listing-location-tabs button.active {
+.listing-toggles button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.listing-toggles button[aria-pressed="true"] {
   border-color: var(--navy);
   background: var(--navy);
   color: var(--on-navy);
 }
 
-/* ---------- Groups ---------- */
+/* ---------- Card view ----------
+   The groups share one column grid. A group spans one column per listing
+   (data-span, capped at the column count), so two short groups sit side by
+   side instead of each leaving half a row empty. */
 .listing-card-groups {
   display: grid;
-  gap: 48px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  align-items: start;
+  gap: 40px 20px;
 }
 
-.listing-group h2,
-.listing-ledger-group h2 {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin: 0;
-  color: var(--ink);
-  font: 400 26px/1.15 var(--font-sans);
-  letter-spacing: -0.02em;
+.listing-group {
+  --listing-cols: 1;
+  min-width: 0;
+  grid-column: span var(--listing-cols);
+}
+
+.listing-group[data-span="2"] {
+  --listing-cols: 2;
+}
+
+.listing-group[data-span="3"] {
+  --listing-cols: 3;
+}
+
+.listing-group[data-span="4"] {
+  --listing-cols: 4;
 }
 
 .listing-group h2 {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font: 500 20px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
 }
 
-.listing-group h2 span,
-.listing-ledger-group h2 span {
+.listing-group h2 span {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13.5px;
+  font-weight: 400;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* ---------- Cards ---------- */
 .listing-card-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--listing-cols), minmax(0, 1fr));
   gap: 20px;
 }
 
 .listing-draft-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 11px;
-  border-radius: var(--r-full);
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
   background: var(--navy);
   color: var(--on-navy);
   font: 500 12px/1 var(--font-sans);
 }
 
-/* ---------- Ledger ---------- */
+/* ---------- Table view: scrolls inside its own container ---------- */
 .listing-ledger {
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--card);
 }
 
-.listing-ledger-inner {
-  min-width: 1080px;
-  padding: 8px 12px 12px;
+.listing-ledger-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  font: 400 14px/1.35 var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
 
-.listing-ledger-head,
-.listing-ledger-row {
-  display: grid;
-  grid-template-columns: minmax(280px, 1.7fr) minmax(150px, 1fr) 110px 120px 150px 170px 120px;
-  gap: 18px;
-  align-items: center;
-  padding: 10px 12px;
+.listing-ledger-table th,
+.listing-ledger-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
 }
 
-.listing-ledger-head {
-  padding-top: 14px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
+.listing-ledger-table th:first-child {
+  padding-left: 18px;
+}
+
+.listing-ledger-table th:last-child,
+.listing-ledger-table td:last-child {
+  padding-right: 18px;
+}
+
+.listing-ledger-table .listing-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.listing-ledger-table thead th {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  border-bottom-color: var(--line-strong);
   color: var(--muted);
-  font: 500 13px/1 var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.listing-ledger-group h2 {
-  padding: 24px 12px 10px;
-  font-size: 20px;
+.listing-ledger-group th {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  border-bottom-color: var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.listing-ledger-row {
-  min-height: 68px;
-  border-radius: var(--r-lg);
-  transition: background 140ms ease;
+.listing-ledger-group th span {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
 }
 
-.listing-ledger-row:hover {
+.listing-ledger-row:hover th,
+.listing-ledger-row:hover td {
   background: var(--paper);
 }
 
-.listing-ledger-row > span:not(.title-badge):not(.listing-status) {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.3;
-  font-variant-numeric: tabular-nums;
+.listing-ledger-table tbody:last-child tr:last-child th,
+.listing-ledger-table tbody:last-child tr:last-child td {
+  border-bottom: 0;
+}
+
+.listing-ledger-row td.listing-num {
+  color: var(--ink);
 }
 
 .listing-ledger-title {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
-
-.listing-ledger-title strong {
+  gap: 12px;
+  min-width: 240px;
   color: var(--ink);
-  font: 500 14.5px/1.3 var(--font-sans);
+  font-weight: 500;
 }
 
-/* ---------- Empty state ---------- */
-.listing-empty {
-  padding: 56px 24px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-card);
-  color: var(--muted);
-  text-align: center;
+.listing-ledger-title a {
+  color: var(--navy);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
 }
 
-.listing-empty strong {
-  color: var(--ink);
-  font: 400 20px/1.2 var(--font-sans);
-  letter-spacing: -0.015em;
+.listing-ledger-title a:hover {
+  text-decoration-color: var(--accent);
 }
 
-.listing-empty p {
-  margin: 8px 0 0;
-  font-size: 15px;
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 1240px) {
-  .listing-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .listing-stats,
-  .listing-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .listing-header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .listing-stats {
-    gap: 20px 16px;
-    margin-bottom: 24px;
-  }
-
-  .listing-filters {
-    padding: 18px 16px;
-    margin-bottom: 32px;
-  }
-
-  .listing-reset-btn {
-    flex: 1 1 100%;
-  }
-
-  .listing-chip-row {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .listing-chip-row > span {
-    width: auto;
-    line-height: 1.6;
-  }
-
-  .listing-card-groups {
-    gap: 36px;
-  }
-
-  .listing-card-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Ledger thumbnail: photo when one exists, else a pegged plot mark */
+/* Thumbnail: the listing's own photo when one exists, else a small plot outline */
 .listing-ledger-thumb {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex: none;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--paper-2);
   overflow: hidden;
 }
 
@@ -401,9 +339,90 @@
 }
 
 .listing-ledger-thumb i {
-  width: 24px;
-  height: 14px;
+  width: 12px;
+  height: 22px;
   border: 1.5px solid var(--navy);
-  background: var(--beacons);
-  background-origin: border-box;
+}
+
+/* ---------- Empty state ---------- */
+.listings-page .listing-empty {
+  padding: 48px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: transparent;
+  color: var(--muted);
+  text-align: center;
+}
+
+.listings-page .listing-empty strong {
+  color: var(--ink);
+  font: 500 18px/1.25 var(--font-sans);
+  letter-spacing: -0.015em;
+}
+
+.listings-page .listing-empty p {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1240px) {
+  .listing-card-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .listing-group[data-span="4"] {
+    --listing-cols: 3;
+  }
+}
+
+@media (max-width: 900px) {
+  .listing-card-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .listing-group[data-span="3"],
+  .listing-group[data-span="4"] {
+    --listing-cols: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .listing-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .listing-filters {
+    margin-bottom: 28px;
+  }
+
+  .listing-filter-search,
+  .listing-filter-estate,
+  .listing-filter-range {
+    flex-basis: 100%;
+  }
+
+  .listing-filter-sort {
+    flex: 1 1 0;
+  }
+
+  .listing-toggle-row {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .listing-toggle-row > span {
+    width: auto;
+    line-height: 1.8;
+  }
+
+  .listing-card-groups {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .listing-group[data-span] {
+    --listing-cols: 1;
+  }
 }

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Building2, ExternalLink, GitCommitHorizontal, User } from "lucide-react";
-import { SourcePill, StatusPill } from "@/components/Pills";
-import { confidenceColor, formatDate } from "@/lib/metrics";
+import SiteFooter from "@/components/SiteFooter";
+import { confidencePattern, formatDate } from "@/lib/metrics";
 import { getReport, getReports } from "@/lib/reportStore";
 import PrintButton from "./PrintButton";
 
 export const dynamic = "force-dynamic";
 
+// The document markup mirrors ReportDetail in app/reports/ReportsClient.jsx, minus the
+// admin-only parts. It stays server-rendered so internal notes never reach this page.
 export default async function ClientReportPage({ params }) {
   const { id } = await params;
   const report = await getReport(id);
@@ -17,174 +18,201 @@ export default async function ClientReportPage({ params }) {
   const n = report.neighborhood;
   const build = (report.data?.buildParameters?.length ? report.data.buildParameters : n.intelligence?.buildParameters || []).slice(0, 4);
   const rules = (report.data?.constraints?.length ? report.data.constraints : n.intelligence?.constraints || []).slice(0, 3);
+  const approvals = (n.approvals || []).slice(0, 3);
   const rationale = report.data?.recommendationRationale || n.recommendation?.confidenceReason || "Verify source pricing, title, survey, estate rules, and approvals before committing capital.";
+  const changes = report.changes || report.data?.changeNotes?.length || 0;
+  const changeNotes = report.data?.changeNotes?.length ? report.data.changeNotes : ["No material changes since the previous brief"];
 
   return (
     <div className="client-report-screen">
       <header className="client-report-bar">
-        <Link className="client-report-brand" href="/">
-          <span className="cw-mark">CW</span>
-          <span>Squaremeter by CW</span>
-        </Link>
-        <PrintButton />
+        <div className="client-report-bar-inner">
+          <Link className="client-report-brand" href="/">
+            <span className="cw-mark">CW</span>
+            <span>Squaremeter by CW</span>
+          </Link>
+          <PrintButton />
+        </div>
       </header>
 
       <main className="client-report-main">
-      <article className="report-paper">
-        <header className="report-paper-head">
-          <div className="report-brand">
-            <span className="cw-mark">CW</span>
-            <div>
-              <strong>Squaremeter by CW</strong>
-              <p>Development brief</p>
-            </div>
-          </div>
-          <aside>
-            <strong>{report.ref}</strong>
-            <p>Prepared 01 Jul 2026</p>
-          </aside>
-        </header>
+        <article className="report-doc">
+          <p className="report-doc-kind">{report.data?.reportType || "Client brief"} · {report.neighborhoodName}</p>
+          <h1 className="report-doc-title">{report.siteTitle}</h1>
+          {report.data?.executiveSummary ? <p className="report-doc-summary">{report.data.executiveSummary}</p> : null}
 
-        <span className="report-neighborhood">{report.neighborhoodName}</span>
-        <h1>{report.siteTitle}</h1>
-        <p className="report-meta">
-          <span><User size={13} /> {report.client}</span>
-          <span><Building2 size={13} /> {report.use}</span>
-        </p>
+          <dl className="report-facts">
+            <div><dt>Reference</dt><dd className="report-ref">{report.ref}</dd></div>
+            <div><dt>Client</dt><dd>{report.client}</dd></div>
+            <div><dt>Location</dt><dd>{report.neighborhoodName}</dd></div>
+            <div><dt>Intended use</dt><dd>{report.use}</dd></div>
+            {report.data?.publishDate ? <div><dt>Published</dt><dd className="sq-fig">{formatDate(report.data.publishDate)}</dd></div> : null}
+            {report.data?.reviewDate ? <div><dt>Review by</dt><dd className="sq-fig">{formatDate(report.data.reviewDate)}</dd></div> : null}
+          </dl>
 
-        {report.data?.executiveSummary ? (
-          <section className="report-intel-summary">
-            <span>{report.data.reportType || "Client brief"}</span>
-            <p>{report.data.executiveSummary}</p>
-          </section>
-        ) : null}
-
-        <div className="report-brief-facts">
-          {report.data?.riskLevel ? <span><b>Risk</b>{report.data.riskLevel}</span> : null}
-          {report.data?.publishDate ? <span><b>Published</b>{formatDate(report.data.publishDate)}</span> : null}
-          {report.data?.reviewDate ? <span><b>Review by</b>{formatDate(report.data.reviewDate)}</span> : null}
-        </div>
-
-        <section className="report-change-box">
-          <strong><GitCommitHorizontal size={14} /> {report.changes || report.data?.changeNotes?.length || 0} changes since this brief was sent</strong>
-          {(report.data?.changeNotes?.length ? report.data.changeNotes : ["No material changes since the previous brief"]).map((note) => <p key={note}>{note}</p>)}
-        </section>
-
-        <section className="report-recommendation">
-          <div className="report-ring" style={{ "--score": report.score, "--tone": confidenceColor(report.score) }}><span>{report.score}</span></div>
-          <div>
-            <span>Recommendation <b>{report.verdict}</b></span>
-            <p>{rationale}</p>
-          </div>
-        </section>
-
-        {report.data?.keyRisks?.length || report.data?.opportunityNotes?.length ? (
-          <div className="report-two-col report-intel-lists">
-            {report.data?.keyRisks?.length ? (
-              <section>
-                <SectionHeading title="Key risks" />
-                {report.data.keyRisks.map((risk) => <p key={risk}>{risk}</p>)}
-              </section>
-            ) : null}
-            {report.data?.opportunityNotes?.length ? (
-              <section>
-                <SectionHeading title="Opportunity notes" />
-                {report.data.opportunityNotes.map((note) => <p key={note}>{note}</p>)}
-              </section>
-            ) : null}
-          </div>
-        ) : null}
-
-        <SectionHeading title="What you can build" />
-        <div className="report-build-grid">
-          {build.map((row) => (
-            <article className="report-build-card" key={row.label}>
-              <span>{row.label}</span>
-              <strong>{row.value}</strong>
-              <SourcePill type={row.sourceType} />
-            </article>
-          ))}
-        </div>
-
-        <div className="report-two-col">
-          <section>
-            <SectionHeading title="Regulations" />
-            {rules.map((row) => (
-              <div className="report-rule-row" key={row.label}>
-                <p>{row.label}</p>
-                <SourcePill type={row.sourceType} />
+          <section className="report-sec">
+            <h2 className="report-sec-title">Recommendation</h2>
+            <div className="report-verdict">
+              <div className="report-verdict-main">
+                <strong>{report.verdict}</strong>
+                <p>{rationale}</p>
               </div>
-            ))}
-          </section>
-          <section>
-            <SectionHeading title="Approval history" />
-            <div className="report-history">
-              {(n.approvals || []).slice(0, 3).map((row, index) => (
-                <article key={`${row.date}-${index}`}>
-                  <i className={String(row.outcome).toLowerCase()} />
-                  <div>
-                    <time>{formatDate(row.date)}</time>
-                    <p>{row.request || row.projectType}</p>
-                  </div>
-                  <StatusPill status={row.outcome} />
-                </article>
-              ))}
+              <dl className="report-verdict-facts">
+                <div><dt>Data confidence</dt><dd><Confidence level={report.level} score={report.score} outOf /></dd></div>
+                {report.data?.riskLevel ? <div><dt>Risk level</dt><dd>{report.data.riskLevel}</dd></div> : null}
+              </dl>
             </div>
           </section>
-        </div>
 
-        {report.resources?.length ? (
-          <>
-            <SectionHeading title="Market research" meta={`${report.resources.length} resources`} />
-            <div className="report-resource-list">
-              {report.resources.slice(0, 4).map((resource) => (
-                <article className="report-resource-row" key={resource.id}>
-                  <div>
-                    <strong>{resource.title}</strong>
-                    <p>{resource.resourceType} · {resource.source}</p>
-                  </div>
-                  {resource.url ? (
-                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
-                  ) : resource.fileName ? (
-                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
-                  ) : null}
-                </article>
-              ))}
+          <section className="report-sec">
+            <h2 className="report-sec-title">{changes} {changes === 1 ? "change" : "changes"} since this brief was sent</h2>
+            <ul className="report-ul">
+              {changeNotes.map((note) => <li key={note}>{note}</li>)}
+            </ul>
+          </section>
+
+          {report.data?.keyRisks?.length || report.data?.opportunityNotes?.length ? (
+            <div className="report-cols">
+              {report.data?.keyRisks?.length ? (
+                <section className="report-sec">
+                  <h2 className="report-sec-title">Key risks</h2>
+                  <ul className="report-ul">
+                    {report.data.keyRisks.map((risk) => <li key={risk}>{risk}</li>)}
+                  </ul>
+                </section>
+              ) : null}
+              {report.data?.opportunityNotes?.length ? (
+                <section className="report-sec">
+                  <h2 className="report-sec-title">Opportunities</h2>
+                  <ul className="report-ul">
+                    {report.data.opportunityNotes.map((note) => <li key={note}>{note}</li>)}
+                  </ul>
+                </section>
+              ) : null}
             </div>
-          </>
-        ) : null}
+          ) : null}
 
-        {comparable.length ? (
-          <>
-            <SectionHeading title="Comparable sites" meta={`in ${report.neighborhoodName}`} />
-            {comparable.map((item) => (
-              <div className="report-comp-row" key={item.id}>
-                <div>
-                  <strong>{item.siteTitle}</strong>
-                  <p>{item.use} · {item.client}</p>
+          {build.length ? (
+            <section className="report-sec">
+              <h2 className="report-sec-title">Key figures</h2>
+              <div className="report-tbl-wrap">
+                <table className="report-tbl">
+                  <thead>
+                    <tr><th scope="col">Item</th><th scope="col">Value</th><th scope="col">Source</th></tr>
+                  </thead>
+                  <tbody>
+                    {build.map((row) => (
+                      <tr key={row.label}>
+                        <th scope="row">{row.label}</th>
+                        <td className="report-tbl-value sq-fig">{row.value}</td>
+                        <td className="report-tbl-source">{row.sourceType || "Internal"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : null}
+
+          {rules.length ? (
+            <section className="report-sec">
+              <h2 className="report-sec-title">Rules and constraints</h2>
+              <div className="report-tbl-wrap">
+                <table className="report-tbl">
+                  <thead>
+                    <tr><th scope="col">What applies</th><th scope="col">Source</th></tr>
+                  </thead>
+                  <tbody>
+                    {rules.map((row) => (
+                      <tr key={row.label}>
+                        <td>{row.label}</td>
+                        <td className="report-tbl-source">{row.sourceType || "Internal"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : null}
+
+          <section className="report-sec">
+            <h2 className="report-sec-title">Approval history</h2>
+            {approvals.length ? (
+              <div className="report-tbl-wrap">
+                <table className="report-tbl">
+                  <thead>
+                    <tr><th scope="col">Date</th><th scope="col">Request</th><th scope="col">Outcome</th></tr>
+                  </thead>
+                  <tbody>
+                    {approvals.map((row, index) => (
+                      <tr key={`${row.date}-${index}`}>
+                        <td className="report-tbl-date sq-fig">{formatDate(row.date)}</td>
+                        <td>{row.request || row.projectType}</td>
+                        <td className={`report-outcome ${String(row.outcome).toLowerCase()}`}>{row.outcome || "No data"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="report-none">No planning approvals are on record for this location yet.</p>
+            )}
+          </section>
+
+          {report.resources?.length ? (
+            <section className="report-sec">
+              <h2 className="report-sec-title">Market research <span>{report.resources.length} {report.resources.length === 1 ? "resource" : "resources"}</span></h2>
+              <ul className="report-resources">
+                {report.resources.slice(0, 4).map((resource) => (
+                  <li key={resource.id}>
+                    {resource.url ? (
+                      <a href={resource.url} target="_blank" rel="noreferrer">{resource.title}</a>
+                    ) : resource.fileName ? (
+                      <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">{resource.title}</a>
+                    ) : (
+                      <strong>{resource.title}</strong>
+                    )}
+                    <span>{resource.resourceType} · {resource.source}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {comparable.length ? (
+            <section className="report-sec">
+              <h2 className="report-sec-title">Comparable sites in {report.neighborhoodName}</h2>
+              {comparable.map((item) => (
+                <div className="report-comp" key={item.id}>
+                  <span className="report-comp-main">
+                    <strong>{item.siteTitle}</strong>
+                    <span>{item.use} · {item.client}</span>
+                  </span>
+                  <Confidence level={item.level} score={item.score} />
                 </div>
-                <span><i style={{ "--tone": confidenceColor(item.score) }} /> {item.score}</span>
-              </div>
-            ))}
-          </>
-        ) : null}
-      </article>
+              ))}
+            </section>
+          ) : null}
+        </article>
+
+        <p className="client-report-contact">
+          Figures in this brief are estimates from tracked market data and may differ from final transaction prices.
+          Verify title, survey and approvals before committing capital. Questions about this brief:{" "}
+          <a href="mailto:hello@cwlagos.com">hello@cwlagos.com</a>
+        </p>
       </main>
 
-      <footer className="client-report-legal">
-        © {new Date().getFullYear()} Squaremeter by CW Real Estate. Figures shown are estimates based on tracked market
-        data and may not reflect final transaction prices. Verify title, survey and approvals before committing capital.
-        Questions about this brief: <a href="mailto:hello@cwlagos.com">hello@cwlagos.com</a>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
 
-function SectionHeading({ title, meta }) {
+// Confidence is always shown as pattern swatch + level + score.
+function Confidence({ score, level, outOf = false }) {
   return (
-    <div className="report-section-title">
-      <h2>{title}</h2>
-      {meta ? <span>{meta}</span> : null}
-    </div>
+    <span className="report-conf">
+      <i className={`sq-pat sq-pat-${confidencePattern(score)}`} aria-hidden="true" />
+      {level} · <span className="sq-fig">{score}{outOf ? " of 100" : ""}</span>
+    </span>
   );
 }

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
-import { getEstateMarketProfile } from "@/lib/landBible";
+import { getEstateMarketProfile, getLandMarketProfile } from "@/lib/landBible";
+import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getClientResources } from "@/lib/resourceStore";
 import EstateDetailClient from "./EstateDetailClient";
 
@@ -10,11 +11,24 @@ export default async function EstateDetailPage({ params }) {
   const { id } = await params;
   const estate = getEstateMarketProfile(id);
   if (!estate) notFound();
-  const resources = await getClientResources({ targetType: "estate", targetId: id });
+  const [resources, neighborhoods] = await Promise.all([
+    getClientResources({ targetType: "estate", targetId: id }),
+    getNeighborhoods()
+  ]);
+  // Naira price per m² for every neighbourhood, so the budget drawing can set this estate beside them.
+  const pricedLocations = neighborhoods
+    .map((item) => ({ item, profile: getLandMarketProfile(item.id) }))
+    .filter(({ profile }) => profile && Number(profile.priceValue) > 0 && profile.trendCurrency !== "USD")
+    .map(({ item, profile }) => ({
+      id: item.id,
+      name: item.name,
+      href: `/locations/${item.id}`,
+      priceValue: profile.priceValue
+    }));
 
   return (
     <AppShell active="map">
-      <EstateDetailClient estate={estate} resources={resources} />
+      <EstateDetailClient estate={estate} resources={resources} pricedLocations={pricedLocations} />
     </AppShell>
   );
 }

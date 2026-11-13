@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Grid2X2, List, Plus, RotateCcw, Search } from "lucide-react";
+import { Grid2X2, List, Plus, RotateCcw } from "lucide-react";
 import PlotCard from "@/components/PlotCard";
 import { photoCredits } from "@/lib/photos";
-import { realPhoto } from "@/lib/plot";
+import { formatNaira, formatSqm, realPhoto } from "@/lib/plot";
 import { useMemo, useState } from "react";
 
 const landUses = ["Residential", "Commercial", "Mixed-use"];
@@ -102,58 +102,45 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
             <span>Listings</span>
           </nav>
           <h1 className="cw-pagehead-title">Land listings</h1>
-          <p className="cw-lede">{visibleListings.length} of {initialListings.length} listings shown, grouped by area.</p>
+          <ListingSummary stats={stats} total={initialListings.length} />
         </div>
         <div className="listing-header-actions">
           <div className="cw-tabs listing-view-toggle" role="group" aria-label="Listing view">
             <button className={view === "cards" ? "active" : ""} type="button" onClick={() => switchView("cards")} aria-label="Card view" aria-pressed={view === "cards"}>
-              <Grid2X2 size={15} /> Cards
+              <Grid2X2 size={15} aria-hidden="true" /> Cards
             </button>
-            <button className={view === "ledger" ? "active" : ""} type="button" onClick={() => switchView("ledger")} aria-label="Ledger view" aria-pressed={view === "ledger"}>
-              <List size={15} /> Ledger
+            <button className={view === "ledger" ? "active" : ""} type="button" onClick={() => switchView("ledger")} aria-label="Table view" aria-pressed={view === "ledger"}>
+              <List size={15} aria-hidden="true" /> Table
             </button>
           </div>
-          <Link className="cw-btn cw-btn-navy listing-new-btn" href={isAdmin ? "/listings/new" : "/admin/login?next=%2Flistings%2Fnew"}>
-            <Plus size={16} /> New listing
+          <Link className="cw-btn cw-btn-navy cw-btn-sm" href={isAdmin ? "/listings/new" : "/admin/login?next=%2Flistings%2Fnew"}>
+            <Plus size={16} aria-hidden="true" /> New listing
           </Link>
         </div>
       </header>
-
-      <section className="listing-stats" aria-label="Listing summary">
-        <Metric label="Listings" value={stats.count} suffix="tracked" />
-        <Metric label="Portfolio value" value={formatCompactPrice(stats.value)} suffix="asking total" />
-        <Metric label="Available" value={stats.available} suffix="ready to sell" />
-        <Metric label="Avg. size" value={formatNumber(stats.avgSize)} suffix="sqm per plot" />
-      </section>
 
       <section className="listing-filters" aria-label="Listing filters">
         <div className="listing-filter-fields">
           <label className="cw-field listing-filter-search">
             <span>Search</span>
-            <span className="listing-search">
-              <Search size={16} aria-hidden="true" />
-              <input className="cw-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Title, area, estate or document" />
-            </span>
+            <input className="cw-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Title, area, estate or document" />
           </label>
           <label className="cw-field listing-filter-estate">
             <span>Estate</span>
-            <span className="listing-select">
-              <select className="cw-select" value={estate} onChange={(event) => setEstate(event.target.value)} aria-label="Estate filter">
-                <option value="all">All estates</option>
-                {estateOptions.map((name) => <option value={name} key={name}>{name}</option>)}
-              </select>
-              <ChevronDown size={16} aria-hidden="true" />
-            </span>
+            <select className="cw-select" value={estate} onChange={(event) => setEstate(event.target.value)} aria-label="Estate filter">
+              <option value="all">All estates</option>
+              {estateOptions.map((name) => <option value={name} key={name}>{name}</option>)}
+            </select>
           </label>
           <div className="cw-field listing-filter-range" role="group" aria-label="Price range in millions of naira">
-            <span>Price (₦M)</span>
+            <span>Price, ₦ million</span>
             <div>
               <input className="cw-input" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} inputMode="numeric" placeholder="Min" aria-label="Minimum price in millions of naira" />
               <input className="cw-input" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} inputMode="numeric" placeholder="Max" aria-label="Maximum price in millions of naira" />
             </div>
           </div>
           <div className="cw-field listing-filter-range" role="group" aria-label="Plot size range in square metres">
-            <span>Size (sqm)</span>
+            <span>Size, m²</span>
             <div>
               <input className="cw-input" value={minSize} onChange={(event) => setMinSize(event.target.value)} inputMode="numeric" placeholder="Min" aria-label="Minimum size in square metres" />
               <input className="cw-input" value={maxSize} onChange={(event) => setMaxSize(event.target.value)} inputMode="numeric" placeholder="Max" aria-label="Maximum size in square metres" />
@@ -161,49 +148,44 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
           </div>
           <label className="cw-field listing-filter-sort">
             <span>Sort by</span>
-            <span className="listing-select">
-              <select className="cw-select" value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort listings">
-                <option value="newest">Newest</option>
-                <option value="price-high">Price high</option>
-                <option value="price-low">Price low</option>
-                <option value="size-high">Size high</option>
-              </select>
-              <ChevronDown size={16} aria-hidden="true" />
-            </span>
+            <select className="cw-select" value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort listings">
+              <option value="newest">Newest first</option>
+              <option value="price-high">Price, high to low</option>
+              <option value="price-low">Price, low to high</option>
+              <option value="size-high">Size, largest first</option>
+            </select>
           </label>
-          <button className="cw-btn cw-btn-navy listing-reset-btn" type="button" onClick={resetFilters}>
-            <RotateCcw size={15} /> Reset
+          <button className="cw-btn cw-btn-soft listing-reset-btn" type="button" onClick={resetFilters}>
+            <RotateCcw size={15} aria-hidden="true" /> Reset
           </button>
         </div>
 
-        <div className="listing-chip-rows">
-          <div className="listing-chip-row">
-            <span>Land use</span>
-            <div className="listing-use-tabs" role="group" aria-label="Land use filters">
-              <button className={landUse === "all" ? "active" : ""} type="button" onClick={() => setLandUse("all")}>All uses</button>
-              {landUses.map((use) => (
-                <button className={landUse === use ? "active" : ""} type="button" onClick={() => setLandUse(use)} key={use}>{use}</button>
-              ))}
-            </div>
+        <div className="listing-toggle-row">
+          <span id="listing-use-label">Land use</span>
+          <div className="listing-toggles" role="group" aria-labelledby="listing-use-label">
+            <button type="button" aria-pressed={landUse === "all"} onClick={() => setLandUse("all")}>All uses</button>
+            {landUses.map((use) => (
+              <button type="button" aria-pressed={landUse === use} onClick={() => setLandUse(use)} key={use}>{use}</button>
+            ))}
           </div>
-          <div className="listing-chip-row">
-            <span>Area</span>
-            <div className="listing-location-tabs" role="group" aria-label="Location filters">
-              <button className={location === "all" ? "active" : ""} type="button" onClick={() => selectLocation("all")}>All areas</button>
-              {locationOptions.map((neighborhood) => (
-                <button className={location === neighborhood.id ? "active" : ""} type="button" onClick={() => selectLocation(neighborhood.id)} key={neighborhood.id}>
-                  {neighborhood.name}
-                </button>
-              ))}
-            </div>
+        </div>
+        <div className="listing-toggle-row">
+          <span id="listing-area-label">Area</span>
+          <div className="listing-toggles" role="group" aria-labelledby="listing-area-label">
+            <button type="button" aria-pressed={location === "all"} onClick={() => selectLocation("all")}>All areas</button>
+            {locationOptions.map((neighborhood) => (
+              <button type="button" aria-pressed={location === neighborhood.id} onClick={() => selectLocation(neighborhood.id)} key={neighborhood.id}>
+                {neighborhood.name}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
       {!visibleListings.length ? (
         <div className="listing-empty">
-          <strong>No listings found</strong>
-          <p>Adjust the filters or publish a new land listing.</p>
+          <strong>No listings match these filters</strong>
+          <p>Widen the price or size range, or reset the filters to see every plot.</p>
         </div>
       ) : view === "cards" ? (
         <ListingCards groups={groups} isAdmin={isAdmin} />
@@ -214,21 +196,43 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
   );
 }
 
+// One sentence carrying the figures for whatever the filters currently show.
+function ListingSummary({ stats, total }) {
+  if (!stats.count) {
+    return <p className="cw-lede listings-summary">None of the {total} {total === 1 ? "plot" : "plots"} on record match these filters.</p>;
+  }
+  const plots = stats.count === 1 ? "plot" : "plots";
+  return (
+    <p className="cw-lede listings-summary">
+      {stats.count === total
+        ? <><strong>{stats.count}</strong> {plots}</>
+        : <><strong>{stats.count}</strong> of {total} plots shown</>}
+      , <strong>{stats.available}</strong> available
+      {stats.value ? <>, <strong>{formatNaira(stats.value)}</strong> asking in total</> : null}
+      {stats.avgSize ? <>, <strong>{formatSqm(stats.avgSize)} m²</strong> on average</> : null}
+      .
+    </p>
+  );
+}
+
 function ListingCards({ groups, isAdmin }) {
   // One scale for every plot on the page, so sizes can be compared by eye.
   const scaleSqm = Math.max(0, ...groups.flatMap((group) => group.listings.map((listing) => Number(listing.sizeSqm) || 0)));
   return (
-    <div className="listing-card-groups">
-      {groups.map((group) => (
-        <section className="listing-group" key={group.key}>
-          <h2>{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></h2>
-          <div className="listing-card-grid">
-            {group.listings.map((listing) => <ListingCard listing={listing} isAdmin={isAdmin} scaleSqm={scaleSqm} key={listing.id} />)}
-          </div>
-        </section>
-      ))}
+    <>
+      {/* Each area takes as many columns as it has listings, so short groups sit side by side. */}
+      <div className="listing-card-groups">
+        {groups.map((group) => (
+          <section className="listing-group" data-span={Math.min(group.listings.length, 4)} key={group.key}>
+            <h2>{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></h2>
+            <div className="listing-card-grid">
+              {group.listings.map((listing) => <ListingCard listing={listing} isAdmin={isAdmin} scaleSqm={scaleSqm} key={listing.id} />)}
+            </div>
+          </section>
+        ))}
+      </div>
       <p className="sq-photo-credit">Area views are stand-in photos from Wikimedia Commons, not the listed plots. {photoCredits}</p>
-    </div>
+    </>
   );
 }
 
@@ -246,54 +250,50 @@ function ListingCard({ listing, isAdmin, scaleSqm }) {
 function ListingLedger({ groups, isAdmin }) {
   return (
     <div className="listing-ledger">
-      <div className="listing-ledger-inner">
-        <div className="listing-ledger-head">
-          <span>Listing</span>
-          <span>Estate</span>
-          <span>Size</span>
-          <span>Use</span>
-          <span>Price</span>
-          <span>Title</span>
-          <span>Status</span>
-        </div>
+      <table className="listing-ledger-table">
+        <thead>
+          <tr>
+            <th scope="col">Listing</th>
+            <th scope="col">Estate</th>
+            <th scope="col">Use</th>
+            <th scope="col" className="listing-num">Size</th>
+            <th scope="col" className="listing-num">Asking price</th>
+            <th scope="col" className="listing-num">Per m²</th>
+            <th scope="col">Title document</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
         {groups.map((group) => (
-          <section className="listing-ledger-group" key={group.key}>
-            <h2>{group.name} <span>{group.listings.length}</span></h2>
+          <tbody key={group.key}>
+            <tr className="listing-ledger-group">
+              <th colSpan={8} scope="rowgroup">{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></th>
+            </tr>
             {group.listings.map((listing) => {
-              const row = (
-                <article className="listing-ledger-row">
-                  <div className="listing-ledger-title">
-                    <div className="listing-ledger-thumb sq-grid">{realPhoto(listing.photos) ? <img src={realPhoto(listing.photos)} alt="" /> : <i aria-hidden="true" />}</div>
-                    <strong>{listing.title}</strong>
-                  </div>
-                  <span>{listing.estate || "-"}</span>
-                  <span>{formatNumber(listing.sizeSqm)} sqm</span>
-                  <span>{listing.landUse}</span>
-                  <span>{formatFullPrice(listing.askingPrice)}</span>
-                  <TitleBadge titleDocument={listing.titleDocument} />
-                  <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
-                </article>
+              const photo = realPhoto(listing.photos);
+              return (
+                <tr className="listing-ledger-row" key={listing.id}>
+                  <th scope="row">
+                    <div className="listing-ledger-title">
+                      <div className="listing-ledger-thumb">{photo ? <img src={photo} alt="" loading="lazy" /> : <i aria-hidden="true" />}</div>
+                      {isAdmin ? <Link href={`/listings/new?id=${listing.id}`}>{listing.title}</Link> : <span>{listing.title}</span>}
+                      {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
+                    </div>
+                  </th>
+                  <td>{listing.estate || "—"}</td>
+                  <td>{listing.landUse}</td>
+                  <td className="listing-num">{formatSqm(listing.sizeSqm)} m²</td>
+                  <td className="listing-num">{formatFullPrice(listing.askingPrice)}</td>
+                  <td className="listing-num">{formatPerSqm(listing.askingPrice, listing.sizeSqm)}</td>
+                  <td>{listing.titleDocument || "—"}</td>
+                  <td><span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span></td>
+                </tr>
               );
-              return isAdmin ? <Link href={`/listings/new?id=${listing.id}`} key={listing.id}>{row}</Link> : <div key={listing.id}>{row}</div>;
             })}
-          </section>
+          </tbody>
         ))}
-      </div>
+      </table>
     </div>
   );
-}
-
-function Metric({ label, value, suffix }) {
-  return (
-    <article>
-      <strong className="cw-stat-num">{value}</strong>
-      <span className="cw-stat-label"><b>{label}</b> {suffix}</span>
-    </article>
-  );
-}
-
-function TitleBadge({ titleDocument }) {
-  return <span className={`title-badge ${titleClass(titleDocument)}`}><i />{titleDocument}</span>;
 }
 
 function groupByLocation(listings) {
@@ -314,41 +314,16 @@ function buildStats(listings) {
   return { count, value, available, avgSize };
 }
 
-function formatCompactPrice(value) {
-  const price = Number(value) || 0;
-  if (!price) return "Price not set";
-  if (price >= 1000000000) return `₦${trimDecimal(price / 1000000000)}B`;
-  return `₦${Math.round(price / 1000000)}M`;
-}
-
 function formatFullPrice(value) {
   const price = Number(value) || 0;
-  return price ? `₦${new Intl.NumberFormat("en-US").format(price)}` : "-";
+  return price ? `₦${new Intl.NumberFormat("en-US").format(price)}` : "—";
 }
 
-function formatPricePerSqm(price, size) {
+function formatPerSqm(price, size) {
   const perSqm = (Number(price) || 0) / (Number(size) || 0);
-  if (!Number.isFinite(perSqm) || perSqm <= 0) return "";
-  if (perSqm >= 1000000) return `₦${trimDecimal(perSqm / 1000000)}M/sqm`;
-  if (perSqm >= 1000) return `₦${Math.round(perSqm / 1000)}k/sqm`;
-  return `₦${Math.round(perSqm)}/sqm`;
-}
-
-function formatNumber(value) {
-  return new Intl.NumberFormat("en-US").format(Math.round(Number(value) || 0));
-}
-
-function trimDecimal(value) {
-  return Number(value.toFixed(1)).toString();
+  return Number.isFinite(perSqm) && perSqm > 0 ? formatNaira(perSqm) : "—";
 }
 
 function statusClass(status) {
   return String(status || "").toLowerCase().replace(/\s+/g, "-");
-}
-
-function titleClass(titleDocument) {
-  if (/consent/i.test(titleDocument)) return "consent";
-  if (/excision/i.test(titleDocument)) return "excision";
-  if (/gazette/i.test(titleDocument)) return "gazette";
-  return "cofo";
 }

@@ -21,6 +21,16 @@ export default async function LocationDetailPage({ params }) {
     getLandListings()
   ]);
   const locationListings = listings.filter((listing) => listing.neighborhoodId === id);
+  // Naira price per m² for every neighbourhood, so the budget drawing can compare this one with the rest.
+  const pricedLocations = neighborhoods
+    .map((item) => ({ item, profile: item.id === id ? market : getLandMarketProfile(item.id) }))
+    .filter(({ profile }) => profile && Number(profile.priceValue) > 0 && profile.trendCurrency !== "USD")
+    .map(({ item, profile }) => ({
+      id: item.id,
+      name: item.name,
+      href: `/locations/${item.id}`,
+      priceValue: profile.priceValue
+    }));
 
   return (
     <AppShell active="map">
@@ -30,6 +40,7 @@ export default async function LocationDetailPage({ params }) {
         market={market}
         resources={resources}
         locationListings={locationListings}
+        pricedLocations={pricedLocations}
         isAdmin={Boolean(admin)}
       />
     </AppShell>

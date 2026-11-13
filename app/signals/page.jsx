@@ -1,69 +1,70 @@
 import Link from "next/link";
-import { Bell, RadioTower, TrendingUp } from "lucide-react";
 import AppShell from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
 
-const previews = [
-  {
-    label: "Live signal feed",
-    title: "Planning alerts",
-    text: "Height variance denied in Banana Island. Drainage review requested in Ikoyi.",
-    icon: RadioTower
-  },
-  {
-    label: "Market movement",
-    title: "Price changes",
-    text: "Victoria Island tracked above the prior average band. Lekki Phase 1 activity increased.",
-    icon: TrendingUp
-  },
-  {
-    label: "Client triggers",
-    title: "Brief updates",
-    text: "Notify clients when a saved neighborhood, estate, or listing changes materially.",
-    icon: Bell
-  }
+// Illustrative rows only: the signal feed is not live yet.
+const examples = [
+  { kind: "Planning", what: "Height variance denied", where: "Banana Island" },
+  { kind: "Planning", what: "Drainage review requested", where: "Ikoyi" },
+  { kind: "Price", what: "Price per m² tracked above the prior average band", where: "Victoria Island" },
+  { kind: "Price", what: "Market activity increased", where: "Lekki Phase 1" },
+  { kind: "Client alert", what: "A saved location, estate or listing changed materially", where: "Your saved items" }
 ];
 
 export default function SignalsPage() {
   return (
     <AppShell active="signals">
       <div className="briefing">
-        <header className="brief-header">
+        <header className="cw-pagehead brief-head">
           <div>
             <nav className="cw-crumbs" aria-label="Breadcrumb">
               <Link href="/">Squaremeter</Link>
               <span aria-hidden="true">/</span>
               <span>Signals</span>
             </nav>
-            <h1>Signals</h1>
-            <p className="brief-header-lede">Live market, planning, listing and client-intelligence signals in one feed.</p>
+            <h1 className="cw-pagehead-title">Signals</h1>
+            <p className="brief-head-date">Planning decisions, price movements and client alerts, listed as they happen.</p>
+          </div>
+          <div className="brief-actions">
+            <Link className="cw-btn cw-btn-soft cw-btn-sm" href="/dashboard">Back to dashboard</Link>
           </div>
         </header>
 
-        <section className="cw-cta-band signals-band">
-          <div>
-            <h2>Coming soon</h2>
-            <p>This page will surface live market, planning, listing, and client-intelligence signals once the signal engine is ready.</p>
-          </div>
-          <Link className="cw-btn cw-btn-white" href="/dashboard">Back to dashboard</Link>
-        </section>
+        <p className="signals-notice">
+          <strong>This feed is not live yet.</strong> The rows below are examples of what it will show once the signal engine is ready.
+          Until then, the latest location signals are under <Link href="/dashboard">What changed on the dashboard</Link>.
+        </p>
 
-        <section className="signals-grid" aria-label="Planned signal types">
-          {previews.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <article className="signals-card" key={item.title}>
-                <div className="signals-card-top">
-                  <p className="cw-label"><b>{String(index + 1).padStart(2, "0")}</b>{item.label}</p>
-                  <span className="signals-icon"><Icon size={18} /></span>
-                </div>
-                <h2>{item.title}</h2>
-                <p>{item.text}</p>
-                <span className="cw-chip">Example preview</span>
-              </article>
-            );
-          })}
+        <section className="brief-card" aria-labelledby="signals-title">
+          <div className="brief-card-title">
+            <div>
+              <h2 id="signals-title">What a signal looks like</h2>
+              <p>{examples.length} examples, not live data</p>
+            </div>
+          </div>
+          <div className="brief-table-wrap">
+            <table className="brief-table signals-table">
+              <thead>
+                <tr>
+                  <th scope="col">What changed</th>
+                  <th scope="col">Where</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {examples.map((item) => (
+                  <tr key={`${item.what}-${item.where}`}>
+                    <th scope="row">{item.what}</th>
+                    <td>{item.where}</td>
+                    <td>{item.kind}</td>
+                    <td><span className="cw-chip">Example</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       </div>
     </AppShell>

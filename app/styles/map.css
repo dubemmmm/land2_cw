@@ -1,59 +1,157 @@
-/* Map page — Leaflet canvas with a floating locations panel.
-   Structure: .map-shell-pro > .map-stage (canvas, controls, legend) + .map-intel-panel */
+/* Map page — Leaflet map beside a locations panel.
+   Structure: .map-shell > .map-head + .map-stage (canvas, key, controls) + .map-panel */
 
-/* ---------- Shell + stage ---------- */
-.map-shell-pro {
-  position: relative;
+/* ---------- Layout ---------- */
+.map-shell {
+  display: grid;
+  grid-template-columns: 372px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "head stage"
+    "panel stage";
+  gap: 16px 20px;
   height: calc(100vh - 64px);
-  min-height: 560px;
+  min-height: 640px;
   margin-bottom: -32px;
 }
 
+.map-head {
+  grid-area: head;
+}
+
+.map-head h1 {
+  margin: 0;
+}
+
+.map-head p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font: 400 14.5px/1.5 var(--font-sans);
+}
+
 .map-stage {
-  position: absolute;
-  inset: 0;
+  grid-area: stage;
+  position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--paper-2);
 }
 
-.map-canvas-pro {
+.map-canvas {
   position: absolute;
   inset: 0;
   z-index: 0;
   isolation: isolate;
 }
 
-/* ---------- Leaflet overrides ---------- */
-.map-canvas-pro.leaflet-container {
+/* ---------- Leaflet: basemap and attribution ---------- */
+.map-canvas.leaflet-container {
   background: var(--paper-2);
   font-family: var(--font-sans);
 }
 
-.map-canvas-pro.leaflet-container .leaflet-control-attribution {
-  margin: 0 12px 12px 0;
-  padding: 3px 10px;
-  border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: var(--muted);
-  font: 400 10.5px/1.4 var(--font-sans);
+/* Standard OSM tiles, greyed so the squares carry the colour */
+.map-canvas .leaflet-tile-pane {
+  filter: grayscale(1) contrast(0.86) brightness(1.08);
 }
 
-.map-canvas-pro.leaflet-container .leaflet-control-attribution a {
+.map-canvas.leaflet-container .leaflet-control-attribution {
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  font: 400 11px/1.5 var(--font-sans);
+}
+
+.map-canvas.leaflet-container .leaflet-control-attribution a {
   color: var(--muted);
 }
 
+/* ---------- Leaflet: neighbourhood outlines ---------- */
+.map-canvas path.map-area {
+  stroke: var(--navy);
+  stroke-opacity: 0.45;
+  fill: var(--navy);
+  fill-opacity: 0.04;
+  transition: fill-opacity 140ms ease, stroke-opacity 140ms ease;
+}
+
+.map-canvas path.map-area:hover {
+  stroke-opacity: 0.9;
+  fill-opacity: 0.08;
+}
+
+.map-canvas path.map-area.is-selected {
+  stroke: var(--accent);
+  stroke-opacity: 1;
+  stroke-width: 2;
+  fill: var(--accent);
+  fill-opacity: 0.08;
+}
+
+/* ---------- Leaflet: price squares ----------
+   Side length is set per marker (area follows price per m²).
+   Fill follows confidencePattern(): solid / hatch / dot / none,
+   the same patterns as .sq-pat-* but on a white ground so the map
+   does not show through. */
+.map-sq-icon {
+  border: 0;
+  background: transparent;
+}
+
+.map-sq {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--navy);
+  color: var(--navy);
+  background-color: var(--card);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9);
+}
+
+.map-sq-solid {
+  background-color: currentColor;
+}
+
+.map-sq-hatch {
+  background-image: repeating-linear-gradient(135deg, currentColor 0 1.5px, transparent 1.5px 5px);
+}
+
+.map-sq-dot {
+  background-image: radial-gradient(currentColor 1px, transparent 1.3px);
+  background-size: 5px 5px;
+}
+
+.map-sq-none {
+  border-style: dashed;
+}
+
+.map-sq-icon:hover .map-sq,
+.map-sq-icon:focus-visible .map-sq {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.map-sq-icon:focus {
+  outline: none;
+}
+
+.map-sq-icon.is-selected .map-sq {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Leaflet: name labels ---------- */
 .leaflet-tooltip.map-label {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   background: var(--card);
   color: var(--ink);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   font: 500 12px/1 var(--font-sans);
+  cursor: pointer;
 }
 
 .leaflet-tooltip.map-label::before {
@@ -69,217 +167,184 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Floating controls, legend, coordinates ---------- */
-.map-pro-controls {
+.leaflet-tooltip.map-label.is-selected {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #ffffff;
+}
+
+.leaflet-tooltip.map-label.is-selected span {
+  color: var(--on-navy-soft);
+}
+
+/* ---------- Map overlays: key and zoom controls ---------- */
+.map-key {
   position: absolute;
   z-index: 2;
-  right: 16px;
-  top: 16px;
+  left: 12px;
+  top: 12px;
+  max-width: min(420px, calc(100% - 74px));
   display: grid;
-  gap: 8px;
-}
-
-.map-pro-controls button {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
+  gap: 10px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--card);
+}
+
+.map-key p {
+  margin: 0;
   color: var(--ink);
-  cursor: pointer;
-  transition: border-color 140ms ease, color 140ms ease;
+  font: 400 13px/1.4 var(--font-sans);
 }
 
-.map-pro-controls button:hover {
-  border-color: var(--line-strong);
-  color: var(--navy);
-}
-
-.map-pro-legend {
+.map-controls {
   position: absolute;
   z-index: 2;
   right: 12px;
-  bottom: 44px;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-md);
-  color: var(--muted);
-  font: 500 12.5px/1 var(--font-sans);
-}
-
-.map-pro-legend em {
-  display: inline-flex;
-  align-items: center;
+  top: 12px;
+  display: grid;
   gap: 6px;
-  color: var(--ink);
-  font-style: normal;
 }
 
-.map-pro-legend i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+.map-controls .cw-icon-btn {
+  cursor: pointer;
 }
 
-.map-pro-legend i.high {
-  background: var(--green);
-}
-
-.map-pro-legend i.medium {
-  background: var(--amber);
-}
-
-.map-pro-legend i.low {
-  background: var(--red);
-}
-
-.map-pro-coords {
-  position: absolute;
-  z-index: 2;
-  left: 388px;
-  bottom: 12px;
-  padding: 3px 10px;
-  border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: var(--muted);
-  font: 400 10.5px/1.4 var(--font-sans);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Locations panel ---------- */
-.map-intel-panel {
-  position: absolute;
-  z-index: 3;
-  left: 16px;
-  top: 16px;
-  bottom: 16px;
-  width: 356px;
+/* ---------- Panel ---------- */
+.map-panel {
+  grid-area: panel;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--r-card);
+  background: var(--card);
   color: var(--ink);
 }
 
-.map-panel-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 18px;
-  padding: 22px 22px 16px;
-}
-
-.map-panel-head h1 {
-  margin: 0;
-  color: var(--ink);
-  font: 400 28px/1.05 var(--font-sans);
-  letter-spacing: -0.03em;
-}
-
-.map-panel-head p,
-.map-panel-stat span {
-  display: block;
-  margin: 8px 0 0;
-  color: var(--muted);
-  font: 400 13px/1.2 var(--font-sans);
-}
-
-.map-panel-stat {
-  text-align: right;
-}
-
-.map-panel-stat strong {
-  color: var(--navy);
-  font: 400 28px/1.05 var(--font-sans);
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
+.map-panel-controls {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
 }
 
 .map-search {
   position: relative;
   display: block;
-  margin: 0 16px 10px;
   color: var(--muted);
 }
 
 .map-search svg {
   position: absolute;
-  left: 16px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
 }
 
-.map-search input {
-  width: 100%;
-  height: 44px;
-  padding: 0 18px 0 42px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-full);
-  background: var(--card);
-  color: var(--ink);
-  font: 400 14.5px/1 var(--font-sans);
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+.map-search .cw-input {
+  padding-left: 40px;
 }
 
-.map-search input::placeholder {
-  color: var(--faint);
-}
-
-.map-search input:focus {
-  outline: none;
-  border-color: var(--navy);
-  box-shadow: 0 0 0 3px var(--navy-50);
-}
-
-/* Segmented control: builds on .cw-tabs, stretched to the panel width */
+/* Segmented control: .cw-tabs stretched to the panel width */
 .map-filter-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0 16px 12px;
 }
 
 .map-filter-tabs button {
   min-width: 0;
+  justify-content: center;
   padding: 0 8px;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
 }
 
-.map-location-list {
+.map-panel-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+
+/* ---------- Selected location ---------- */
+.map-selected {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.map-selected-photo {
+  margin: 0 0 14px;
+}
+
+.map-selected-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+}
+
+.map-selected-photo figcaption {
+  margin-top: 6px;
+  color: var(--muted);
+  font: 400 12px/1.4 var(--font-sans);
+}
+
+.map-selected h2 {
+  margin: 0;
+  color: var(--ink);
+  font: 500 20px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
+}
+
+.map-selected-place {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font: 400 13.5px/1.4 var(--font-sans);
+}
+
+.map-selected-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.map-selected-facts dt {
+  color: var(--muted);
+  font: 500 12.5px/1.3 var(--font-sans);
+}
+
+.map-selected-facts dd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0;
+  color: var(--ink);
+  font: 500 16px/1.2 var(--font-sans);
+}
+
+/* ---------- Location list ---------- */
+.map-location-list {
   display: grid;
   align-content: start;
-  gap: 2px;
-  padding: 0 10px 12px;
+  padding: 6px 8px;
 }
 
 .map-location-row {
-  min-height: 60px;
+  min-height: 56px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 16px;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 10px 10px 10px 12px;
+  padding: 8px;
   border: 0;
   border-radius: var(--r-md);
   background: transparent;
@@ -290,89 +355,75 @@
 }
 
 .map-location-row:hover,
-.map-location-row:focus-visible,
 .map-location-row.active {
   background: var(--navy-50);
-  outline: none;
+}
+
+.map-location-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .map-location-text {
   min-width: 0;
+  display: grid;
+  gap: 4px;
 }
 
-.map-location-row strong {
-  display: block;
+.map-location-text strong,
+.map-location-text span {
   overflow: hidden;
-  color: var(--ink);
-  font: 500 14.5px/1.2 var(--font-sans);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.map-location-row p {
-  margin: 4px 0 0;
-  overflow: hidden;
+.map-location-text strong {
+  font: 500 14.5px/1.2 var(--font-sans);
+}
+
+.map-location-text span {
   color: var(--muted);
   font: 400 13px/1.25 var(--font-sans);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.map-location-score {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.map-location-price {
   color: var(--ink);
   font: 500 14px/1 var(--font-sans);
-  font-variant-numeric: tabular-nums;
-}
-
-.map-location-score i {
-  width: 7px;
-  height: 7px;
-  flex: none;
-  border-radius: 50%;
-}
-
-.map-location-chevron {
-  color: var(--faint);
+  white-space: nowrap;
 }
 
 .map-location-empty {
   margin: 0;
-  padding: 18px 12px;
+  padding: 16px 8px;
   color: var(--muted);
   font-size: 14px;
 }
 
+.map-photo-credit {
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ---------- Panel foot: add a neighborhood ---------- */
 .map-panel-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px 12px 22px;
+  padding: 12px 16px;
   border-top: 1px solid var(--line);
 }
 
-.map-panel-foot span {
+.map-panel-foot > span {
   color: var(--muted);
-  font: 400 13px/1.3 var(--font-sans);
+  font: 400 13.5px/1.3 var(--font-sans);
 }
 
-/* ---------- Add-neighborhood popover ---------- */
 .map-create-form {
-  position: absolute;
-  z-index: 3;
-  left: 12px;
-  right: 12px;
-  bottom: 76px;
+  flex: 1;
   display: grid;
   gap: 12px;
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--card);
-  box-shadow: var(--shadow-md);
 }
 
 .map-create-actions {
@@ -380,87 +431,82 @@
   gap: 8px;
 }
 
-/* ---------- Tablet: map on top, panel as a card below ---------- */
+/* ---------- Up to 1100px: title, map, then the panel as a full-width card ---------- */
 @media (max-width: 1100px) {
-  .map-shell-pro {
+  .map-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas:
+      "head"
+      "stage"
+      "panel";
+    gap: 16px;
     height: auto;
     min-height: 0;
     margin-bottom: 0;
-    display: grid;
-    gap: 16px;
   }
 
   .map-stage {
-    position: relative;
-    inset: auto;
     height: 58vh;
+    min-height: 380px;
+    max-height: 640px;
+  }
+
+  .map-panel {
+    overflow: visible;
+  }
+
+  /* Selected location beside the list */
+  .map-panel-scroll {
+    overflow: visible;
+    display: grid;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .map-selected {
+    border-bottom: 0;
+  }
+
+  .map-location-list {
+    border-left: 1px solid var(--line);
+    min-height: 100%;
+  }
+
+  .map-photo-credit {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Up to 720px: everything in one column ---------- */
+@media (max-width: 720px) {
+  .map-stage {
+    height: 56vh;
     min-height: 340px;
   }
 
-  .map-intel-panel {
-    position: relative;
-    inset: auto;
-    width: auto;
-    max-height: 640px;
-    border-radius: var(--r-card);
-    background: var(--card);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: none;
+  .map-key {
+    padding: 10px 12px;
+  }
+
+  .map-key p {
+    font-size: 12.5px;
+  }
+
+  .map-panel-scroll {
+    display: block;
+  }
+
+  .map-selected {
+    border-bottom: 1px solid var(--line);
   }
 
   .map-location-list {
-    min-height: 200px;
+    border-left: 0;
+    min-height: 0;
   }
 
-  .map-pro-coords {
-    display: none;
+  .map-panel-foot {
+    flex-wrap: wrap;
   }
-}
-
-/* ---------- Mobile: full-bleed map ---------- */
-@media (max-width: 720px) {
-  .map-shell-pro {
-    margin-top: -20px;
-  }
-
-  .map-stage {
-    height: 52vh;
-    margin: 0 -16px;
-    border-width: 0 0 1px;
-    border-radius: 0;
-  }
-
-  .map-pro-controls {
-    right: 12px;
-    top: 12px;
-  }
-
-  .map-pro-legend {
-    gap: 10px;
-    padding: 0 12px;
-    font-size: 12px;
-  }
-
-  .map-pro-legend span {
-    display: none;
-  }
-
-  .map-intel-panel {
-    max-height: none;
-    border-radius: var(--r-lg);
-  }
-
-  .map-panel-head {
-    padding: 18px 18px 14px;
-  }
-
-  .map-location-list {
-    max-height: 420px;
-  }
-}
-
-/* Basemap: standard OSM tiles, muted so they sit in the paper/navy palette */
-.map-canvas-pro .leaflet-tile-pane {
-  filter: grayscale(1) contrast(0.86) brightness(1.08);
 }

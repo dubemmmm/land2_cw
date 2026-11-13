@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Building2, ExternalLink, FileText, GitCommitHorizontal, Pencil, Plus, Search, Share2, User } from "lucide-react";
-import { SourcePill, StatusPill } from "@/components/Pills";
-import { confidenceColor, formatDate } from "@/lib/metrics";
+import { Pencil, Plus, Search, Share2 } from "lucide-react";
+import { confidencePattern, formatDate } from "@/lib/metrics";
 
 const filters = [
   { key: "all", label: "All" },
@@ -102,311 +101,331 @@ export default function ReportsClient({ reports, initialSelectedId, isAdmin = fa
             <span aria-current="page">Reports</span>
           </nav>
           <h1 className="cw-pagehead-title">Reports</h1>
-          <p className="cw-lede">{visibleReports.length} of {accessibleReports.length} briefs, grouped by location. Select one to preview the client-facing document.</p>
+          <p className="cw-lede">
+            Showing {visibleReports.length} of {accessibleReports.length} briefs, grouped by location. Pick one to read it as the client sees it.
+          </p>
         </div>
         {isAdmin ? <Link className="cw-btn cw-btn-navy" href="/reports/new"><Plus size={16} /> New report</Link> : null}
       </header>
 
-      <div className="report-ledger-tools">
+      <div className="reports-tools">
+        <label className="reports-search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            aria-label="Search reports"
+            className="cw-input"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by site, client, location or reference"
+            value={query}
+          />
+        </label>
         {isAdmin ? (
-          <nav className="cw-tabs report-tabs" aria-label="Report filters">
+          <nav className="cw-tabs reports-tabs" aria-label="Filter by status">
             {filters.map((filter) => (
               <button
+                aria-pressed={statusFilter === filter.key}
                 className={statusFilter === filter.key ? "active" : ""}
                 key={filter.key}
                 onClick={() => setStatusFilter(filter.key)}
                 type="button"
               >
-                {filter.label} <b>{counts[filter.key]}</b>
+                {filter.label} <span className="sq-fig">{counts[filter.key]}</span>
               </button>
             ))}
           </nav>
         ) : null}
-        <label className="report-search">
-          <Search size={15} />
-          <input
-            aria-label="Search reports"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search site, client, neighborhood..."
-            value={query}
-          />
+        {isAdmin ? (
+          <label className="reports-check">
+            <input checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} type="checkbox" />
+            <span>Changed since sent ({counts.changed})</span>
+          </label>
+        ) : null}
+        <label className="reports-sort">
+          <span>Sort by</span>
+          <select className="cw-select" onChange={(event) => setSortBy(event.target.value)} value={sortBy}>
+            <option value="recent">Most recent</option>
+            <option value="confidence">Confidence</option>
+            <option value="az">Title, A to Z</option>
+          </select>
         </label>
-        <div className="report-filter-row">
-          {isAdmin ? (
-            <button className={`report-changed-toggle ${changedOnly ? "active" : ""}`} onClick={() => setChangedOnly((value) => !value)} type="button">
-              <i /> Changed since sent <b>{counts.changed}</b>
-            </button>
-          ) : null}
-          <em>Sort</em>
-          <div className="cw-tabs report-sort">
-            <button className={sortBy === "recent" ? "active" : ""} onClick={() => setSortBy("recent")} type="button">Recent</button>
-            <button className={sortBy === "confidence" ? "active" : ""} onClick={() => setSortBy("confidence")} type="button">Confidence</button>
-            <button className={sortBy === "az" ? "active" : ""} onClick={() => setSortBy("az")} type="button">A-Z</button>
-          </div>
-        </div>
       </div>
 
-      <div className="reports-split">
-        <div className={`report-table ${isAdmin ? "admin-mode" : "client-mode"}`}>
-          <div className="report-table-head">
-            <span>Report</span>
-            <span>Confidence</span>
-            {isAdmin ? <span>Status</span> : null}
-            <span>{isAdmin ? "Activity" : "Publication"}</span>
-          </div>
+      <div className="reports-layout">
+        <div className="reports-list">
           {groupedReports.map((group) => (
-            <section className="report-location-group" key={group.key}>
-              <div className="report-location-head">
-                <div>
-                  <strong>{group.name}</strong>
-                  <span>{group.reports.length} {group.reports.length === 1 ? "brief" : "briefs"}</span>
-                </div>
-                <em>{group.hasEstates ? "Location + estates" : "Location"}</em>
-              </div>
+            <section className="reports-group" key={group.key}>
+              <h2 className="reports-group-head">
+                {group.name}
+                <span>{group.reports.length} {group.reports.length === 1 ? "brief" : "briefs"}</span>
+              </h2>
               {group.reports.map((report) => (
                 <button
-                  className={`report-ledger-row ${report.sourceType === "estate" ? "estate-child" : "location-parent"} ${report.id === selectedId ? "featured" : ""}`}
+                  aria-pressed={report.id === selectedId}
+                  className={`reports-item ${report.sourceType === "estate" ? "estate-child" : "location-parent"} ${report.id === selectedId ? "selected" : ""}`}
                   key={report.id}
                   onClick={() => selectReport(report.id)}
                   type="button"
                 >
-                  <div>
-                    {report.ref ? <span className="report-row-ref">{report.ref}</span> : null}
-                    <strong>{report.siteTitle}</strong>
-                    <p>{reportRowMeta(report)}</p>
-                  </div>
-                  <span className="report-confidence"><i style={{ "--tone": confidenceColor(report.score) }} /> <b>{report.score}</b> {report.level}</span>
-                  {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
-                  <span className="report-activity">
-                    {isAdmin ? report.activity : "Published"}
-                    {isAdmin && hasChanges(report) ? <em><GitCommitHorizontal size={12} /> {changeCount(report)} since sent</em> : null}
+                  <span className="reports-item-top">
+                    <span className="reports-item-ref">{report.ref}</span>
+                    <span className="reports-item-when">{isAdmin ? report.activity : "Published"}</span>
+                  </span>
+                  <strong className="reports-item-title">{report.siteTitle}</strong>
+                  <span className="reports-item-meta">{reportRowMeta(report)}</span>
+                  <span className="reports-item-foot">
+                    {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
+                    <Confidence level={report.level} score={report.score} />
+                    {isAdmin && hasChanges(report) ? (
+                      <span className="reports-item-changed">{changeLabel(changeCount(report))} since sent</span>
+                    ) : null}
                   </span>
                 </button>
               ))}
             </section>
           ))}
           {!visibleReports.length ? (
-            <div className="report-empty-state">
-              <FileText size={18} />
-              <strong>No reports found</strong>
-              <p>Adjust the filters or search term.</p>
+            <div className="reports-empty">
+              <strong>No reports match</strong>
+              <p>Change the search or the filters to see more briefs.</p>
             </div>
           ) : null}
         </div>
 
-      {selected ? (
-        <ReportDetail key={selected.id} report={selected} reports={accessibleReports} shareState={shareState} onSelect={selectReport} onShare={() => shareReport(selected)} isAdmin={isAdmin} embedded />
-      ) : (
-        <section className="report-detail-screen embedded empty">
-          <div className="report-select-empty">
-            <FileText size={22} />
-            <h2>Select a report</h2>
-            <p>Choose a land or estate brief from the ledger to preview its client-facing intelligence.</p>
-          </div>
-        </section>
-      )}
+        {selected ? (
+          <ReportDetail key={selected.id} report={selected} reports={accessibleReports} shareState={shareState} onSelect={selectReport} onShare={() => shareReport(selected)} isAdmin={isAdmin} embedded />
+        ) : (
+          <section className="report-preview embedded empty">
+            <div className="reports-empty">
+              <strong>No report selected</strong>
+              <p>Choose a brief from the list to read the document the client receives.</p>
+            </div>
+          </section>
+        )}
       </div>
     </section>
   );
 }
 
+// The document markup below is mirrored in app/client/reports/[id]/page.jsx (server-rendered,
+// so internal notes never reach the public page). Keep the two in step.
 function ReportDetail({ report, reports, shareState, onSelect, onShare, isAdmin = false, embedded = false }) {
   const n = report.neighborhood;
   const comparable = reports.filter((item) => item.id !== report.id && item.neighborhoodName === report.neighborhoodName).slice(0, 1);
   const build = (report.data?.buildParameters?.length ? report.data.buildParameters : n.intelligence?.buildParameters || []).slice(0, 4);
   const rules = (report.data?.constraints?.length ? report.data.constraints : n.intelligence?.constraints || []).slice(0, 3);
-  const notes = report.data?.notes?.length ? report.data.notes : n.notes || [];
+  const notes = (report.data?.notes?.length ? report.data.notes : n.notes || []).slice(0, 2);
+  const approvals = (n.approvals || []).slice(0, 3);
   const rationale = report.data?.recommendationRationale || n.recommendation?.confidenceReason || "Verify source pricing, title, survey, estate rules, and approvals before committing capital.";
+  const changes = changeCount(report);
+  const changeNotes = changes > 0 && report.data?.changeNotes?.length ? report.data.changeNotes : ["No material changes since this brief was prepared"];
 
   return (
-    <section className={`report-detail-screen ${embedded ? "embedded" : ""}`}>
-      <div className="report-detail-actions">
-        <span className="report-detail-label">Report preview</span>
-        {shareState ? <em>{shareState}</em> : null}
-        {isAdmin ? <span className={statusClass(report.status)}>{report.status}</span> : null}
-        {isAdmin ? <Link aria-label="Edit report" className="cw-icon-btn" href={`/reports/${report.id}/edit`} title="Edit report"><Pencil size={15} /></Link> : null}
-        {isAdmin ? <button aria-label="Copy client report link" className="cw-icon-btn" onClick={onShare} title="Share client link" type="button"><Share2 size={15} /></button> : null}
+    <section className={`report-preview ${embedded ? "embedded" : ""}`}>
+      <div className="report-preview-bar">
+        <span className="report-preview-label">Preview of the client document</span>
+        {shareState ? <span className="report-preview-note" role="status">{shareState}</span> : null}
+        {isAdmin ? <Link className="cw-btn cw-btn-soft cw-btn-sm" href={`/reports/${report.id}/edit`}><Pencil size={15} /> Edit</Link> : null}
+        {isAdmin ? <button className="cw-btn cw-btn-soft cw-btn-sm" onClick={onShare} type="button"><Share2 size={15} /> Share client link</button> : null}
       </div>
 
-      <article className="report-paper">
-        <header className="report-paper-head">
-          <div className="report-brand">
-            <span className="cw-mark">CW</span>
-            <div>
-              <strong>Squaremeter by CW</strong>
-              <p>Development brief</p>
+      <article className="report-doc">
+        <p className="report-doc-kind">{report.data?.reportType || "Client brief"} · {report.neighborhoodName}</p>
+        <h2 className="report-doc-title">{report.siteTitle}</h2>
+        {report.data?.executiveSummary ? <p className="report-doc-summary">{report.data.executiveSummary}</p> : null}
+
+        <dl className="report-facts">
+          <div><dt>Reference</dt><dd className="report-ref">{report.ref}</dd></div>
+          <div><dt>Client</dt><dd>{report.client}</dd></div>
+          <div><dt>Location</dt><dd>{report.neighborhoodName}</dd></div>
+          <div><dt>Intended use</dt><dd>{report.use}</dd></div>
+          {report.data?.publishDate ? <div><dt>Published</dt><dd className="sq-fig">{formatDate(report.data.publishDate)}</dd></div> : null}
+          {report.data?.reviewDate ? <div><dt>Review by</dt><dd className="sq-fig">{formatDate(report.data.reviewDate)}</dd></div> : null}
+          {isAdmin ? <div><dt>Status</dt><dd><span className={statusClass(report.status)}>{report.status}</span></dd></div> : null}
+        </dl>
+
+        <section className="report-sec">
+          <h3 className="report-sec-title">Recommendation</h3>
+          <div className="report-verdict">
+            <div className="report-verdict-main">
+              <strong>{report.verdict}</strong>
+              <p>{rationale}</p>
             </div>
+            <dl className="report-verdict-facts">
+              <div><dt>Data confidence</dt><dd><Confidence level={report.level} score={report.score} outOf /></dd></div>
+              {report.data?.riskLevel ? <div><dt>Risk level</dt><dd>{report.data.riskLevel}</dd></div> : null}
+            </dl>
           </div>
-          <aside>
-            <strong>{report.ref}</strong>
-            <p>Prepared 01 Jul 2026</p>
-          </aside>
-        </header>
-
-        <span className="report-neighborhood">{report.neighborhoodName}</span>
-        <h1>{report.siteTitle}</h1>
-        <p className="report-meta">
-          <span><User size={13} /> {report.client}</span>
-          <span><Building2 size={13} /> {report.use}</span>
-        </p>
-
-        {report.data?.executiveSummary ? (
-          <section className="report-intel-summary">
-            <span>{report.data.reportType || "Client brief"}</span>
-            <p>{report.data.executiveSummary}</p>
-          </section>
-        ) : null}
-
-        <div className="report-brief-facts">
-          {report.data?.riskLevel ? <span><b>Risk</b>{report.data.riskLevel}</span> : null}
-          {report.data?.publishDate ? <span><b>Published</b>{formatDate(report.data.publishDate)}</span> : null}
-          {report.data?.reviewDate ? <span><b>Review by</b>{formatDate(report.data.reviewDate)}</span> : null}
-        </div>
-
-        <section className="report-change-box">
-          <strong><GitCommitHorizontal size={14} /> {changeCount(report)} changes since this brief was sent</strong>
-          {(changeCount(report) > 0 && report.data?.changeNotes?.length ? report.data.changeNotes : ["No material changes since this brief was prepared"]).map((note) => (
-            <p key={note}>{note}</p>
-          ))}
         </section>
 
-        <section className="report-recommendation">
-          <div className="report-ring" style={{ "--score": report.score, "--tone": confidenceColor(report.score) }}><span>{report.score}</span></div>
-          <div>
-            <span>Recommendation <b>{report.verdict}</b></span>
-            <p>{rationale}</p>
-          </div>
+        <section className="report-sec">
+          <h3 className="report-sec-title">{changeLabel(changes)} since this brief was sent</h3>
+          <ul className="report-ul">
+            {changeNotes.map((note) => <li key={note}>{note}</li>)}
+          </ul>
         </section>
 
         {report.data?.keyRisks?.length || report.data?.opportunityNotes?.length ? (
-          <div className="report-two-col report-intel-lists">
+          <div className="report-cols">
             {report.data?.keyRisks?.length ? (
-              <section>
-                <SectionHeading title="Key risks" />
-                {report.data.keyRisks.map((risk) => <p key={risk}>{risk}</p>)}
+              <section className="report-sec">
+                <h3 className="report-sec-title">Key risks</h3>
+                <ul className="report-ul">
+                  {report.data.keyRisks.map((risk) => <li key={risk}>{risk}</li>)}
+                </ul>
               </section>
             ) : null}
             {report.data?.opportunityNotes?.length ? (
-              <section>
-                <SectionHeading title="Opportunity notes" />
-                {report.data.opportunityNotes.map((note) => <p key={note}>{note}</p>)}
+              <section className="report-sec">
+                <h3 className="report-sec-title">Opportunities</h3>
+                <ul className="report-ul">
+                  {report.data.opportunityNotes.map((note) => <li key={note}>{note}</li>)}
+                </ul>
               </section>
             ) : null}
           </div>
         ) : null}
 
-        <SectionHeading title="What you can build" />
-        <div className="report-build-grid">
-          {build.map((row) => (
-            <article className="report-build-card" key={row.label}>
-              <span>{row.label}</span>
-              <strong>{row.value}</strong>
-              <SourcePill type={row.sourceType} />
-            </article>
-          ))}
-        </div>
+        {build.length ? (
+          <section className="report-sec">
+            <h3 className="report-sec-title">Key figures</h3>
+            <div className="report-tbl-wrap">
+              <table className="report-tbl">
+                <thead>
+                  <tr><th scope="col">Item</th><th scope="col">Value</th><th scope="col">Source</th></tr>
+                </thead>
+                <tbody>
+                  {build.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row">{row.label}</th>
+                      <td className="report-tbl-value sq-fig">{row.value}</td>
+                      <td className="report-tbl-source">{row.sourceType || "Internal"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
 
-        <div className="report-two-col">
-          <section>
-            <SectionHeading title="Regulations" />
-            {rules.map((row) => (
-              <div className="report-rule-row" key={row.label}>
-                <p>{row.label}</p>
-                <SourcePill type={row.sourceType} />
-              </div>
+        {rules.length ? (
+          <section className="report-sec">
+            <h3 className="report-sec-title">Rules and constraints</h3>
+            <div className="report-tbl-wrap">
+              <table className="report-tbl">
+                <thead>
+                  <tr><th scope="col">What applies</th><th scope="col">Source</th></tr>
+                </thead>
+                <tbody>
+                  {rules.map((row) => (
+                    <tr key={row.label}>
+                      <td>{row.label}</td>
+                      <td className="report-tbl-source">{row.sourceType || "Internal"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="report-sec">
+          <h3 className="report-sec-title">Approval history</h3>
+          {approvals.length ? (
+            <div className="report-tbl-wrap">
+              <table className="report-tbl">
+                <thead>
+                  <tr><th scope="col">Date</th><th scope="col">Request</th><th scope="col">Outcome</th></tr>
+                </thead>
+                <tbody>
+                  {approvals.map((row, index) => (
+                    <tr key={`${row.date}-${index}`}>
+                      <td className="report-tbl-date sq-fig">{formatDate(row.date)}</td>
+                      <td>{row.request || row.projectType}</td>
+                      <td className={`report-outcome ${String(row.outcome).toLowerCase()}`}>{row.outcome || "No data"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="report-none">No planning approvals are on record for this location yet.</p>
+          )}
+        </section>
+
+        {notes.length ? (
+          <section className="report-sec">
+            <h3 className="report-sec-title">Advisory commentary</h3>
+            {notes.map((note, index) => (
+              <figure className="report-note" key={`${note.date}-${index}`}>
+                <blockquote>{note.text}</blockquote>
+                <figcaption>{note.author} · {formatDate(note.date)}</figcaption>
+              </figure>
             ))}
           </section>
-
-          <section>
-            <SectionHeading title="Approval history" />
-            <div className="report-history">
-              {(n.approvals || []).slice(0, 3).map((row, index) => (
-                <article key={`${row.date}-${index}`}>
-                  <i className={String(row.outcome).toLowerCase()} />
-                  <div>
-                    <time>{formatDate(row.date)}</time>
-                    <p>{row.request || row.projectType}</p>
-                  </div>
-                  <StatusPill status={row.outcome} />
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <SectionHeading title="Advisory commentary" />
-        <div className="report-notes">
-          {notes.slice(0, 2).map((note, index) => (
-            <article key={`${note.date}-${index}`}>
-              <span>{note.author?.split(/\s+/).map((part) => part[0]).join("").slice(0, 2) || "CW"}</span>
-              <div>
-                <p>{note.text}</p>
-                <small>{note.author} · {formatDate(note.date)}</small>
-              </div>
-            </article>
-          ))}
-        </div>
+        ) : null}
 
         {report.resources?.length ? (
-          <>
-            <SectionHeading title="Market research" meta={`${report.resources.length} resources`} />
-            <div className="report-resource-list">
+          <section className="report-sec">
+            <h3 className="report-sec-title">Market research <span>{report.resources.length} {report.resources.length === 1 ? "resource" : "resources"}</span></h3>
+            <ul className="report-resources">
               {report.resources.slice(0, 4).map((resource) => (
-                <article className="report-resource-row" key={resource.id}>
-                  <div>
-                    <strong>{resource.title}</strong>
-                    <p>{resource.resourceType} · {resource.source}</p>
-                  </div>
+                <li key={resource.id}>
                   {resource.url ? (
-                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={resource.url} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
+                    <a href={resource.url} target="_blank" rel="noreferrer">{resource.title}</a>
                   ) : resource.fileName ? (
-                    <a className="cw-btn cw-btn-soft cw-btn-sm" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer"><ExternalLink size={13} /> Open</a>
-                  ) : null}
-                </article>
+                    <a href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer">{resource.title}</a>
+                  ) : (
+                    <strong>{resource.title}</strong>
+                  )}
+                  <span>{resource.resourceType} · {resource.source}</span>
+                </li>
               ))}
-            </div>
-          </>
+            </ul>
+          </section>
         ) : null}
 
         {comparable.length ? (
-          <>
-            <SectionHeading title="Comparable sites" meta={`in ${report.neighborhoodName}`} />
+          <section className="report-sec">
+            <h3 className="report-sec-title">Comparable sites in {report.neighborhoodName}</h3>
             {comparable.map((item) => (
-              <button className="report-comp-row" key={item.id} onClick={() => onSelect(item.id)} type="button">
-                <div>
+              <button className="report-comp" key={item.id} onClick={() => onSelect(item.id)} type="button">
+                <span className="report-comp-main">
                   <strong>{item.siteTitle}</strong>
-                  <p>{item.use} · {item.client}</p>
-                </div>
-                <span><i style={{ "--tone": confidenceColor(item.score) }} /> {item.score}</span>
+                  <span>{item.use} · {item.client}</span>
+                </span>
+                <Confidence level={item.level} score={item.score} />
               </button>
             ))}
-          </>
+          </section>
         ) : null}
 
         {isAdmin && report.data?.internalNotes ? (
-          <>
-            <SectionHeading title="Internal notes" meta="admin only" />
-            <section className="report-internal-notes">
-              <p>{report.data.internalNotes}</p>
-            </section>
-          </>
+          <section className="report-sec report-internal">
+            <h3 className="report-sec-title">Internal notes <span>Admins only, not shown to the client</span></h3>
+            <p>{report.data.internalNotes}</p>
+          </section>
         ) : null}
       </article>
     </section>
   );
 }
 
-function SectionHeading({ title, meta }) {
+// Confidence is always shown as pattern swatch + level + score.
+function Confidence({ score, level, outOf = false }) {
   return (
-    <div className="report-section-title">
-      <h2>{title}</h2>
-      {meta ? <span>{meta}</span> : null}
-    </div>
+    <span className="report-conf">
+      <i className={`sq-pat sq-pat-${confidencePattern(score)}`} aria-hidden="true" />
+      {level} · <span className="sq-fig">{score}{outOf ? " of 100" : ""}</span>
+    </span>
   );
 }
 
+function changeLabel(count) {
+  return `${count} ${count === 1 ? "change" : "changes"}`;
+}
+
 function statusClass(status) {
-  return `cw-chip report-detail-status ${String(status).toLowerCase().replace(/\s+/g, "-")}`;
+  return `cw-chip report-status ${String(status).toLowerCase().replace(/\s+/g, "-")}`;
 }
 
 function reportRowMeta(report) {

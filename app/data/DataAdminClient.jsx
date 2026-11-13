@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Building2, Check, Database, ExternalLink, FileText, Paperclip, Plus, Save, Trash2, UploadCloud } from "lucide-react";
-import { confidenceColor, confidenceLevel, confidenceScore, formatDate } from "@/lib/metrics";
+import { Check, ExternalLink, Paperclip, Plus, Save, Trash2, UploadCloud } from "lucide-react";
+import ConfidenceLegend from "@/components/ConfidenceLegend";
+import { confidenceLevel, confidencePattern, confidenceScore, formatDate } from "@/lib/metrics";
 
 const sourceTypes = ["Official", "Estate", "Internal", "Historical", "Manual"];
 const outcomes = ["Approved", "Pending", "Denied", "Draft", "No data"];
@@ -42,6 +43,9 @@ export default function DataAdminClient({
     records.map((record) => ({ type: "neighborhood", id: record.id, name: record.name, meta: record.jurisdiction || "Location" }))
       .concat(estates.map((estate) => ({ type: "estate", id: estate.id, name: estate.name, meta: estate.parentName || "Estate" })))
   ), [estates, records]);
+  // Display only: is the open location different from what is stored, and is the last message a failure.
+  const dirty = useMemo(() => Boolean(draft && selected) && JSON.stringify(draft) !== JSON.stringify(selected), [draft, selected]);
+  const statusIsError = /^Could not/.test(status);
 
   function selectRecord(id) {
     const record = records.find((item) => item.id === id);
@@ -256,11 +260,12 @@ export default function DataAdminClient({
         <header className="cw-pagehead">
           <div>
             <DataCrumbs />
-            <h1 className="cw-pagehead-title">Intelligence data</h1>
-            <p className="cw-lede">No locations yet. Create the first one to start entering intelligence.</p>
+            <h1 className="cw-pagehead-title">Location data</h1>
+            <p className="cw-lede">There are no locations yet. Create the first one to start entering planning rules, approvals and prices.</p>
           </div>
           <button className="cw-btn cw-btn-navy" type="button" onClick={createRecord}><Plus size={16} /> Create first location</button>
         </header>
+        {status ? <p className={`data-state ${statusIsError ? "is-error" : "is-saved"}`} role="status">{status}</p> : null}
       </section>
     );
   }
@@ -270,14 +275,13 @@ export default function DataAdminClient({
       <header className="cw-pagehead">
         <div>
           <DataCrumbs />
-          <h1 className="cw-pagehead-title">Intelligence data</h1>
-          <p className="cw-lede">Enter neighborhood intelligence, planning rules, approvals, notes, and manual overrides.</p>
+          <h1 className="cw-pagehead-title">Location data</h1>
+          <p className="cw-lede">Edit what Squaremeter holds on each location: planning rules, approval history, notes, research files, estates and yearly prices.</p>
         </div>
         <div className="data-head-actions">
-          <span className="cw-chip data-admin-badge">{adminEmail}</span>
+          <span className="data-admin">Signed in as {adminEmail}</span>
           <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={logout}>Log out</button>
           <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={createRecord}><Plus size={16} /> New location</button>
-          <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit" form="data-editor"><Save size={16} /> Save data</button>
         </div>
       </header>
 
@@ -297,172 +301,199 @@ export default function DataAdminClient({
           ))}
         </div>
         <div className="data-toolbar-meta">
-          {status ? <span className="data-status" role="status"><Check size={14} /> {status}</span> : null}
-          <span className="cw-chip"><Database size={13} /> SQLite database</span>
+          <SaveState dirty={dirty} status={status} isError={statusIsError} name={draft.name} />
+          <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit" form="data-editor"><Save size={16} /> Save location</button>
         </div>
       </div>
 
       <div className="data-grid">
-        <aside className="data-sidebar">
+        <aside className="data-sidebar" aria-label="Locations">
           <div className="data-sidebar-head">
             <strong>{records.length} locations</strong>
-            <span>data/app.db</span>
+            <span>Confidence</span>
           </div>
-          {records.map((record) => {
-            const recordScore = confidenceScore(record);
-            return (
-              <button className={record.id === selected?.id ? "active" : ""} type="button" key={record.id} onClick={() => selectRecord(record.id)}>
-                <i style={{ "--tone": confidenceColor(recordScore) }}>{recordScore}</i>
-                <span>
-                  <b>{record.name}</b>
-                  <small>{record.jurisdiction} · {confidenceLevel(recordScore)}</small>
-                </span>
-              </button>
-            );
-          })}
+          <div className="data-sidebar-list">
+            {records.map((record) => {
+              const recordScore = confidenceScore(record);
+              return (
+                <button
+                  className={record.id === selected?.id ? "active" : ""}
+                  type="button"
+                  key={record.id}
+                  aria-current={record.id === selected?.id ? "true" : undefined}
+                  onClick={() => selectRecord(record.id)}
+                >
+                  <span className="data-sidebar-name">
+                    <b>{record.name}</b>
+                    <small>{record.jurisdiction}</small>
+                  </span>
+                  <Confidence score={recordScore} />
+                </button>
+              );
+            })}
+          </div>
+          <div className="data-sidebar-key">
+            <ConfidenceLegend />
+          </div>
         </aside>
 
         <div className="data-editor">
-          <form id="data-editor" className="data-panel data-editor-stack" onSubmit={saveRecord} hidden={section !== "record"}>
-            <section className="data-card data-basics">
-            <div className="data-card-head">
-              <div>
-                <h2>{draft.name}</h2>
-                <p>Last reviewed {formatDate(draft.metadata?.lastReviewed)} · {draft.metadata?.reviewedBy || "Admin"}</p>
+          <form id="data-editor" className="data-panel" onSubmit={saveRecord} hidden={section !== "record"}>
+            <section className="data-card">
+              <div className="data-card-head">
+                <div>
+                  <h2>{draft.name}</h2>
+                  <p>Last reviewed {formatDate(draft.metadata?.lastReviewed)} by {draft.metadata?.reviewedBy || "Admin"}</p>
+                </div>
+                <Confidence score={score} showLevel />
               </div>
-              <div className="data-score" style={{ "--tone": confidenceColor(score) }}>
-                <b>{score}</b>
-                <span>{confidenceLevel(score)}</span>
-              </div>
-            </div>
 
-            <div className="data-fields two">
-              <Field label="Neighborhood" value={draft.name} onChange={(value) => update("name", value)} />
-              <Field label="Jurisdiction" value={draft.jurisdiction} onChange={(value) => update("jurisdiction", value)} />
-              <Field label="Confidence score" type="number" value={draft.recommendation?.confidence || 0} onChange={(value) => update("recommendation.confidence", Number(value))} />
-              <Field label="Risk level" value={draft.recommendation?.riskLevel || ""} onChange={(value) => update("recommendation.riskLevel", value)} />
-            </div>
-            <Textarea label="Summary" value={draft.recommendation?.summary || ""} onChange={(value) => update("recommendation.summary", value)} />
-            <Textarea label="Best next action" value={draft.recommendation?.bestNextAction || ""} onChange={(value) => update("recommendation.bestNextAction", value)} />
-            <Textarea label="Confidence reason" value={draft.recommendation?.confidenceReason || ""} onChange={(value) => update("recommendation.confidenceReason", value)} />
+              <div className="data-fields">
+                <Field label="Neighborhood" value={draft.name} onChange={(value) => update("name", value)} />
+                <Field label="Jurisdiction" value={draft.jurisdiction} onChange={(value) => update("jurisdiction", value)} />
+                <Field label="Confidence score (0 to 100)" type="number" value={draft.recommendation?.confidence || 0} onChange={(value) => update("recommendation.confidence", Number(value))} />
+                <Field label="Risk level" value={draft.recommendation?.riskLevel || ""} onChange={(value) => update("recommendation.riskLevel", value)} />
+                <Textarea wide label="Summary" value={draft.recommendation?.summary || ""} onChange={(value) => update("recommendation.summary", value)} />
+                <Textarea wide label="Best next action" value={draft.recommendation?.bestNextAction || ""} onChange={(value) => update("recommendation.bestNextAction", value)} />
+                <Textarea wide label="Why this confidence score" value={draft.recommendation?.confidenceReason || ""} onChange={(value) => update("recommendation.confidenceReason", value)} />
+              </div>
             </section>
 
-          <ArrayEditor
-            title="What you can build"
-            items={draft.intelligence?.buildParameters || []}
-            emptyItem={{ label: "New parameter", value: "", sourceType: "Manual" }}
-            render={(item, index) => (
-              <div className="data-array-row three">
-                <Field label="Label" value={item.label} onChange={(value) => updateArray("intelligence.buildParameters", index, "label", value)} />
-                <Field label="Value" value={item.value} onChange={(value) => updateArray("intelligence.buildParameters", index, "value", value)} />
-                <Select label="Source" value={item.sourceType} options={sourceTypes} onChange={(value) => updateArray("intelligence.buildParameters", index, "sourceType", value)} />
-              </div>
-            )}
-            onAdd={() => addArray("intelligence.buildParameters", { label: "New parameter", value: "", sourceType: "Manual" })}
-            onRemove={(index) => removeArray("intelligence.buildParameters", index)}
-          />
+            <ArrayEditor
+              title="What you can build"
+              columns={[{ label: "Label", size: "md" }, { label: "Value" }, { label: "Source", size: "sm" }]}
+              items={draft.intelligence?.buildParameters || []}
+              render={(item, index) => (
+                <>
+                  <td><Field bare label="Label" value={item.label} onChange={(value) => updateArray("intelligence.buildParameters", index, "label", value)} /></td>
+                  <td><Field bare label="Value" value={item.value} onChange={(value) => updateArray("intelligence.buildParameters", index, "value", value)} /></td>
+                  <td><Select bare label="Source" value={item.sourceType} options={sourceTypes} onChange={(value) => updateArray("intelligence.buildParameters", index, "sourceType", value)} /></td>
+                </>
+              )}
+              onAdd={() => addArray("intelligence.buildParameters", { label: "New parameter", value: "", sourceType: "Manual" })}
+              onRemove={(index) => removeArray("intelligence.buildParameters", index)}
+            />
 
-          <ArrayEditor
-            title="Regulations"
-            items={draft.intelligence?.constraints || []}
-            emptyItem={{ label: "", sourceType: "Manual" }}
-            render={(item, index) => (
-              <div className="data-array-row two-wide">
-                <Field label="Rule" value={item.label} onChange={(value) => updateArray("intelligence.constraints", index, "label", value)} />
-                <Select label="Source" value={item.sourceType} options={sourceTypes} onChange={(value) => updateArray("intelligence.constraints", index, "sourceType", value)} />
-              </div>
-            )}
-            onAdd={() => addArray("intelligence.constraints", { label: "", sourceType: "Manual" })}
-            onRemove={(index) => removeArray("intelligence.constraints", index)}
-          />
+            <ArrayEditor
+              title="Regulations"
+              columns={[{ label: "Rule" }, { label: "Source", size: "sm" }]}
+              items={draft.intelligence?.constraints || []}
+              render={(item, index) => (
+                <>
+                  <td><Field bare label="Rule" value={item.label} onChange={(value) => updateArray("intelligence.constraints", index, "label", value)} /></td>
+                  <td><Select bare label="Source" value={item.sourceType} options={sourceTypes} onChange={(value) => updateArray("intelligence.constraints", index, "sourceType", value)} /></td>
+                </>
+              )}
+              onAdd={() => addArray("intelligence.constraints", { label: "", sourceType: "Manual" })}
+              onRemove={(index) => removeArray("intelligence.constraints", index)}
+            />
 
-          <ArrayEditor
-            title="Approval history"
-            items={draft.approvals || []}
-            emptyItem={{ date: new Date().toISOString().slice(0, 10), request: "", outcome: "Pending", sourceType: "Historical" }}
-            render={(item, index) => (
-              <div className="data-array-row four">
-                <Field label="Date" type="date" value={item.date} onChange={(value) => updateArray("approvals", index, "date", value)} />
-                <Field label="Request" value={item.request || item.projectType || ""} onChange={(value) => updateArray("approvals", index, "request", value)} />
-                <Select label="Outcome" value={item.outcome} options={outcomes} onChange={(value) => updateArray("approvals", index, "outcome", value)} />
-                <Select label="Source" value={item.sourceType} options={sourceTypes} onChange={(value) => updateArray("approvals", index, "sourceType", value)} />
-              </div>
-            )}
-            onAdd={() => addArray("approvals", { date: new Date().toISOString().slice(0, 10), request: "", outcome: "Pending", sourceType: "Historical" })}
-            onRemove={(index) => removeArray("approvals", index)}
-          />
+            <ArrayEditor
+              title="Approval history"
+              columns={[{ label: "Date", size: "sm" }, { label: "Request" }, { label: "Outcome", size: "sm" }, { label: "Source", size: "sm" }]}
+              items={draft.approvals || []}
+              render={(item, index) => (
+                <>
+                  <td><Field bare label="Date" type="date" value={item.date} onChange={(value) => updateArray("approvals", index, "date", value)} /></td>
+                  <td><Field bare label="Request" value={item.request || item.projectType || ""} onChange={(value) => updateArray("approvals", index, "request", value)} /></td>
+                  <td><Select bare label="Outcome" value={item.outcome} options={outcomes} onChange={(value) => updateArray("approvals", index, "outcome", value)} /></td>
+                  <td><Select bare label="Source" value={item.sourceType} options={sourceTypes} onChange={(value) => updateArray("approvals", index, "sourceType", value)} /></td>
+                </>
+              )}
+              onAdd={() => addArray("approvals", { date: new Date().toISOString().slice(0, 10), request: "", outcome: "Pending", sourceType: "Historical" })}
+              onRemove={(index) => removeArray("approvals", index)}
+            />
 
-          <ArrayEditor
-            title="Team notes"
-            items={draft.notes || []}
-            emptyItem={{ author: "Admin", category: "Note", text: "", date: new Date().toISOString().slice(0, 10) }}
-            render={(item, index) => (
-              <div className="data-array-row notes">
-                <Field label="Author" value={item.author} onChange={(value) => updateArray("notes", index, "author", value)} />
-                <Field label="Category" value={item.category} onChange={(value) => updateArray("notes", index, "category", value)} />
-                <Field label="Date" type="date" value={item.date} onChange={(value) => updateArray("notes", index, "date", value)} />
-                <Textarea label="Note" value={item.text} onChange={(value) => updateArray("notes", index, "text", value)} />
-              </div>
-            )}
-            onAdd={() => addArray("notes", { author: "Admin", category: "Note", text: "", date: new Date().toISOString().slice(0, 10) })}
-            onRemove={(index) => removeArray("notes", index)}
-          />
+            <ArrayEditor
+              title="Team notes"
+              columns={[{ label: "Date", size: "sm" }, { label: "Author", size: "sm" }, { label: "Category", size: "sm" }, { label: "Note" }]}
+              items={draft.notes || []}
+              render={(item, index) => (
+                <>
+                  <td><Field bare label="Date" type="date" value={item.date} onChange={(value) => updateArray("notes", index, "date", value)} /></td>
+                  <td><Field bare label="Author" value={item.author} onChange={(value) => updateArray("notes", index, "author", value)} /></td>
+                  <td><Field bare label="Category" value={item.category} onChange={(value) => updateArray("notes", index, "category", value)} /></td>
+                  <td><Textarea bare label="Note" value={item.text} onChange={(value) => updateArray("notes", index, "text", value)} /></td>
+                </>
+              )}
+              onAdd={() => addArray("notes", { author: "Admin", category: "Note", text: "", date: new Date().toISOString().slice(0, 10) })}
+              onRemove={(index) => removeArray("notes", index)}
+            />
 
             <div className="data-editor-actions">
-              <button className="cw-btn cw-btn-danger cw-btn-sm" type="button" onClick={deleteRecord}><Trash2 size={16} /> Delete</button>
-              {status ? <span className="data-status"><Check size={14} /> {status}</span> : null}
-              <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Save size={16} /> Save data</button>
+              <button className="cw-btn cw-btn-danger cw-btn-sm" type="button" onClick={deleteRecord}><Trash2 size={16} /> Delete location</button>
+              <SaveState dirty={dirty} status={status} isError={statusIsError} name={draft.name} />
+              <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Save size={16} /> Save location</button>
             </div>
           </form>
 
           <div className="data-panel" hidden={section !== "resources"}>
-          <ResourceManager
-            draft={resourceDraft}
-            resources={resources}
-            selectedId={selectedId}
-            targetOptions={targetOptions}
-            onCreate={createResource}
-            onDraftChange={setResourceDraft}
-            onDelete={deleteResource}
-            onUpdate={updateResource}
-          />
+            <ResourceManager
+              draft={resourceDraft}
+              resources={resources}
+              selectedId={selectedId}
+              targetOptions={targetOptions}
+              onCreate={createResource}
+              onDraftChange={setResourceDraft}
+              onDelete={deleteResource}
+              onUpdate={updateResource}
+            />
           </div>
 
           <div className="data-panel" hidden={section !== "market"}>
-          <MarketManager
-            estateDraft={estateDraft}
-            marketEstates={marketEstates}
-            neighborhoods={records}
-            priceDraft={priceDraft}
-            pricePoints={pricePoints}
-            selectedId={selectedId}
-            targetOptions={targetOptions.concat(marketEstates.map((estate) => ({
-              type: "estate",
-              id: estate.id,
-              name: estate.name,
-              meta: estate.neighborhoodId
-            })))}
-            onCreateEstate={createEstate}
-            onCreatePricePoint={createPricePoint}
-            onDeleteEstate={deleteEstate}
-            onDeletePricePoint={deletePricePoint}
-            onEstateDraftChange={setEstateDraft}
-            onPriceDraftChange={setPriceDraft}
-            onUpdateEstate={updateEstate}
-          />
+            <MarketManager
+              estateDraft={estateDraft}
+              marketEstates={marketEstates}
+              neighborhoods={records}
+              priceDraft={priceDraft}
+              pricePoints={pricePoints}
+              selectedId={selectedId}
+              targetOptions={targetOptions.concat(marketEstates.map((estate) => ({
+                type: "estate",
+                id: estate.id,
+                name: estate.name,
+                meta: estate.neighborhoodId
+              })))}
+              onCreateEstate={createEstate}
+              onCreatePricePoint={createPricePoint}
+              onDeleteEstate={deleteEstate}
+              onDeletePricePoint={deletePricePoint}
+              onEstateDraftChange={setEstateDraft}
+              onPriceDraftChange={setPriceDraft}
+              onUpdateEstate={updateEstate}
+            />
           </div>
-        </div>
 
-        <aside className="data-events">
-          <h2>Recent changes</h2>
-          {events.map((event) => (
-            <article key={event.id}>
-              <span className="cw-chip">{event.action}</span>
-              <strong>{event.neighborhoodId || "System"}</strong>
-              <p>{new Date(event.createdAt).toLocaleString()}</p>
-            </article>
-          ))}
-        </aside>
+          <section className="data-card">
+            <div className="data-section-head">
+              <h2>Recent changes</h2>
+            </div>
+            {events.length ? (
+              <div className="data-tablewrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>When</th>
+                      <th>Change</th>
+                      <th>Location</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {events.map((event) => (
+                      <tr key={event.id}>
+                        <td className="data-num">{new Date(event.createdAt).toLocaleString()}</td>
+                        <td>{event.action}</td>
+                        <td>{event.neighborhoodId || "System"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="data-empty">No changes recorded yet.</p>
+            )}
+          </section>
+        </div>
       </div>
     </section>
   );
@@ -498,22 +529,58 @@ export default function DataAdminClient({
   }
 }
 
-function ArrayEditor({ title, items, render, onAdd, onRemove }) {
+// Unsaved edits to the open location win over the last message, so a stale "Saved" never hides them.
+function SaveState({ dirty, status, isError, name }) {
+  if (isError) return <span className="data-state is-error" role="alert">{status}</span>;
+  if (dirty) return <span className="data-state is-dirty" role="status">Unsaved changes to {name}</span>;
+  if (status) return <span className="data-state is-saved" role="status"><Check size={14} aria-hidden="true" /> {status}</span>;
+  return <span className="data-state">No unsaved changes</span>;
+}
+
+function Confidence({ score, showLevel = false }) {
+  const level = confidenceLevel(score);
+  return (
+    <span className={`data-conf${showLevel ? " data-conf-lg" : ""}`} title={`${level} confidence`}>
+      <i className={`sq-pat sq-pat-${confidencePattern(score)}`} aria-hidden="true" />
+      {showLevel ? <span>{level}</span> : <span className="data-sr">{level} confidence</span>}
+      <b>{score}</b>
+    </span>
+  );
+}
+
+function ArrayEditor({ title, columns, items, render, onAdd, onRemove }) {
   return (
     <section className="data-card">
       <div className="data-section-head">
-        <h2>{title}<span className="data-count">{items.length}</span></h2>
-        <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={onAdd}><Plus size={15} /> Add</button>
+        <h2>{title} <span className="data-count">{items.length}</span></h2>
+        <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={onAdd}><Plus size={15} /> Add row</button>
       </div>
-      <div className="data-array">
-        {items.map((item, index) => (
-          <article key={index}>
-            {render(item, index)}
-            <button className="cw-icon-btn data-remove" type="button" aria-label="Remove row" title="Remove row" onClick={() => onRemove(index)}><Trash2 size={14} /></button>
-          </article>
-        ))}
-        {!items.length ? <p className="data-empty">Nothing added yet.</p> : null}
-      </div>
+      {items.length ? (
+        <div className="data-tablewrap">
+          <table className="data-table data-table-edit">
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th className={column.size ? `data-col-${column.size}` : undefined} key={column.label}>{column.label}</th>
+                ))}
+                <th className="data-col-act"><span className="data-sr">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={index}>
+                  {render(item, index)}
+                  <td className="data-col-act">
+                    <button className="cw-icon-btn data-remove" type="button" aria-label="Remove row" title="Remove row" onClick={() => onRemove(index)}><Trash2 size={14} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="data-empty">Nothing added yet.</p>
+      )}
     </section>
   );
 }
@@ -536,41 +603,52 @@ function ResourceManager({ draft, resources, selectedId, targetOptions, onCreate
     <section className="data-card">
       <div className="data-section-head">
         <div>
-          <h2>Attachments & market research</h2>
-          <p>Post source links, research notes, planning memos, and client-visible market intelligence.</p>
+          <h2>Research and files</h2>
+          <p>Source links, research notes, planning memos and documents. Anything marked Client is visible to clients.</p>
         </div>
       </div>
 
       <form className="data-form" onSubmit={onCreate}>
-        <label className="data-field">
-          <span>Target</span>
-          <select className="cw-select" value={`${draft.targetType}:${draft.targetId}`} onChange={(event) => updateTarget(event.target.value)}>
-            {targetOptions.map((target) => (
-              <option value={`${target.type}:${target.id}`} key={`${target.type}:${target.id}`}>
-                {target.name} · {target.type === "estate" ? "Estate" : "Location"}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Select label="Type" value={draft.resourceType} options={resourceTypes} onChange={(value) => updateDraft("resourceType", value)} />
-        <Select label="Visibility" value={draft.visibility} options={visibilityTypes} onChange={(value) => updateDraft("visibility", value)} />
-        <Field label="Title" value={draft.title} onChange={(value) => updateDraft("title", value)} />
-        <Field label="Source" value={draft.source} onChange={(value) => updateDraft("source", value)} />
-        <Field label="URL / document link" value={draft.url} onChange={(value) => updateDraft("url", value)} />
-        <FileField
-          label="Upload document"
-          file={draft.file}
-          onChange={(file) => onDraftChange((current) => ({
-            ...current,
-            file,
-            resourceType: file ? "Attachment" : current.resourceType,
-            title: current.title || file?.name || ""
-          }))}
-        />
-        <Textarea label="Research summary" value={draft.summary} onChange={(value) => updateDraft("summary", value)} />
-        <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Paperclip size={16} /> Add resource</button>
+        <h3>Add a resource</h3>
+        <div className="data-form-grid">
+          <label className="cw-field data-field">
+            <span>Attach to</span>
+            <select className="cw-select" value={`${draft.targetType}:${draft.targetId}`} onChange={(event) => updateTarget(event.target.value)}>
+              {targetOptions.map((target) => (
+                <option value={`${target.type}:${target.id}`} key={`${target.type}:${target.id}`}>
+                  {target.name} · {target.type === "estate" ? "Estate" : "Location"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Select label="Type" value={draft.resourceType} options={resourceTypes} onChange={(value) => updateDraft("resourceType", value)} />
+          <Select label="Visibility" value={draft.visibility} options={visibilityTypes} onChange={(value) => updateDraft("visibility", value)} />
+          <Field label="Title" value={draft.title} onChange={(value) => updateDraft("title", value)} />
+          <Field label="Source" value={draft.source} onChange={(value) => updateDraft("source", value)} />
+          <Field label="Link to document" value={draft.url} onChange={(value) => updateDraft("url", value)} />
+          <FileField
+            label="Upload a document"
+            file={draft.file}
+            onChange={(file) => onDraftChange((current) => ({
+              ...current,
+              file,
+              resourceType: file ? "Attachment" : current.resourceType,
+              title: current.title || file?.name || ""
+            }))}
+          />
+          <Textarea wide label="Summary" value={draft.summary} onChange={(value) => updateDraft("summary", value)} />
+        </div>
+        <div className="data-form-actions">
+          <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Paperclip size={16} /> Add resource</button>
+        </div>
       </form>
 
+      <h3 className="data-subhead">
+        Saved resources
+        <span className="data-count">
+          {visibleResources.length < resources.length ? `${visibleResources.length} of ${resources.length} shown` : resources.length}
+        </span>
+      </h3>
       <div className="data-list">
         {visibleResources.map((resource) => (
           <ResourceRow
@@ -582,15 +660,18 @@ function ResourceManager({ draft, resources, selectedId, targetOptions, onCreate
           />
         ))}
         {!visibleResources.length ? (
-          <p className="data-empty">No attachments or market research have been added yet.</p>
+          <p className="data-empty">No research or files have been added yet.</p>
         ) : null}
       </div>
     </section>
   );
 }
 
+const resourceFields = ["title", "resourceType", "visibility", "source", "url", "summary"];
+
 function ResourceRow({ resource, target, onDelete, onUpdate }) {
   const [draft, setDraft] = useState(resource);
+  const dirty = differs(draft, resource, resourceFields);
 
   function update(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -599,18 +680,16 @@ function ResourceRow({ resource, target, onDelete, onUpdate }) {
   return (
     <article className="data-item">
       <header>
-        <span className="data-item-icon">{resource.fileName ? <Paperclip size={18} /> : <FileText size={18} />}</span>
         <div className="data-item-title">
           <strong>{resource.title || target?.name || resource.targetId}</strong>
-          <small>{target?.name || resource.targetId} · {resource.author} · {new Date(resource.createdAt).toLocaleDateString()}</small>
-          <div className="data-item-chips">
-            <span className="cw-chip">{resource.resourceType}</span>
-            <span className="cw-chip">{resource.visibility}</span>
-          </div>
+          <small>
+            {resource.resourceType} · {resource.visibility} · {target?.name || resource.targetId} · {resource.author} · {new Date(resource.createdAt).toLocaleDateString()}
+            {resource.fileName ? ` · ${resource.fileName}` : ""}
+          </small>
         </div>
         <div className="data-item-actions">
           {resource.url ? (
-            <a className="cw-icon-btn" href={resource.url} target="_blank" rel="noreferrer" aria-label="Open resource" title="Open resource"><ExternalLink size={15} /></a>
+            <a className="cw-icon-btn" href={resource.url} target="_blank" rel="noreferrer" aria-label="Open link" title="Open link"><ExternalLink size={15} /></a>
           ) : null}
           {resource.fileName ? (
             <a className="cw-icon-btn" href={`/api/resources/${resource.id}/file`} target="_blank" rel="noreferrer" aria-label="Open attachment" title="Open attachment"><Paperclip size={15} /></a>
@@ -623,10 +702,13 @@ function ResourceRow({ resource, target, onDelete, onUpdate }) {
         <Select label="Type" value={draft.resourceType} options={resourceTypes} onChange={(value) => update("resourceType", value)} />
         <Select label="Visibility" value={draft.visibility} options={visibilityTypes} onChange={(value) => update("visibility", value)} />
         <Field label="Source" value={draft.source} onChange={(value) => update("source", value)} />
-        <Field label="URL" value={draft.url} onChange={(value) => update("url", value)} />
-        <Textarea label="Summary" value={draft.summary} onChange={(value) => update("summary", value)} />
+        <Field label="Link" value={draft.url} onChange={(value) => update("url", value)} />
+        <Textarea wide label="Summary" value={draft.summary} onChange={(value) => update("summary", value)} />
       </div>
-      <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save resource</button>
+      <footer className="data-item-foot">
+        <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save resource</button>
+        <RowState dirty={dirty} />
+      </footer>
     </article>
   );
 }
@@ -650,86 +732,123 @@ function MarketManager({
   const visibleEstates = marketEstates.filter((estate) => estate.neighborhoodId === selectedId);
   const visiblePrices = pricePoints.filter((point) => point.targetId === selectedId || visibleEstates.some((estate) => estate.id === point.targetId));
   const targets = uniqueTargets(targetOptions);
+  const selectedName = neighborhoods.find((record) => record.id === selectedId)?.name || "this location";
 
   return (
-    <section className="data-card">
-      <div className="data-section-head">
-        <div>
-          <h2>Estate & price intelligence</h2>
-          <p>Add estates inside neighborhoods and yearly price points used by the projection model.</p>
-        </div>
-      </div>
-
-      <form className="data-form" onSubmit={onCreateEstate}>
-        <label className="data-field">
-          <span>Neighborhood</span>
-          <select className="cw-select" value={estateDraft.neighborhoodId} onChange={(event) => onEstateDraftChange((current) => ({ ...current, neighborhoodId: event.target.value }))}>
-            {neighborhoods.map((record) => <option value={record.id} key={record.id}>{record.name}</option>)}
-          </select>
-        </label>
-        <Field label="Estate name" value={estateDraft.name} onChange={(value) => onEstateDraftChange((current) => ({ ...current, name: value }))} />
-        <Field label="Primary use" value={estateDraft.primaryUse} onChange={(value) => onEstateDraftChange((current) => ({ ...current, primaryUse: value }))} />
-        <Field label="Status" value={estateDraft.status} onChange={(value) => onEstateDraftChange((current) => ({ ...current, status: value }))} />
-        <Field label="Developer" value={estateDraft.developer} onChange={(value) => onEstateDraftChange((current) => ({ ...current, developer: value }))} />
-        <Field label="Available plots" value={estateDraft.availablePlots} onChange={(value) => onEstateDraftChange((current) => ({ ...current, availablePlots: value }))} />
-        <Field label="Total land sqm" type="number" value={estateDraft.totalLandSqm} onChange={(value) => onEstateDraftChange((current) => ({ ...current, totalLandSqm: value }))} />
-        <Textarea label="Estate description" value={estateDraft.description} onChange={(value) => onEstateDraftChange((current) => ({ ...current, description: value }))} />
-        <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Plus size={16} /> Add estate</button>
-      </form>
-
-      <div className="data-list">
-        {visibleEstates.map((estate) => (
-          <EstateAdminRow key={estate.id} estate={estate} onDelete={onDeleteEstate} onUpdate={onUpdateEstate} />
-        ))}
-        {!visibleEstates.length ? <p className="data-empty">No editable estates have been added for this neighborhood yet.</p> : null}
-      </div>
-
-      <form className="data-form" onSubmit={onCreatePricePoint}>
-        <label className="data-field">
-          <span>Price target</span>
-          <select className="cw-select" value={`${priceDraft.targetType}:${priceDraft.targetId}`} onChange={(event) => {
-            const [targetType, targetId] = event.target.value.split(":");
-            onPriceDraftChange((current) => ({ ...current, targetType, targetId }));
-          }}>
-            {targets.map((target) => (
-              <option value={`${target.type}:${target.id}`} key={`${target.type}:${target.id}`}>
-                {target.name} · {target.type === "estate" ? "Estate" : "Location"}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Field label="Year" type="number" value={priceDraft.year} onChange={(value) => onPriceDraftChange((current) => ({ ...current, year: Number(value) }))} />
-        <Field label="Price / sqm" type="number" value={priceDraft.value} onChange={(value) => onPriceDraftChange((current) => ({ ...current, value }))} />
-        <Select label="Currency" value={priceDraft.currency} options={["NGN", "USD"]} onChange={(value) => onPriceDraftChange((current) => ({ ...current, currency: value }))} />
-        <Field label="Source" value={priceDraft.source} onChange={(value) => onPriceDraftChange((current) => ({ ...current, source: value }))} />
-        <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Plus size={16} /> Save price point</button>
-      </form>
-
-      <div className="data-table">
-        {visiblePrices.length ? (
-          <div className="data-table-head" aria-hidden="true">
-            <span>Year</span>
-            <span>Target · source</span>
-            <span>Price</span>
-            <span />
+    <>
+      <section className="data-card">
+        <div className="data-section-head">
+          <div>
+            <h2>Estates in {selectedName} <span className="data-count">{visibleEstates.length}</span></h2>
+            <p>Estates added here can be chosen on listings and reports, and can carry their own yearly prices.</p>
           </div>
-        ) : null}
-        {visiblePrices.sort((a, b) => b.year - a.year).map((point) => (
-          <article key={point.id}>
-            <strong>{point.year}</strong>
-            <span>{targetName(targets, point)} · {point.source}</span>
-            <b>{formatPricePoint(point)}</b>
-            <button className="cw-icon-btn data-remove" type="button" aria-label="Remove price point" title="Remove price point" onClick={() => onDeletePricePoint(point.id)}><Trash2 size={14} /></button>
-          </article>
-        ))}
-        {!visiblePrices.length ? <p className="data-empty">No yearly price points have been added for this neighborhood or its estates.</p> : null}
-      </div>
-    </section>
+        </div>
+
+        <form className="data-form" onSubmit={onCreateEstate}>
+          <h3>Add an estate</h3>
+          <div className="data-form-grid">
+            <label className="cw-field data-field">
+              <span>Neighborhood</span>
+              <select className="cw-select" value={estateDraft.neighborhoodId} onChange={(event) => onEstateDraftChange((current) => ({ ...current, neighborhoodId: event.target.value }))}>
+                {neighborhoods.map((record) => <option value={record.id} key={record.id}>{record.name}</option>)}
+              </select>
+            </label>
+            <Field label="Estate name" value={estateDraft.name} onChange={(value) => onEstateDraftChange((current) => ({ ...current, name: value }))} />
+            <Field label="Primary use" value={estateDraft.primaryUse} onChange={(value) => onEstateDraftChange((current) => ({ ...current, primaryUse: value }))} />
+            <Field label="Status" value={estateDraft.status} onChange={(value) => onEstateDraftChange((current) => ({ ...current, status: value }))} />
+            <Field label="Developer" value={estateDraft.developer} onChange={(value) => onEstateDraftChange((current) => ({ ...current, developer: value }))} />
+            <Field label="Available plots" value={estateDraft.availablePlots} onChange={(value) => onEstateDraftChange((current) => ({ ...current, availablePlots: value }))} />
+            <Field label="Total land (m²)" type="number" value={estateDraft.totalLandSqm} onChange={(value) => onEstateDraftChange((current) => ({ ...current, totalLandSqm: value }))} />
+            <Textarea wide label="Description" value={estateDraft.description} onChange={(value) => onEstateDraftChange((current) => ({ ...current, description: value }))} />
+          </div>
+          <div className="data-form-actions">
+            <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Plus size={16} /> Add estate</button>
+          </div>
+        </form>
+
+        <div className="data-list">
+          {visibleEstates.map((estate) => (
+            <EstateAdminRow key={estate.id} estate={estate} onDelete={onDeleteEstate} onUpdate={onUpdateEstate} />
+          ))}
+          {!visibleEstates.length ? <p className="data-empty">No editable estates have been added for {selectedName} yet.</p> : null}
+        </div>
+      </section>
+
+      <section className="data-card">
+        <div className="data-section-head">
+          <div>
+            <h2>Yearly prices <span className="data-count">{visiblePrices.length}</span></h2>
+            <p>One price per m² per year, for {selectedName} or one of its estates. The price history and projection are drawn from these.</p>
+          </div>
+        </div>
+
+        <form className="data-form" onSubmit={onCreatePricePoint}>
+          <h3>Add a price</h3>
+          <div className="data-form-grid">
+            <label className="cw-field data-field">
+              <span>Price is for</span>
+              <select className="cw-select" value={`${priceDraft.targetType}:${priceDraft.targetId}`} onChange={(event) => {
+                const [targetType, targetId] = event.target.value.split(":");
+                onPriceDraftChange((current) => ({ ...current, targetType, targetId }));
+              }}>
+                {targets.map((target) => (
+                  <option value={`${target.type}:${target.id}`} key={`${target.type}:${target.id}`}>
+                    {target.name} · {target.type === "estate" ? "Estate" : "Location"}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Field label="Year" type="number" value={priceDraft.year} onChange={(value) => onPriceDraftChange((current) => ({ ...current, year: Number(value) }))} />
+            <Field label="Price per m²" type="number" value={priceDraft.value} onChange={(value) => onPriceDraftChange((current) => ({ ...current, value }))} />
+            <Select label="Currency" value={priceDraft.currency} options={["NGN", "USD"]} onChange={(value) => onPriceDraftChange((current) => ({ ...current, currency: value }))} />
+            <Field label="Source" value={priceDraft.source} onChange={(value) => onPriceDraftChange((current) => ({ ...current, source: value }))} />
+          </div>
+          <div className="data-form-actions">
+            <button className="cw-btn cw-btn-navy cw-btn-sm" type="submit"><Plus size={16} /> Save price</button>
+          </div>
+        </form>
+
+        {visiblePrices.length ? (
+          <div className="data-tablewrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th className="data-col-xs">Year</th>
+                  <th>For</th>
+                  <th>Source</th>
+                  <th className="data-num">Price per m²</th>
+                  <th className="data-col-act"><span className="data-sr">Remove</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {visiblePrices.sort((a, b) => b.year - a.year).map((point) => (
+                  <tr key={point.id}>
+                    <td className="data-year">{point.year}</td>
+                    <td>{targetName(targets, point)}</td>
+                    <td className="data-quiet">{point.source}</td>
+                    <td className="data-num">{formatPricePoint(point)}</td>
+                    <td className="data-col-act">
+                      <button className="cw-icon-btn data-remove" type="button" aria-label="Remove price" title="Remove price" onClick={() => onDeletePricePoint(point.id)}><Trash2 size={14} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="data-empty">No yearly prices have been added for {selectedName} or its estates.</p>
+        )}
+      </section>
+    </>
   );
 }
 
+const estateFields = ["name", "primaryUse", "status", "developer", "availablePlots", "totalLandSqm", "description"];
+
 function EstateAdminRow({ estate, onDelete, onUpdate }) {
   const [draft, setDraft] = useState(estate);
+  const dirty = differs(draft, estate, estateFields);
+
   function update(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
@@ -737,14 +856,9 @@ function EstateAdminRow({ estate, onDelete, onUpdate }) {
   return (
     <article className="data-item">
       <header>
-        <span className="data-item-icon"><Building2 size={18} /></span>
         <div className="data-item-title">
           <strong>{estate.name}</strong>
-          <small>{estate.primaryUse || "Use not set"} · {estate.status || "Status not set"}</small>
-          <div className="data-item-chips">
-            <span className="cw-chip">Estate</span>
-            <span className="cw-chip">{estate.neighborhoodId}</span>
-          </div>
+          <small>{estate.primaryUse || "Use not set"} · {estate.status || "Status not set"} · {estate.neighborhoodId}</small>
         </div>
         <div className="data-item-actions">
           <button className="cw-icon-btn data-remove" type="button" aria-label="Remove estate" title="Remove estate" onClick={() => onDelete(estate.id)}><Trash2 size={14} /></button>
@@ -756,12 +870,26 @@ function EstateAdminRow({ estate, onDelete, onUpdate }) {
         <Field label="Status" value={draft.status} onChange={(value) => update("status", value)} />
         <Field label="Developer" value={draft.developer} onChange={(value) => update("developer", value)} />
         <Field label="Available plots" value={draft.availablePlots} onChange={(value) => update("availablePlots", value)} />
-        <Field label="Total land sqm" type="number" value={draft.totalLandSqm} onChange={(value) => update("totalLandSqm", value)} />
-        <Textarea label="Description" value={draft.description} onChange={(value) => update("description", value)} />
+        <Field label="Total land (m²)" type="number" value={draft.totalLandSqm} onChange={(value) => update("totalLandSqm", value)} />
+        <Textarea wide label="Description" value={draft.description} onChange={(value) => update("description", value)} />
       </div>
-      <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save estate</button>
+      <footer className="data-item-foot">
+        <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={() => onUpdate(draft)}><Save size={15} /> Save estate</button>
+        <RowState dirty={dirty} />
+      </footer>
     </article>
   );
+}
+
+function RowState({ dirty }) {
+  return dirty
+    ? <span className="data-state is-dirty" role="status">Unsaved changes</span>
+    : <span className="data-state">No unsaved changes</span>;
+}
+
+// Display only: compares the editable fields of a row with what is stored.
+function differs(draft, stored, fields) {
+  return fields.some((field) => String(draft?.[field] ?? "").trim() !== String(stored?.[field] ?? "").trim());
 }
 
 function DataCrumbs() {
@@ -774,27 +902,31 @@ function DataCrumbs() {
   );
 }
 
-function Field({ label, value, onChange, type = "text" }) {
+function Field({ label, value, onChange, type = "text", bare = false, wide = false }) {
+  const input = <input className="cw-input" type={type} value={value ?? ""} aria-label={bare ? label : undefined} onChange={(event) => onChange(event.target.value)} />;
+  if (bare) return input;
   return (
-    <label className="data-field">
+    <label className={`cw-field data-field${wide ? " data-field-wide" : ""}`}>
       <span>{label}</span>
-      <input className="cw-input" type={type} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      {input}
     </label>
   );
 }
 
-function Textarea({ label, value, onChange }) {
+function Textarea({ label, value, onChange, bare = false, wide = false }) {
+  const input = <textarea className="cw-textarea" value={value ?? ""} aria-label={bare ? label : undefined} onChange={(event) => onChange(event.target.value)} />;
+  if (bare) return input;
   return (
-    <label className="data-field">
+    <label className={`cw-field data-field${wide ? " data-field-wide" : ""}`}>
       <span>{label}</span>
-      <textarea className="cw-textarea" value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      {input}
     </label>
   );
 }
 
 function FileField({ label, file, onChange }) {
   return (
-    <label className="data-field data-file-field">
+    <label className="cw-field data-field data-field-wide">
       <span>{label}</span>
       <div className="data-dropzone">
         <input
@@ -803,22 +935,25 @@ function FileField({ label, file, onChange }) {
           accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.txt"
           onChange={(event) => onChange(event.target.files?.[0] || null)}
         />
-        <UploadCloud size={22} />
-        <strong>Drop a document here, or click to browse</strong>
-        <small>PDF, Word, Excel, CSV, text or image</small>
-        {file ? <em>{file.name}</em> : null}
+        <UploadCloud size={20} aria-hidden="true" />
+        <strong>{file ? file.name : "Drop a document here, or click to browse"}</strong>
+        <small>{file ? "Selected. It uploads when you add the resource." : "PDF, Word, Excel, CSV, text or image"}</small>
       </div>
     </label>
   );
 }
 
-function Select({ label, value, options, onChange }) {
+function Select({ label, value, options, onChange, bare = false }) {
+  const input = (
+    <select className="cw-select" value={value || options[0]} aria-label={bare ? label : undefined} onChange={(event) => onChange(event.target.value)}>
+      {options.map((option) => <option key={option}>{option}</option>)}
+    </select>
+  );
+  if (bare) return input;
   return (
-    <label className="data-field">
+    <label className="cw-field data-field">
       <span>{label}</span>
-      <select className="cw-select" value={value || options[0]} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => <option key={option}>{option}</option>)}
-      </select>
+      {input}
     </label>
   );
 }
@@ -877,7 +1012,7 @@ function targetName(targets, point) {
 
 function formatPricePoint(point) {
   const value = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(point.value) || 0);
-  return point.currency === "USD" ? `$${value}/sqm` : `₦${value}/sqm`;
+  return point.currency === "USD" ? `$${value}` : `₦${value}`;
 }
 
 function clone(value) {
