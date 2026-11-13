@@ -21,10 +21,16 @@ Buyers and agents can create their own accounts:
 - A buyer can sign in once they confirm their email. An agent confirms their email and then waits for an admin to approve them at `/admin/accounts`.
 - The admin login at `/admin/login` is separate and still comes from `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 
-Accounts are stored apart from the rest of the data, through `@libsql/client`:
+Accounts are stored apart from the rest of the data:
 
-- Locally: a file, `data/accounts.db` (no setup needed).
-- On Vercel: a Turso database. Set `ACCOUNTS_DB_URL` (`libsql://...`) and `ACCOUNTS_DB_TOKEN`. Without them, account pages fail on Vercel rather than writing to temporary storage.
+- Locally: a SQLite file, `data/accounts.db` (no setup needed).
+- On Vercel: a PostgreSQL database on AWS RDS. Set `ACCOUNTS_DB_URL` to `postgres://USER:PASSWORD@HOST:5432/DBNAME`. The tables are created on first use. Without the setting, account pages fail on Vercel rather than writing to temporary storage.
+
+Notes for RDS:
+
+- Vercel does not run inside your AWS network, so the database must be publicly accessible and its security group must allow inbound PostgreSQL (port 5432). Use a long random password, and a database user that only owns this database.
+- The connection is always encrypted. To also verify the server's certificate, put the contents of the AWS RDS certificate bundle (`global-bundle.pem`) in `ACCOUNTS_DB_CA`.
+- Each server instance keeps at most 3 connections open. If traffic grows, put RDS Proxy in front and point `ACCOUNTS_DB_URL` at the proxy.
 
 Emails (confirm address, reset password, agent approved) are sent through Resend when `RESEND_API_KEY` is set, from `MAIL_FROM`. Without the key they are printed in the server log, which is how to follow the links during local work. Set `APP_URL` to the public address so links in emails point to the right place.
 
