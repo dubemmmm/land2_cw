@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function SiteFooter() {
+export default function SiteFooter({ note }) {
   const year = new Date().getFullYear();
   return (
     <footer className="sq-footer">
@@ -41,6 +41,7 @@ export default function SiteFooter() {
           © {year} Squaremeter by CW Real Estate. Figures are estimates drawn from tracked market data and may
           not reflect final transaction prices. They are not a substitute for legal, survey or valuation advice.
         </p>
+        {note ? <p className="sq-footer-legal">{note}</p> : null}
       </div>
     </footer>
   );

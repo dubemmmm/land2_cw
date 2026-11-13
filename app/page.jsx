@@ -1,16 +1,20 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import {
+  ArrowRight, ArrowUpRight, Banknote, Building2, DoorOpen, FileCheck2, Gem, Hammer, Landmark, PieChart, Ruler,
+  ShieldCheck, TrendingUp, UserPlus, Users
+} from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 import SqmCartogram from "@/components/SqmCartogram";
 import BudgetScale from "@/components/BudgetScale";
-import PlotGlyph from "@/components/PlotGlyph";
+import PlotCard from "@/components/PlotCard";
 import ConfidenceLegend from "@/components/ConfidenceLegend";
 import { getLandBibleInventory } from "@/lib/landBible";
 import { getLandListings } from "@/lib/listingStore";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { confidenceLegend, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
-import { formatNaira, formatSqm, layoutCartogram, realPhoto } from "@/lib/plot";
+import { photo, photoCredits } from "@/lib/photos";
+import { formatNaira, layoutCartogram } from "@/lib/plot";
 import { getEstateMarketProfile, getLandMarketProfile, toEstateSlug } from "@/lib/landBible";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +37,9 @@ export default async function LandingPage() {
   const developmentDistribution = countBy(estates, (estate) => /built/i.test(estate.status || "") ? "Fully built" : "Developing");
   const priced = buildPricedLocations(marketProfiles);
   const cartogram = layoutCartogram(priced);
+  const heroPhoto = photo("ikoyi", 1920);
+  const lagosPhotos = [photo("victoriaIsland"), photo("linkBridge"), photo("ikoyi")];
+  const closePhoto = photo("farmland", 1920);
   const indexYear = marketProfiles[0]?.market.currentYear || new Date().getFullYear();
 
   return (
@@ -40,6 +47,7 @@ export default async function LandingPage() {
       <SiteNav />
 
       <section className="land-hero sq-blueprint sq-on-navy" id="index">
+        <img className="land-hero-photo" src={heroPhoto.src} alt="" />
         <div className="cw-container land-hero-grid">
           <div className="land-hero-copy">
             <p className="sq-anno"><b>Sheet 01</b>Lagos land price index · {indexYear}</p>
@@ -118,15 +126,18 @@ export default async function LandingPage() {
             </p>
           </div>
           <div className="land-signals">
-            {insights.map((insight, index) => (
+            {insights.map((insight, index) => {
+              const Icon = signalIcons[index % signalIcons.length];
+              return (
               <article className="sq-sheet" key={insight.label}>
-                <span className="land-signal-no sq-fig">{String(index + 1).padStart(2, "0")}</span>
+                <span className="land-signal-no sq-fig">{String(index + 1).padStart(2, "0")}<Icon size={20} strokeWidth={1.5} aria-hidden="true" /></span>
                 <p>{insight.label}</p>
                 <h3>{insight.title}</h3>
                 <small>{insight.meta}</small>
                 <b>{insight.badge}</b>
               </article>
-            ))}
+              );
+            })}
           </div>
           <div className="land-dists">
             <Distribution title="Land use across tracked estates" total={estates.length} entries={landUseDistribution} />
@@ -146,28 +157,9 @@ export default async function LandingPage() {
           </div>
           {featuredListings.length ? (
             <div className="land-plots">
-              {featuredListings.map((listing) => {
-                const photo = realPhoto(listing.photos);
-                const perSqm = listing.sizeSqm ? listing.askingPrice / listing.sizeSqm : 0;
-                return (
-                  <Link className="sq-sheet sq-plotcard" href="/listings" key={listing.id}>
-                    <div className="sq-plotcard-drawing sq-grid">
-                      {photo ? <img src={photo} alt="" /> : <PlotGlyph sqm={listing.sizeSqm} scaleSqm={plotScale} />}
-                      <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
-                      {listing.titleDocument ? <span className="sq-stamp">{listing.titleDocument}</span> : null}
-                    </div>
-                    <div className="sq-plotcard-body">
-                      <h3>{listing.title}</h3>
-                      <p>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""} · {listing.landUse}</p>
-                      <dl>
-                        <div><dt>Area</dt><dd className="sq-fig">{formatSqm(listing.sizeSqm)} m²</dd></div>
-                        <div><dt>Per m²</dt><dd className="sq-fig">{formatNaira(perSqm)}</dd></div>
-                        <div><dt>Asking</dt><dd className="sq-fig">{formatNaira(listing.askingPrice)}</dd></div>
-                      </dl>
-                    </div>
-                  </Link>
-                );
-              })}
+              {featuredListings.map((listing) => (
+                <PlotCard listing={listing} scaleSqm={plotScale} href="/listings" key={listing.id} />
+              ))}
             </div>
           ) : (
             <p className="sq-sheet land-empty">No plots are marked available right now. New listings appear here as soon as they are published.</p>
@@ -189,9 +181,9 @@ export default async function LandingPage() {
           </div>
           <div className="land-method">
             <ol className="land-spec">
-              {features.map((feature, index) => (
+              {features.map((feature) => (
                 <li key={feature.title}>
-                  <span className="sq-fig">{String.fromCharCode(65 + index)}</span>
+                  <span className="land-spec-icon"><feature.icon size={20} strokeWidth={1.5} aria-hidden="true" /></span>
                   <h3>{feature.title}</h3>
                   <p>{feature.text}</p>
                 </li>
@@ -229,11 +221,19 @@ export default async function LandingPage() {
           <dl className="land-lagos-stats">
             {lagosStats.map((stat) => (
               <div key={stat.label}>
-                <dt>{stat.label}</dt>
+                <dt><stat.icon size={15} strokeWidth={1.5} aria-hidden="true" />{stat.label}</dt>
                 <dd className="sq-fig">{stat.value}</dd>
               </div>
             ))}
           </dl>
+          <div className="land-photos">
+            {lagosPhotos.map((item, index) => (
+              <figure key={item.place}>
+                <img src={item.src} alt={item.place} loading="lazy" />
+                <figcaption><b className="sq-fig">{String(index + 1).padStart(2, "0")}</b>{item.place}</figcaption>
+              </figure>
+            ))}
+          </div>
           <ol className="land-reasons">
             {lagosReasons.map((reason, index) => (
               <li key={reason.title}>
@@ -250,6 +250,7 @@ export default async function LandingPage() {
         <div className="cw-container">
           <div className="land-close sq-blueprint sq-on-navy">
             <div className="land-close-copy">
+              <img className="land-close-photo" src={closePhoto.src} alt="" loading="lazy" />
               <p className="sq-anno"><b>Next</b>Start with a plot, then check the ground around it</p>
               <h2>Shortlist land with the <em>measurements in hand.</em></h2>
               <div className="land-actions">
@@ -270,11 +271,12 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter note={`Stand-in photos from Wikimedia Commons. ${photoCredits}`} />
     </main>
   );
 }
 
+const signalIcons = [TrendingUp, DoorOpen, Gem, Hammer];
 const distPatterns = ["solid", "hatch", "dot", "none"];
 
 // Share of a whole, drawn as one bar to scale. Segments are told apart by pattern.
@@ -326,10 +328,6 @@ function buildPricedLocations(marketProfiles) {
         lng: Number(center[1])
       };
     });
-}
-
-function statusClass(status = "") {
-  return String(status).toLowerCase().replace(/\s+/g, "-");
 }
 
 function buildHeroStats(neighborhoods, estates, marketProfiles) {
@@ -426,12 +424,12 @@ function average(values) {
 }
 
 const lagosStats = [
-  { label: "Population density", value: "5,000/km²" },
-  { label: "Population influx", value: "~86/hour" },
-  { label: "Lagos GDP", value: "$33.67B" },
-  { label: "Share of Nigeria GDP", value: "25%+" },
-  { label: "Urbanization rate", value: "16%" },
-  { label: "Financial institutions", value: "200+" }
+  { icon: Users, label: "Population density", value: "5,000/km²" },
+  { icon: UserPlus, label: "Population influx", value: "~86/hour" },
+  { icon: Banknote, label: "Lagos GDP", value: "$33.67B" },
+  { icon: PieChart, label: "Share of Nigeria GDP", value: "25%+" },
+  { icon: Building2, label: "Urbanization rate", value: "16%" },
+  { icon: Landmark, label: "Financial institutions", value: "200+" }
 ];
 
 const exploreLinks = [
@@ -442,9 +440,9 @@ const exploreLinks = [
 ];
 
 const features = [
-  { title: "Price by the square metre", text: "Compare price per m², annual growth and mapped estate supply across locations, from the Land Bible and admin updates." },
-  { title: "Plots with their papers", text: "Browse available plots with size, use, asking price, estate and the title document recorded for each listing." },
-  { title: "Risk before commitment", text: "See planning constraints, approval history and the documents to request, so an attractive plot is checked against practical risk." }
+  { icon: Ruler, title: "Price by the square metre", text: "Compare price per m², annual growth and mapped estate supply across locations, from the Land Bible and admin updates." },
+  { icon: FileCheck2, title: "Plots with their papers", text: "Browse available plots with size, use, asking price, estate and the title document recorded for each listing." },
+  { icon: ShieldCheck, title: "Risk before commitment", text: "See planning constraints, approval history and the documents to request, so an attractive plot is checked against practical risk." }
 ];
 
 const lagosReasons = [

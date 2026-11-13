@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { ChevronDown, Grid2X2, List, Plus, RotateCcw, Search } from "lucide-react";
-import PlotGlyph from "@/components/PlotGlyph";
-import { formatNaira, formatSqm, realPhoto } from "@/lib/plot";
+import PlotCard from "@/components/PlotCard";
+import { photoCredits } from "@/lib/photos";
+import { realPhoto } from "@/lib/plot";
 import { useMemo, useState } from "react";
 
 const landUses = ["Residential", "Commercial", "Mixed-use"];
@@ -226,35 +227,20 @@ function ListingCards({ groups, isAdmin }) {
           </div>
         </section>
       ))}
+      <p className="sq-photo-credit">Area views are stand-in photos from Wikimedia Commons, not the listed plots. {photoCredits}</p>
     </div>
   );
 }
 
 function ListingCard({ listing, isAdmin, scaleSqm }) {
-  const photo = realPhoto(listing.photos);
-  const perSqm = listing.sizeSqm && listing.askingPrice ? listing.askingPrice / listing.sizeSqm : 0;
-  const content = (
-    <>
-      <div className="sq-plotcard-drawing sq-grid">
-        {photo ? <img src={photo} alt="" /> : <PlotGlyph sqm={listing.sizeSqm} scaleSqm={scaleSqm} />}
-        <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span>
-        {listing.titleDocument ? <span className="sq-stamp">{listing.titleDocument}</span> : null}
-        {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
-      </div>
-      <div className="sq-plotcard-body">
-        <h3>{listing.title}</h3>
-        <p>{listing.neighborhoodName}{listing.estate ? ` · ${listing.estate}` : ""} · {listing.landUse}</p>
-        <dl>
-          <div><dt>Area</dt><dd className="sq-fig">{formatSqm(listing.sizeSqm)} m²</dd></div>
-          <div><dt>Per m²</dt><dd className="sq-fig">{formatNaira(perSqm)}</dd></div>
-          <div><dt>Asking</dt><dd className="sq-fig">{listing.askingPrice ? formatNaira(listing.askingPrice) : "Not set"}</dd></div>
-        </dl>
-      </div>
-    </>
+  return (
+    <PlotCard
+      listing={listing}
+      scaleSqm={scaleSqm}
+      href={isAdmin ? `/listings/new?id=${listing.id}` : undefined}
+      badge={isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
+    />
   );
-  return isAdmin
-    ? <Link className="sq-sheet sq-plotcard" href={`/listings/new?id=${listing.id}`}>{content}</Link>
-    : <article className="sq-sheet sq-plotcard">{content}</article>;
 }
 
 function ListingLedger({ groups, isAdmin }) {

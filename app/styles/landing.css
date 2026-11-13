@@ -36,7 +36,33 @@
 
 /* ---------- Hero: blueprint sheet ---------- */
 .land-hero {
+  position: relative;
+  isolation: isolate;
   border-bottom: 1px solid var(--navy);
+  overflow: hidden;
+}
+
+/* aerial photo under the blueprint: desaturated, then tinted by the navy above it */
+.land-hero-photo,
+.land-close-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.15);
+  mix-blend-mode: luminosity;
+  opacity: 0.32;
+}
+
+.land-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, var(--blueprint) 0%, rgba(14, 24, 56, 0.55) 46%, rgba(14, 24, 56, 0.2) 100%);
 }
 
 .land-hero-grid {
@@ -103,7 +129,9 @@
   min-width: 0;
   padding: 22px 24px 24px;
   border: 1px solid var(--on-navy-line);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--sheet-grid-on-navy), rgba(14, 24, 56, 0.86);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .land-hero-drawing-head {
@@ -187,6 +215,9 @@
 }
 
 .land-signal-no {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: var(--accent);
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -322,7 +353,7 @@
 
 .land-spec li {
   display: grid;
-  grid-template-columns: 44px minmax(0, 0.8fr) minmax(0, 1.3fr);
+  grid-template-columns: 52px minmax(0, 0.8fr) minmax(0, 1.3fr);
   gap: 8px 20px;
   padding: 22px 0;
   border-bottom: 1px solid var(--line);
@@ -352,6 +383,15 @@
   color: var(--muted);
   font-size: 14.5px;
   line-height: 1.55;
+}
+
+.land-spec-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--navy);
+  color: var(--navy);
 }
 
 .land-key {
@@ -423,6 +463,57 @@
   text-transform: uppercase;
 }
 
+.land-lagos-stats dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.land-lagos-stats dt svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.land-photos {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.land-photos figure {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--navy);
+  background: var(--beacons), var(--navy-50);
+  background-origin: border-box;
+  padding: 5px;
+}
+
+.land-photos img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  filter: saturate(0.85) contrast(1.04);
+}
+
+.land-photos figcaption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px 6px;
+  color: var(--ink);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.land-photos figcaption b {
+  color: var(--accent);
+  font-weight: 500;
+}
+
 .land-lagos-stats dd {
   margin: 14px 0 0;
   color: var(--navy);
@@ -456,6 +547,9 @@
 }
 
 .land-close-copy {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -609,8 +703,13 @@
   .land-signals,
   .land-plots,
   .land-dists,
+  .land-photos,
   .land-reasons {
     grid-template-columns: 1fr;
+  }
+
+  .land-photos img {
+    height: 220px;
   }
 
   .land-dists {
@@ -618,7 +717,7 @@
   }
 
   .land-spec li {
-    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(0, 1fr);
   }
 
   .land-spec li p {
