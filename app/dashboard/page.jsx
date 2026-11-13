@@ -2,13 +2,11 @@ import Link from "next/link";
 import { Map, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import ConfidenceLegend from "@/components/ConfidenceLegend";
-import SqmCartogram from "@/components/SqmCartogram";
 import { getDashboardData } from "@/lib/dashboardStore";
 import { getLandMarketProfile } from "@/lib/landBible";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getReports } from "@/lib/reportStore";
 import { averageConfidence, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
-import { formatNaira, layoutCartogram } from "@/lib/plot";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +42,6 @@ export default async function DashboardPage() {
   const today = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
 
   const priceRows = buildPriceRows(marketProfiles);
-  const cartogram = layoutCartogram(buildCartogramItems(marketProfiles));
   const publishedCount = stats.publishedReports || clientReports.length;
   const newThisWeek = stats.reportsPublishedThisWeek || 0;
   const editedThisWeek = stats.reportsEditedThisWeek || 0;
@@ -98,13 +95,7 @@ export default async function DashboardPage() {
             <Link className="cw-link" href="/data">Open data <span aria-hidden="true">→</span></Link>
           </div>
           {priceRows.length ? (
-            <div className={`brief-prices-body ${cartogram.squares.length ? "" : "is-table-only"}`}>
-              {cartogram.squares.length ? (
-                <div className="brief-prices-figure">
-                  <SqmCartogram layout={cartogram} onNavy={false} />
-                  <p className="brief-note">Each square is sized by its naira price per m². Point at a square to read its figures.</p>
-                </div>
-              ) : null}
+            <div className="brief-prices-body">
               <div className="brief-prices-table">
                 <div className="brief-table-wrap">
                   <table className="brief-table">
@@ -120,7 +111,12 @@ export default async function DashboardPage() {
                       {priceRows.map((row) => (
                         <tr key={row.id}>
                           <th scope="row"><Link href={row.href}>{row.name}</Link></th>
-                          <td className="sq-fig">{row.price}</td>
+                          <td className="brief-price-cell">
+                            <span className="brief-price-bar" aria-hidden="true">
+                              {row.share ? <i style={{ width: `${row.share}%` }} /> : null}
+                            </span>
+                            <span className="sq-fig">{row.price}</span>
+                          </td>
                           <td className="sq-fig">{row.growth}</td>
                           <td>
                             <span className="brief-conf">
@@ -262,7 +258,11 @@ function growthLabel(market) {
 }
 
 // Table rows: every location with a market profile, dearest first.
+// `share` is each naira price as a percentage of the highest, for the bar in the
+// price column. Locations priced in dollars get no bar.
 function buildPriceRows(marketProfiles) {
+  const naira = (market) => (market.trendCurrency !== "USD" ? Number(market.priceValue) || 0 : 0);
+  const top = Math.max(0, ...marketProfiles.map((item) => naira(item.market)));
   return [...marketProfiles]
     .sort((a, b) => (Number(b.market.priceValue) || 0) - (Number(a.market.priceValue) || 0))
     .map(({ neighborhood, market, score }) => ({
@@ -270,36 +270,12 @@ function buildPriceRows(marketProfiles) {
       name: neighborhood.name,
       href: `/locations/${neighborhood.id}`,
       price: cleanPriceLabel(market.priceLabel).replace("/m² est.", "").replace("/m²", "") || "Under review",
+      share: top ? Math.round((naira(market) / top) * 100) : 0,
       growth: growthLabel(market),
       score,
       level: confidenceLevel(score),
       pattern: confidencePattern(score)
     }));
-}
-
-// Cartogram items: naira-priced locations only, same shape as the landing page
-// (without photographs, so the squares are filled with the confidence pattern).
-function buildCartogramItems(marketProfiles) {
-  return marketProfiles
-    .filter((item) => Number(item.market.priceValue) > 0 && item.market.trendCurrency !== "USD")
-    .map(({ neighborhood, market, score }) => {
-      const center = neighborhood.geometry?.center || [];
-      return {
-        id: neighborhood.id,
-        name: neighborhood.name,
-        href: `/locations/${neighborhood.id}`,
-        priceValue: market.priceValue,
-        priceLabel: cleanPriceLabel(market.priceLabel),
-        priceShort: formatNaira(market.priceValue),
-        growthLabel: growthLabel(market),
-        confidence: score,
-        confidenceLevel: confidenceLevel(score),
-        pattern: confidencePattern(score),
-        photo: null,
-        lat: Number(center[0]),
-        lng: Number(center[1])
-      };
-    });
 }
 
 function UpdateRow({ item }) {

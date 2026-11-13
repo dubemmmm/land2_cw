@@ -126,33 +126,29 @@
 }
 
 .brief-prices-body {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  align-items: start;
   border-top: 1px solid var(--line);
 }
 
-.brief-prices-body.is-table-only {
-  grid-template-columns: minmax(0, 1fr);
+/* price column: a bar scaled to the dearest location, then the figure */
+.brief-price-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
-.brief-prices-figure {
-  min-width: 0;
-  padding: 24px;
+.brief-price-bar {
+  flex: 1 1 160px;
+  max-width: 320px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--paper-2);
 }
 
-.brief-prices-figure .sq-carto {
-  max-width: 520px;
-  margin: 0 auto 14px;
-}
-
-.brief-prices-table {
-  min-width: 0;
-  border-left: 1px solid var(--line);
-}
-
-.brief-prices-body.is-table-only .brief-prices-table {
-  border-left: 0;
+.brief-price-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--navy);
 }
 
 .brief-prices-foot {
@@ -416,14 +412,8 @@ a.brief-row:hover {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
-  .brief-grid,
-  .brief-prices-body {
+  .brief-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .brief-prices-table {
-    border-top: 1px solid var(--line);
-    border-left: 0;
   }
 }
 
@@ -437,8 +427,8 @@ a.brief-row:hover {
     padding: 18px 18px 14px;
   }
 
-  .brief-prices-figure {
-    padding: 18px;
+  .brief-price-bar {
+    flex-basis: 60px;
   }
 
   .brief-prices-foot,
