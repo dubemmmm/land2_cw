@@ -208,8 +208,8 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
             <h2 className="cw-h3">What a budget buys here and elsewhere</h2>
           </div>
           <p className="focus-note">
-            Pick an amount. Each square is the land it buys at this year&rsquo;s estimated price per m², drawn at one
-            scale beside a standard 648 m² plot.
+            Drag the slider. Each line shows how much land the budget buys at this year&rsquo;s estimated price per m².
+            The dashed line marks one standard 648 m² plot.
           </p>
           <BudgetScale items={budgetItems} />
         </section>

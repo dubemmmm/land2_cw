@@ -96,8 +96,8 @@ export default async function LandingPage() {
           <div className="cw-container">
             <h2 className="cw-h2">How much land does your budget buy?</h2>
             <p className="land-sub">
-              Pick an amount. Each square is the land it buys in that location at today&rsquo;s estimated price,
-              drawn at one scale next to a standard 648 m² Lagos plot.
+              Drag the slider. Each line is a location: the further right you go, the more land the budget buys
+              there at today&rsquo;s estimated price. The dashed line marks one standard 648 m² Lagos plot.
             </p>
             <BudgetScale items={priced} />
           </div>
