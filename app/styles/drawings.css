@@ -35,7 +35,7 @@
 
 .sq-plot-area {
   fill: var(--navy);
-  font: 500 11px/1 var(--font-mono);
+  font: 500 12.5px/1 var(--font-sans);
   letter-spacing: -0.02em;
 }
 
@@ -43,8 +43,7 @@
 .sq-plot-scale text,
 .sq-plot-north text {
   fill: var(--muted);
-  font: 500 7px/1 var(--font-mono);
-  letter-spacing: 0.04em;
+  font: 500 7px/1 var(--font-sans);
 }
 
 .sq-plot-north path,
@@ -57,10 +56,7 @@
 /* ---------- Plot card: a listing as a sheet (markup: a.sq-sheet.sq-plotcard) ---------- */
 .sq-plotcard-drawing {
   position: relative;
-  background:
-    linear-gradient(var(--accent), var(--accent)) top left / 5px 5px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) top right / 5px 5px no-repeat,
-    var(--sheet-grid), var(--paper-2);
+  background: var(--sheet-grid), var(--paper-2);
   aspect-ratio: 16 / 10;
   display: grid;
   place-items: center;
@@ -124,9 +120,7 @@
 
 .sq-plotcard-body dt {
   color: var(--muted);
-  font: 500 10px/1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 500 12.5px/1 var(--font-sans);
 }
 
 .sq-plotcard-body dd {
@@ -152,10 +146,10 @@
   bottom: 10px;
   width: 50%;
   padding: 4px 4px 0;
-  border: 1px solid var(--navy);
-  background: var(--beacons), var(--sheet-grid), var(--paper-2);
-  background-origin: border-box;
-  box-shadow: 3px 3px 0 rgba(12, 21, 50, 0.35);
+  border-radius: var(--r-md);
+  background: var(--sheet-grid), #ffffff;
+  box-shadow: 0 6px 18px -8px rgba(12, 21, 50, 0.5);
+  overflow: hidden;
 }
 
 .sq-plotcard-inset .sq-plot-note,
@@ -177,11 +171,10 @@
   bottom: 10px;
   max-width: 45%;
   padding: 5px 7px;
-  background: var(--blueprint);
-  color: var(--on-navy-soft);
-  font: 500 9.5px/1.2 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  border-radius: var(--r-sm);
+  background: rgba(12, 21, 50, 0.78);
+  color: #ffffff;
+  font: 500 12px/1.2 var(--font-sans);
 }
 
 .sq-plotcard-body p {
@@ -261,9 +254,7 @@
 .sq-carto-name {
   fill: currentColor;
   opacity: 0.72;
-  font: 500 9.5px/1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 500 12.5px/1 var(--font-sans);
   transition: opacity 160ms ease;
 }
 
@@ -300,7 +291,7 @@
 
 .sq-carto-price text {
   fill: currentColor;
-  font: 500 11.5px/1 var(--font-mono);
+  font: 500 12.5px/1 var(--font-sans);
   letter-spacing: -0.02em;
 }
 
@@ -331,6 +322,7 @@
   grid-template-columns: 1.3fr 1fr 1fr 1fr;
   margin-top: 18px;
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
 }
 
 .sq-on-navy .sq-carto-readout {
@@ -355,9 +347,7 @@
 .sq-carto-readout span {
   display: block;
   color: var(--muted);
-  font: 500 9.5px/1 var(--font-mono);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font: 500 12.5px/1 var(--font-sans);
 }
 
 .sq-on-navy .sq-carto-readout span {
@@ -376,7 +366,7 @@
 }
 
 .sq-carto-readout strong.sq-fig {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 @media (max-width: 480px) {
@@ -413,8 +403,7 @@
   gap: 10px;
   margin: 0;
   color: var(--muted);
-  font: 500 11px/1 var(--font-mono);
-  letter-spacing: 0.05em;
+  font: 500 12.5px/1 var(--font-sans);
 }
 
 .sq-budget-scale i {
@@ -433,7 +422,8 @@
   margin: 0;
   padding: 40px 32px 28px;
   list-style: none;
-  border: 1px solid var(--navy);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
   overflow-x: auto;
 }
 
@@ -450,8 +440,9 @@
 }
 
 .sq-budget-row .sq-budget-ref {
-  margin-left: auto;
-  padding-left: 28px;
+  margin-left: 12px;
+  padding-left: 40px;
+  border-left: 1px dashed var(--line-strong);
 }
 
 .sq-budget-ref .sq-budget-square {
@@ -522,7 +513,7 @@
 
 .sq-trace-year {
   fill: var(--muted);
-  font: 500 10px/1 var(--font-mono);
+  font: 500 12.5px/1 var(--font-sans);
 }
 
 .sq-trace-line {
@@ -552,7 +543,7 @@
 
 .sq-trace-mark text {
   fill: var(--ink);
-  font: 500 11px/1 var(--font-mono);
+  font: 500 12.5px/1 var(--font-sans);
   letter-spacing: -0.02em;
 }
 
@@ -572,10 +563,11 @@
 
 .sq-cmd {
   width: min(600px, 100%);
-  border: 1px solid var(--navy);
-  background: var(--beacons), var(--card);
-  background-origin: border-box;
-  box-shadow: 6px 6px 0 var(--accent), var(--shadow-lg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
   animation: sq-rise 160ms ease both;
 }
 
@@ -584,7 +576,7 @@
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  border-bottom: 1px solid var(--navy);
+  border-bottom: 1px solid var(--line);
   color: var(--muted);
 }
 
@@ -604,8 +596,7 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
   color: var(--muted);
-  font: 500 10px/1 var(--font-mono);
-  text-transform: uppercase;
+  font: 500 12.5px/1 var(--font-sans);
 }
 
 .sq-cmd ul {
@@ -636,9 +627,7 @@
 
 .sq-cmd li span {
   color: var(--accent);
-  font: 500 10px/1 var(--font-mono);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font: 500 12.5px/1 var(--font-sans);
 }
 
 .sq-cmd li strong {
@@ -651,7 +640,7 @@
 
 .sq-cmd li em {
   color: var(--muted);
-  font: 400 11.5px/1 var(--font-mono);
+  font: 400 12.5px/1 var(--font-sans);
   font-style: normal;
   white-space: nowrap;
 }
@@ -682,4 +671,36 @@
   .sq-cmd li em {
     display: none;
   }
+}
+
+/* The drawings themselves keep the survey lettering: mono, small caps. */
+.sq-plot-area,
+.sq-plot-note,
+.sq-plot-scale text,
+.sq-plot-north text,
+.sq-carto-name,
+.sq-carto-price text,
+.sq-trace-year,
+.sq-trace-mark text {
+  font-family: var(--font-mono);
+}
+
+.sq-carto-name {
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sq-plot-note,
+.sq-plot-scale text,
+.sq-plot-north text {
+  font-size: 7px;
+}
+
+.sq-plot-area {
+  font-size: 11px;
+}
+
+.sq-carto-price text {
+  font-size: 11.5px;
 }

@@ -5,14 +5,13 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const defaultLinks = [
-  { href: "/#index", label: "Price index" },
-  { href: "/#budget", label: "What it buys" },
-  { href: "/listings", label: "Plots" },
-  { href: "/map", label: "Map" },
-  { href: "/#method", label: "Method" }
+  { href: "/#prices", label: "Prices" },
+  { href: "/#budget", label: "Budget tool" },
+  { href: "/listings", label: "Plots for sale" },
+  { href: "/map", label: "Map" }
 ];
 
-export default function SiteNav({ links = defaultLinks, cta = { href: "/dashboard", label: "Open the portal" } }) {
+export default function SiteNav({ links = defaultLinks, cta = { href: "/dashboard", label: "Open portal" } }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -20,7 +19,7 @@ export default function SiteNav({ links = defaultLinks, cta = { href: "/dashboar
       <nav className="sq-nav-bar" aria-label="Primary">
         <Link className="sq-brand" href="/" aria-label="Squaremeter by CW home">
           <span className="cw-mark">CW</span>
-          <span>Squaremeter<sup aria-hidden="true">m²</sup></span>
+          <span>Squaremeter</span>
         </Link>
         <button
           className="sq-nav-toggle"
@@ -37,11 +36,9 @@ export default function SiteNav({ links = defaultLinks, cta = { href: "/dashboar
           ))}
         </div>
         <div className="sq-nav-actions">
-          <span className="sq-nav-coords" aria-hidden="true">6.4550° N · 3.4200° E</span>
           {cta ? <Link className="cw-btn cw-btn-navy cw-btn-sm" href={cta.href}>{cta.label}</Link> : null}
         </div>
       </nav>
-      <div className="sq-nav-ruler" aria-hidden="true" />
     </header>
   );
 }

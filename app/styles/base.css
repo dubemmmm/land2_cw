@@ -29,19 +29,10 @@ h2,
 h3,
 h4 {
   font-family: var(--font-sans);
-  font-weight: 400;
+  font-weight: 500;
   color: var(--ink);
-  letter-spacing: -0.02em;
-}
-
-/* One phrase per headline may be set in the serif italic. */
-h1 em,
-h2 em,
-h3 em {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
 }
 
 button,

@@ -1,6 +1,7 @@
-/* Squaremeter tokens — "Drawn to scale".
+/* Squaremeter tokens.
    Family link to CW: navy ink, General Sans, the round CW mark.
-   Squaremeter's own: laterite accent, squared corners, mono figures, survey-sheet grid.
+   Squaremeter's own: land green accent, cool neutral surfaces. The survey-drawing
+   vocabulary (grid, corner pegs, mono labels) is used only inside actual drawings.
    Every stylesheet in app/styles reads from here. Do not hardcode colors elsewhere. */
 :root {
   /* Navy — the ink the sheet is drawn in */
@@ -14,11 +15,11 @@
   --navy-50: #ecedf4;
   --blueprint: #0e1838;
 
-  /* Laterite — Lagos red earth; boundaries, beacons, emphasis */
-  --accent: #c4502a;
-  --accent-600: #a5411f;
-  --accent-50: #f8ebe4;
-  --accent-on-navy: #f2916a;
+  /* Land green — the single accent */
+  --accent: #1c6b4f;
+  --accent-600: #15543e;
+  --accent-50: #e6f1ec;
+  --accent-on-navy: #86d3b2;
 
   /* Text */
   --ink: #171a24;
@@ -27,13 +28,13 @@
   --faint: #a7acbc;
 
   /* Surfaces */
-  --paper: #f6f4ef;
-  --paper-2: #f0eee7;
-  --paper-3: #e8e5dc;
+  --paper: #f5f6f4;
+  --paper-2: #eef0ed;
+  --paper-3: #e4e7e3;
   --card: #ffffff;
-  --line: #dedacd;
-  --line-soft: #ebe8df;
-  --line-strong: #c4bfb0;
+  --line: #e0e3de;
+  --line-soft: #eceeea;
+  --line-strong: #c6cbc4;
 
   /* Status (never used as brand colour) */
   --green: #1f8a5f;
@@ -54,13 +55,13 @@
   --on-navy-fill: rgba(255, 255, 255, 0.08);
 
   /* Radii — squared. Only true circles use --r-round. */
-  --r-sm: 2px;
-  --r-md: 3px;
-  --r-lg: 4px;
-  --r-card: 4px;
-  --r-xl: 6px;
-  --r-band: 6px;
-  --r-ctl: 3px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-card: 12px;
+  --r-xl: 14px;
+  --r-band: 16px;
+  --r-ctl: 8px;
   --r-round: 999px;
 
   /* Shadows — floating things only. --shadow-ink is the hard offset used on hover. */
@@ -68,7 +69,7 @@
   --shadow-md: 0 10px 30px -12px rgba(20, 24, 46, 0.18), 0 2px 6px rgba(20, 24, 46, 0.05);
   --shadow-lg: 0 26px 64px -24px rgba(20, 24, 46, 0.32), 0 8px 18px -10px rgba(20, 24, 46, 0.12);
   --shadow-nav: 0 12px 36px rgba(17, 29, 66, 0.18);
-  --shadow-ink: 3px 3px 0 var(--accent);
+  --shadow-ink: 0 8px 22px -12px rgba(20, 24, 46, 0.28);
 
   /* Type */
   --font-sans: "General Sans", "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -101,7 +102,7 @@
   /* Layout */
   --container: 1240px;
   --gutter: 24px;
-  --section-pad: 104px;
+  --section-pad: 112px;
   --rail-w: 68px;
   --nav-h: 68px;
 
