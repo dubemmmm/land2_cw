@@ -13,7 +13,7 @@ import { getLandBibleInventory } from "@/lib/landBible";
 import { getLandListings } from "@/lib/listingStore";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { confidenceLegend, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
-import { photo, photoCredits } from "@/lib/photos";
+import { areaPhoto, photo, photoCredits } from "@/lib/photos";
 import { formatNaira, layoutCartogram } from "@/lib/plot";
 import { getEstateMarketProfile, getLandMarketProfile, toEstateSlug } from "@/lib/landBible";
 
@@ -38,7 +38,9 @@ export default async function LandingPage() {
   const priced = buildPricedLocations(marketProfiles);
   const cartogram = layoutCartogram(priced);
   const heroPhoto = photo("ikoyi", 1920);
-  const lagosPhotos = [photo("victoriaIsland"), photo("linkBridge"), photo("ikoyi")];
+  const lagosPhotos = [photo("victoriaIsland"), photo("lekki"), photo("bridgeNight")];
+  const methodPhoto = photo("skyline", 1920);
+  const budgetPhoto = photo("victoriaIsland", 1920);
   const closePhoto = photo("farmland", 1920);
   const indexYear = marketProfiles[0]?.market.currentYear || new Date().getFullYear();
 
@@ -108,6 +110,10 @@ export default async function LandingPage() {
                 A standard Lagos plot is 648 m².
               </p>
             </div>
+            <figure className="land-banner">
+              <img src={budgetPhoto.src} alt={budgetPhoto.place} loading="lazy" />
+              <figcaption><b className="sq-fig">Plate</b>{budgetPhoto.place}</figcaption>
+            </figure>
             <BudgetScale items={priced} />
           </div>
         </section>
@@ -130,6 +136,7 @@ export default async function LandingPage() {
               const Icon = signalIcons[index % signalIcons.length];
               return (
               <article className="sq-sheet" key={insight.label}>
+                {insight.photo ? <img className="land-signal-photo" src={insight.photo.src} alt={insight.photo.place} loading="lazy" /> : null}
                 <span className="land-signal-no sq-fig">{String(index + 1).padStart(2, "0")}<Icon size={20} strokeWidth={1.5} aria-hidden="true" /></span>
                 <p>{insight.label}</p>
                 <h3>{insight.title}</h3>
@@ -179,6 +186,10 @@ export default async function LandingPage() {
               and planning risk in one place, and grades each location by how well its data is sourced.
             </p>
           </div>
+          <figure className="land-banner">
+            <img src={methodPhoto.src} alt={methodPhoto.place} loading="lazy" />
+            <figcaption><b className="sq-fig">Plate</b>{methodPhoto.place}</figcaption>
+          </figure>
           <div className="land-method">
             <ol className="land-spec">
               {features.map((feature) => (
@@ -350,24 +361,28 @@ function buildInsightCards(marketProfiles, estates) {
   return [
     {
       label: "Top appreciating area",
+      photo: areaPhoto(sortedGrowth[0]?.neighborhood.id),
       title: sortedGrowth[0]?.neighborhood.name || "Banana Island",
       meta: cleanPriceLabel(sortedGrowth[0]?.market.priceLabel) || "Tracked market",
       badge: `${sortedGrowth[0]?.market.annualGrowthLabel || "~15%"} est. annual growth`
     },
     {
       label: "Best entry point",
+      photo: areaPhoto(sortedPrice[0]?.neighborhood.id),
       title: sortedPrice[0]?.neighborhood.name || "Ajah",
       meta: cleanPriceLabel(sortedPrice[0]?.market.priceLabel) || "Entry pricing under review",
       badge: "Lowest tracked naira price"
     },
     {
       label: "Premium market",
+      photo: areaPhoto(premium?.neighborhood.id),
       title: premium?.neighborhood.name || "Ikoyi",
       meta: cleanPriceLabel(premium?.market.priceLabel) || "Premium pricing under review",
       badge: `${premium?.market.annualGrowthLabel || "~15%"} est. annual growth`
     },
     {
       label: "Active developments",
+      photo: photo("farmland"),
       title: developing,
       meta: `of ${estates.length} estates developing`,
       badge: `${estates.length ? Math.round((developing / estates.length) * 100) : 0}% of tracked estates`
