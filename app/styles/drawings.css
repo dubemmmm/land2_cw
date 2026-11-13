@@ -267,6 +267,26 @@
   transition: opacity 160ms ease;
 }
 
+.sq-carto-tint {
+  fill: var(--blueprint);
+  opacity: 0.28;
+  transition: opacity 160ms ease;
+}
+
+.sq-carto-plot.active .sq-carto-tint,
+.sq-carto-plot:hover .sq-carto-tint {
+  opacity: 0;
+}
+
+.sq-carto-grade-bg {
+  fill: var(--blueprint);
+}
+
+.sq-carto-grade rect + rect {
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
 .sq-carto-price rect {
   fill: var(--card);
   stroke: var(--navy);

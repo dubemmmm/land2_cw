@@ -335,6 +335,7 @@ function buildPricedLocations(marketProfiles) {
         confidence: score,
         confidenceLevel: confidenceLevel(score),
         pattern: confidencePattern(score),
+        photo: areaPhoto(neighborhood.id, neighborhood.id === "banana-island" ? 1920 : 960)?.src || null,
         lat: Number(center[0]),
         lng: Number(center[1])
       };
