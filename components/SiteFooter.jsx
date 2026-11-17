@@ -29,8 +29,9 @@ export default function SiteFooter({ note }) {
           </div>
         </div>
         <p className="sq-footer-legal">
-          © {year} CW Real Estate. Prices are estimates from tracked market data and may differ from final
-          transaction prices. They are not legal, survey or valuation advice.
+          © {year} CW Real Estate. Prices are sellers&rsquo; asking prices and estimates from tracked market data, and may
+          differ from final transaction prices. They are not legal, survey or valuation advice. Dollar prices are
+          converted to naira with <a href="https://www.exchangerate-api.com">rates by Exchange Rate API</a>.
         </p>
         {note ? <p className="sq-footer-legal">{note}</p> : null}
       </div>

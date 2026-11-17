@@ -9,9 +9,12 @@ import { formatNaira, formatSqm } from "@/lib/plot";
 
 const sizeUnits = ["sqm", "ha", "acres"];
 const sizeUnitLabels = { sqm: "m²", ha: "ha", acres: "acres" };
-const landUses = ["Residential", "Commercial", "Mixed-use"];
+const landUses = ["Residential", "Commercial", "Mixed-use", "Industrial"];
 const titleDocuments = ["C of O", "Governor's Consent", "Excision", "Gazette", "Deed of Assignment", "Registered Survey"];
 const listingStatuses = ["Available", "Under offer", "Sold", "Off-market", "Coming soon"];
+const offerTypes = ["Sale", "Joint venture", "Lease"];
+// How the price is quoted. A lease is always per year.
+const priceBases = { Sale: [["total", "For the whole plot"], ["per_sqm", "Per m²"]], "Joint venture": [["total", "For the whole plot"], ["per_sqm", "Per m²"]], Lease: [["lease", "Per year"], ["lease_per_sqm", "Per m² per year"]] };
 
 export default function NewListingClient({ neighborhoods, estates, listingsCount, initialListing = null }) {
   const router = useRouter();
@@ -26,10 +29,16 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
     estate: initialListing?.estate || "",
     sizeValue: initialListing?.sizeValue || "",
     sizeUnit: initialListing?.sizeUnit || "sqm",
-    askingPrice: initialListing?.askingPrice || "",
-    landUse: initialListing?.landUse || "Residential",
-    titleDocument: initialListing?.titleDocument || "C of O",
+    priceAmount: initialListing?.priceAmount || "",
+    priceCurrency: initialListing?.priceCurrency || "NGN",
+    priceBasis: initialListing?.priceBasis || "total",
+    offerType: initialListing?.offerType || "Sale",
+    landUse: initialListing ? initialListing.landUse : "Residential",
+    titleDocument: initialListing?.titleDocument || "",
     listingStatus: initialListing?.listingStatus || "Available",
+    address: initialListing?.address || "",
+    agentName: initialListing?.agentName || "",
+    agentPhone: initialListing?.agentPhone || "",
     description: initialListing?.description || "",
     photos: initialListing?.photos || []
   });
@@ -38,14 +47,24 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
   const matchingEstates = useMemo(() => estates.filter((estate) => estate.neighborhoodId === form.neighborhoodId), [estates, form.neighborhoodId]);
   const requirements = {
     title: Boolean(form.title.trim()),
-    location: Boolean(form.neighborhoodId),
-    photo: form.photos.length > 0
+    location: Boolean(form.neighborhoodId)
   };
-  const canPublish = requirements.title && requirements.location && requirements.photo;
+  const canPublish = requirements.title && requirements.location;
   const missingText = missingRequirements(requirements);
   const sizeSqm = toSqm(form.sizeValue, form.sizeUnit);
-  const askingPrice = Number(form.askingPrice) || 0;
-  const pricePerSqm = sizeSqm > 0 && askingPrice > 0 ? askingPrice / sizeSqm : 0;
+  const priceAmount = Number(form.priceAmount) || 0;
+  const symbol = form.priceCurrency === "USD" ? "$" : "₦";
+  // Whole-plot price and rate per m², in the currency entered. Leases have neither.
+  const askingPrice = form.priceBasis === "total" ? priceAmount : form.priceBasis === "per_sqm" ? priceAmount * sizeSqm : 0;
+  const pricePerSqm = form.priceBasis === "per_sqm" ? priceAmount : form.priceBasis === "total" && sizeSqm > 0 ? priceAmount / sizeSqm : 0;
+  const basisOptions = priceBases[form.offerType] || priceBases.Sale;
+
+  function updateOffer(offerType) {
+    const allowed = (priceBases[offerType] || priceBases.Sale).map(([value]) => value);
+    setForm((current) => ({ ...current, offerType, priceBasis: allowed.includes(current.priceBasis) ? current.priceBasis : allowed[0] }));
+    setToast("");
+    setError("");
+  }
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -61,10 +80,16 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
       estate: "",
       sizeValue: "",
       sizeUnit: "sqm",
-      askingPrice: "",
+      priceAmount: "",
+      priceCurrency: "NGN",
+      priceBasis: "total",
+      offerType: "Sale",
       landUse: "Residential",
-      titleDocument: "C of O",
+      titleDocument: "",
       listingStatus: "Available",
+      address: "",
+      agentName: "",
+      agentPhone: "",
       description: "",
       photos: []
     });
@@ -131,7 +156,7 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
           </nav>
           <h1 className="cw-pagehead-title">{initialListing ? "Edit land listing" : "New land listing"}</h1>
           <p className="cw-lede">
-            A listing needs a title, a location and at least one photo before it can be published. {listingsCount} listings are on file across {neighborhoods.length} locations.
+            A listing needs a title and a location before it can be published. Without a photo it is shown with a view of its area. {listingsCount} listings are on file across {neighborhoods.length} locations.
           </p>
         </div>
       </header>
@@ -207,13 +232,40 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
                   <small>{sizeHint(sizeSqm, form.sizeUnit)}</small>
                 </div>
                 <div className="listing-field">
-                  <label htmlFor="listing-price">Asking price</label>
-                  <div className="listing-price-field">
-                    <i aria-hidden="true">₦</i>
-                    <input id="listing-price" className="cw-input" value={form.askingPrice} inputMode="numeric" onChange={(event) => update("askingPrice", event.target.value)} placeholder="850000000" />
+                  <label htmlFor="listing-price">Price as quoted</label>
+                  <div className="listing-size-control">
+                    <div className="listing-price-field">
+                      <i aria-hidden="true">{symbol}</i>
+                      <input id="listing-price" className="cw-input" value={form.priceAmount} inputMode="numeric" onChange={(event) => update("priceAmount", event.target.value)} placeholder="850000000" />
+                    </div>
+                    <div className="cw-tabs" role="group" aria-label="Currency">
+                      {["NGN", "USD"].map((currency) => (
+                        <button className={form.priceCurrency === currency ? "active" : ""} type="button" aria-pressed={form.priceCurrency === currency} onClick={() => update("priceCurrency", currency)} key={currency}>{currency === "USD" ? "$" : "₦"}</button>
+                      ))}
+                    </div>
                   </div>
-                  <small>{form.askingPrice ? formatFullPrice(form.askingPrice) : "Digits only, in naira"}</small>
+                  <small>
+                    {priceAmount ? `${symbol}${new Intl.NumberFormat("en-US").format(priceAmount)}` : "Digits only"}
+                    {form.priceCurrency === "USD" ? ". Shown on the site in naira at the day's exchange rate." : ""}
+                  </small>
                 </div>
+              </div>
+              <div className="listing-field">
+                <span id="listing-offer-label">Offer</span>
+                <div className="listing-choice-row" role="group" aria-labelledby="listing-offer-label">
+                  {offerTypes.map((type) => (
+                    <button className={form.offerType === type ? "active" : ""} type="button" aria-pressed={form.offerType === type} onClick={() => updateOffer(type)} key={type}>{type}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="listing-field">
+                <span id="listing-basis-label">The price is</span>
+                <div className="listing-choice-row" role="group" aria-labelledby="listing-basis-label">
+                  {basisOptions.map(([value, label]) => (
+                    <button className={form.priceBasis === value ? "active" : ""} type="button" aria-pressed={form.priceBasis === value} onClick={() => update("priceBasis", value)} key={value}>{label}</button>
+                  ))}
+                </div>
+                {form.priceBasis === "unknown" ? <small>The import could not tell whether this price is for the whole plot or per m². Choose one to include it in price comparisons.</small> : null}
               </div>
               <div className="listing-field">
                 <span id="listing-use-label">Land use</span>
@@ -221,6 +273,7 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
                   {landUses.map((use) => (
                     <button className={form.landUse === use ? "active" : ""} type="button" aria-pressed={form.landUse === use} onClick={() => update("landUse", use)} key={use}>{use}</button>
                   ))}
+                  <button className={form.landUse === "" ? "active" : ""} type="button" aria-pressed={form.landUse === ""} onClick={() => update("landUse", "")}>Not stated</button>
                 </div>
               </div>
             </EditorSection>
@@ -229,6 +282,7 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
               <label className="listing-field">
                 <span>Title document</span>
                 <select className="cw-select" value={form.titleDocument} onChange={(event) => update("titleDocument", event.target.value)}>
+                  <option value="">Not stated</option>
                   {titleDocuments.map((title) => <option key={title}>{title}</option>)}
                 </select>
                 <small>{titleDocumentHelp(form.titleDocument)}</small>
@@ -243,10 +297,24 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
               </div>
             </EditorSection>
 
-            <EditorSection title="Internal notes">
+            <EditorSection title="Agent and description">
+              <div className="listing-field-grid">
+                <label className="listing-field">
+                  <span>Agent name</span>
+                  <input className="cw-input" value={form.agentName} onChange={(event) => update("agentName", event.target.value)} placeholder="e.g. Emmanuel" />
+                </label>
+                <label className="listing-field">
+                  <span>Agent phone</span>
+                  <input className="cw-input" value={form.agentPhone} inputMode="tel" onChange={(event) => update("agentPhone", event.target.value)} placeholder="+234 908 000 0000" />
+                </label>
+              </div>
               <label className="listing-field">
-                <span>Notes <em>(not shown to clients)</em></span>
-                <textarea className="cw-textarea" value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Access, owner, pricing context or due diligence reminders." />
+                <span>Address <em>(optional)</em></span>
+                <input className="cw-input" value={form.address} onChange={(event) => update("address", event.target.value)} placeholder="Street or estate" />
+              </label>
+              <label className="listing-field">
+                <span>Description <em>(shown on the listing page, with the agent&rsquo;s name and phone)</em></span>
+                <textarea className="cw-textarea" value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="What a buyer should know about the plot." />
               </label>
             </EditorSection>
           </div>
@@ -292,19 +360,19 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
               </div>
               <div>
                 <dt>Asking price</dt>
-                <dd className={askingPrice ? "" : "is-empty"}>{askingPrice ? formatFullPrice(askingPrice) : "Not set"}</dd>
+                <dd className={askingPrice ? "" : "is-empty"}>{askingPrice ? `${symbol}${new Intl.NumberFormat("en-US").format(Math.round(askingPrice))}` : priceAmount && form.offerType === "Lease" ? "Lease, no sale price" : "Not set"}</dd>
               </div>
               <div className="listing-summary-key">
                 <dt>Price per m²</dt>
-                <dd className={pricePerSqm ? "" : "is-empty"}>{pricePerSqm ? formatNaira(pricePerSqm) : "Needs size and price"}</dd>
+                <dd className={pricePerSqm ? "" : "is-empty"}>{pricePerSqm ? (form.priceCurrency === "USD" ? `$${new Intl.NumberFormat("en-US").format(Math.round(pricePerSqm))}` : formatNaira(pricePerSqm)) : "Needs size and price"}</dd>
               </div>
               <div>
                 <dt>Land use</dt>
-                <dd>{form.landUse}</dd>
+                <dd>{form.landUse || "Not stated"}</dd>
               </div>
               <div>
                 <dt>Title document</dt>
-                <dd>{form.titleDocument}</dd>
+                <dd>{form.titleDocument || "Not stated"}</dd>
               </div>
               <div>
                 <dt>Status</dt>
@@ -317,7 +385,6 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             <h2>Needed to publish</h2>
             <CheckItem done={requirements.title} label="Title" />
             <CheckItem done={requirements.location} label="Location" />
-            <CheckItem done={requirements.photo} label="At least one photo" />
           </section>
 
           <Link className="cw-link listing-back-link" href="/listings">Back to listings</Link>
@@ -351,7 +418,6 @@ function missingRequirements(requirements) {
   const missing = [];
   if (!requirements.title) missing.push("a title");
   if (!requirements.location) missing.push("a location");
-  if (!requirements.photo) missing.push("a photo");
   return missing.length ? `Needs ${listWords(missing)} to publish` : "Ready to publish";
 }
 
@@ -376,11 +442,7 @@ function titleDocumentHelp(titleDocument) {
   if (titleDocument === "C of O") return "Certificate of Occupancy, full statutory title.";
   if (titleDocument === "Governor's Consent") return "Transfer title with governor consent recorded.";
   if (titleDocument === "Excision") return "Excised land; verify gazette and survey before closing.";
+  if (!titleDocument) return "Leave as not stated unless the document has been seen.";
   if (titleDocument === "Gazette") return "Government gazette reference should be checked against survey coordinates.";
   return "Verify title documents before sharing final advice.";
-}
-
-function formatFullPrice(value) {
-  const price = Number(value) || 0;
-  return price ? `₦${new Intl.NumberFormat("en-US").format(price)}` : "Price not set";
 }

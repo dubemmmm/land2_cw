@@ -14,14 +14,14 @@ export default async function NewListingPage({ searchParams }) {
   const [neighborhoods, marketEstates, listings] = await Promise.all([
     getNeighborhoods(),
     getMarketEstates(),
-    getLandListings({ includeDrafts: true })
+    getLandListings({ includeDrafts: true, summary: true })
   ]);
   const initialListing = params?.id ? await getLandListing(params.id, { includeDrafts: true }) : null;
   return (
     <AppShell active="listings">
       <NewListingClient
         neighborhoods={neighborhoods}
-        estates={withLandBibleEstates(marketEstates)}
+        estates={withLandBibleEstates(marketEstates, await getLandBibleInventory())}
         listingsCount={listings.length}
         initialListing={initialListing}
       />
@@ -29,9 +29,9 @@ export default async function NewListingPage({ searchParams }) {
   );
 }
 
-function withLandBibleEstates(estates) {
+function withLandBibleEstates(estates, inventory) {
   const byId = new Map();
-  getLandBibleInventory().estates.forEach((estate) => {
+  inventory.estates.forEach((estate) => {
     byId.set(toEstateSlug(estate.id), {
       id: toEstateSlug(estate.id),
       neighborhoodId: String(estate.neighborhood_id || "").replaceAll("_", "-"),

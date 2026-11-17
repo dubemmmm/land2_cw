@@ -426,3 +426,72 @@
     --listing-cols: 1;
   }
 }
+
+/* ---------- Paging and notes under the results ---------- */
+.listing-more {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.listing-footnote {
+  max-width: 78ch;
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* ---------- Listing detail page ---------- */
+.listing-detail-note {
+  margin-top: 14px;
+}
+
+.listing-detail-split {
+  margin-top: 56px;
+}
+
+.listing-agent-name {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font: 500 20px/1.25 var(--font-sans);
+  letter-spacing: -0.015em;
+}
+
+.listing-agent-name span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.listing-agent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.listing-agent-ref {
+  margin: 16px 0 0;
+}
+
+.listing-description {
+  max-width: 72ch;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .listing-detail-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --webpack -p 4174",
     "build": "next build",
-    "start": "next start -p 4174"
+    "start": "next start -p 4174",
+    "import:listings": "node scripts/import-listings.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",

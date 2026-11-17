@@ -17,7 +17,7 @@ export default async function DataPage() {
     getMarketEstates(),
     getPricePoints()
   ]);
-  const inventory = getLandBibleInventory();
+  const inventory = await getLandBibleInventory();
   const estates = inventory.estates.map((estate) => ({
     id: toEstateSlug(estate.id),
     name: estate.name,

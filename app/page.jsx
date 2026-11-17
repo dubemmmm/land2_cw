@@ -6,27 +6,33 @@ import SqmCartogram from "@/components/SqmCartogram";
 import BudgetScale from "@/components/BudgetScale";
 import PlotCard from "@/components/PlotCard";
 import ConfidenceLegend from "@/components/ConfidenceLegend";
-import { getLandBibleInventory } from "@/lib/landBible";
+import Distribution from "@/components/Distribution";
+import { getListingStats } from "@/lib/listingStats";
 import { getLandListings } from "@/lib/listingStore";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { confidenceLegend, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
 import { areaPhoto, photo, photoCredits } from "@/lib/photos";
-import { formatNaira, layoutCartogram } from "@/lib/plot";
-import { getLandMarketProfile } from "@/lib/landBible";
+import { formatNaira, layoutCartogram, priceBasisLabel } from "@/lib/plot";
+import { loadMarket } from "@/lib/landBible";
 
 export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
-  const [neighborhoods, listings] = await Promise.all([getNeighborhoods(), getLandListings()]);
-  const inventory = getLandBibleInventory();
+  const [neighborhoods, listings, stats, marketData] = await Promise.all([
+    getNeighborhoods(),
+    getLandListings({ summary: true }),
+    getListingStats(),
+    loadMarket()
+  ]);
+  const listingStats = stats.all;
+  const inventory = marketData.inventory();
   const estates = inventory.estates || [];
   const marketProfiles = neighborhoods
-    .map((neighborhood) => ({ neighborhood, market: getLandMarketProfile(neighborhood.id) }))
+    .map((neighborhood) => ({ neighborhood, market: marketData.profile(neighborhood.id) }))
     .filter((item) => item.market);
   const featuredListings = listings
     .filter((listing) => listing.listingStatus === "Available")
     .slice(0, 3);
-  const plotScale = Math.max(0, ...featuredListings.map((listing) => Number(listing.sizeSqm) || 0));
   const landUseDistribution = countBy(estates, (estate) => normalizeUse(estate.primary_use));
   const developmentDistribution = countBy(estates, (estate) => /built/i.test(estate.status || "") ? "Fully built" : "Developing");
   const priced = buildPricedLocations(marketProfiles);
@@ -46,7 +52,7 @@ export default async function LandingPage() {
         href: `/locations/${neighborhood.id}`,
         photo: areaPhoto(neighborhood.id)?.src || null,
         price: cleanPriceLabel(market.priceLabel).replace("/m² est.", "").replace("/m²", ""),
-        growth: market.annualGrowthLabel && market.annualGrowthLabel !== "N/A" ? market.annualGrowthLabel : "—",
+        basis: priceBasisLabel(market),
         estates: market.estateSummary?.total ?? "—",
         score,
         level: confidenceLevel(score),
@@ -97,7 +103,7 @@ export default async function LandingPage() {
             <h2 className="cw-h2">How much land does your budget buy?</h2>
             <p className="land-sub">
               Drag the slider. Each line is a location: the further right you go, the more land the budget buys
-              there at today&rsquo;s estimated price. The dashed line marks one standard 648 m² Lagos plot.
+              there at today&rsquo;s price per m². The dashed line marks one standard 648 m² Lagos plot.
             </p>
             <BudgetScale items={priced} />
           </div>
@@ -120,7 +126,7 @@ export default async function LandingPage() {
                 <tr>
                   <th scope="col">Location</th>
                   <th scope="col">Price per m²</th>
-                  <th scope="col">Growth per year</th>
+                  <th scope="col">Based on</th>
                   <th scope="col">Estates tracked</th>
                   <th scope="col">Data confidence</th>
                   <th scope="col"><span className="land-visually-hidden">Open</span></th>
@@ -136,7 +142,7 @@ export default async function LandingPage() {
                       </Link>
                     </th>
                     <td className="sq-fig">{row.price}</td>
-                    <td className="sq-fig">{row.growth}</td>
+                    <td className="sq-fig">{row.basis}</td>
                     <td className="sq-fig">{row.estates}</td>
                     <td>
                       <span className="land-conf"><i className={`sq-pat sq-pat-${row.pattern}`} aria-hidden="true" />{row.level}{row.score ? ` · ${row.score}` : ""}</span>
@@ -157,18 +163,24 @@ export default async function LandingPage() {
       <section className="cw-section" id="plots">
         <div className="cw-container">
           <div className="land-row-head">
-            <h2 className="cw-h2">Plots open for review</h2>
-            <Link className="cw-link" href="/listings">See all plots <ArrowRight size={15} /></Link>
+            <h2 className="cw-h2">Newest plots on the market</h2>
+            <Link className="cw-link" href="/listings">See all {listings.length} plots <ArrowRight size={15} /></Link>
           </div>
           {featuredListings.length ? (
             <div className="land-plots">
               {featuredListings.map((listing) => (
-                <PlotCard listing={listing} scaleSqm={plotScale} href="/listings" key={listing.id} />
+                <PlotCard listing={listing} key={listing.id} />
               ))}
             </div>
           ) : (
             <p className="sq-sheet land-empty">No plots are marked available right now. New listings appear here as soon as they are published.</p>
           )}
+          {listingStats.count ? (
+            <div className="land-dists">
+              <Distribution title="What the listed land can be used for" total={listingStats.count} unit="listings" entries={listingStats.byUse} />
+              <Distribution title="How big the listed plots are" total={listingStats.bySize.reduce((sum, band) => sum + band.count, 0)} unit="with a size" entries={listingStats.bySize} />
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -248,34 +260,6 @@ export default async function LandingPage() {
 }
 
 
-// Share of a whole, drawn as one bar to scale. Segments are shades of navy, darkest first.
-function Distribution({ title, total, entries }) {
-  const sum = entries.reduce((acc, entry) => acc + entry.count, 0) || 1;
-  return (
-    <article className="land-dist">
-      <header>
-        <h3>{title}</h3>
-        <span className="sq-fig">{total} estates</span>
-      </header>
-      <div className="land-dist-bar" role="img" aria-label={entries.map((entry) => `${entry.label} ${entry.count}`).join(", ")}>
-        {entries.map((entry, index) => (
-          <i key={entry.label} className={`land-shade-${index % 4}`} style={{ flexGrow: entry.count }} />
-        ))}
-      </div>
-      <ul>
-        {entries.map((entry, index) => (
-          <li key={entry.label}>
-            <i className={`land-swatch land-shade-${index % 4}`} aria-hidden="true" />
-            <span>{entry.label}</span>
-            <b className="sq-fig">{entry.count}</b>
-            <em className="sq-fig">{Math.round((entry.count / sum) * 100)}%</em>
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
 function buildPricedLocations(marketProfiles) {
   return marketProfiles
     .filter((item) => Number(item.market.priceValue) > 0 && item.market.trendCurrency !== "USD")
@@ -289,7 +273,7 @@ function buildPricedLocations(marketProfiles) {
         priceValue: market.priceValue,
         priceLabel: cleanPriceLabel(market.priceLabel),
         priceShort: formatNaira(market.priceValue),
-        growthLabel: market.annualGrowthLabel && market.annualGrowthLabel !== "N/A" ? market.annualGrowthLabel : "—",
+        basisLabel: priceBasisLabel(market),
         confidence: score,
         confidenceLevel: confidenceLevel(score),
         pattern: confidencePattern(score),
@@ -325,8 +309,8 @@ function average(values) {
 }
 
 const features = [
-  { title: "Price by the square metre", text: "Compare price per m², annual growth and mapped estate supply across locations, from the Land Bible and admin updates." },
-  { title: "Plots with their papers", text: "Browse available plots with size, use, asking price, estate and the title document recorded for each listing." },
+  { title: "Price by the square metre", text: "Compare the median asking price per m² across locations, worked out from the plots listed now, alongside mapped estate supply." },
+  { title: "Plots with their papers", text: "Browse plots with size, use, asking price and the title document where the listing states one, and see how each price sits against its area." },
   { title: "Risk before commitment", text: "See planning constraints, approval history and the documents to request, so an attractive plot is checked against practical risk." }
 ];
 

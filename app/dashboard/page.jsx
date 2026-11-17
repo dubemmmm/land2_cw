@@ -3,9 +3,10 @@ import { Map, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import ConfidenceLegend from "@/components/ConfidenceLegend";
 import { getDashboardData } from "@/lib/dashboardStore";
-import { getLandMarketProfile } from "@/lib/landBible";
+import { loadMarket } from "@/lib/landBible";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getReports } from "@/lib/reportStore";
+import { priceBasisLabel } from "@/lib/plot";
 import { averageConfidence, confidenceLevel, confidencePattern, confidenceScore } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 const UPDATES_SHOWN = 8;
 
 export default async function DashboardPage() {
-  const [neighborhoods, reports, dashboard] = await Promise.all([getNeighborhoods(), getReports(), getDashboardData()]);
+  const [neighborhoods, reports, dashboard, marketData] = await Promise.all([getNeighborhoods(), getReports(), getDashboardData(), loadMarket()]);
   const approvals = neighborhoods.flatMap((n) => (n.approvals || []).map((row) => ({ neighborhood: n, row })));
   const pending = approvals.filter((item) => item.row.outcome === "Pending").length;
   const leaders = [...neighborhoods].sort((a, b) => confidenceScore(b) - confidenceScore(a)).slice(0, 4);
@@ -25,14 +26,10 @@ export default async function DashboardPage() {
   const latestReports = clientReports.slice(0, 5);
   const estateReportCount = reports.filter((report) => report.sourceType === "estate").length;
   const marketProfiles = neighborhoods
-    .map((neighborhood) => ({ neighborhood, market: getLandMarketProfile(neighborhood.id), score: confidenceScore(neighborhood) }))
+    .map((neighborhood) => ({ neighborhood, market: marketData.profile(neighborhood.id), score: confidenceScore(neighborhood) }))
     .filter((item) => item.market);
-  const marketSnapshots = [...marketProfiles]
-    .sort((a, b) => (b.market.annualGrowth || 0) - (a.market.annualGrowth || 0))
-    .slice(0, 4);
-  const avgGrowth = marketSnapshots.length
-    ? Math.round((marketSnapshots.reduce((sum, item) => sum + (item.market.annualGrowth || 0), 0) / marketSnapshots.length) * 100)
-    : 0;
+  const askingAreas = marketProfiles.filter((item) => item.market.priceSource === "asking");
+  const askingListings = askingAreas.reduce((sum, item) => sum + item.market.asking.pricedCount, 0);
   const approvalCounts = {
     approved: approvals.filter((item) => item.row.outcome === "Approved").length,
     pending,
@@ -89,7 +86,7 @@ export default async function DashboardPage() {
               <h2 id="brief-prices-title">Prices by location</h2>
               <p>
                 {priceRows.length} {plural(priceRows.length, "location", "locations")} priced.
-                {marketSnapshots.length ? ` The ${marketSnapshots.length === 1 ? "fastest-growing location is" : `${marketSnapshots.length} fastest-growing average`} about ${avgGrowth}% a year.` : ""}
+                {askingAreas.length ? ` ${askingAreas.length} ${plural(askingAreas.length, "price is the median", "prices are medians")} of ${askingListings} live asking prices; the rest are 2023 figures estimated forward.` : ""}
               </p>
             </div>
             <Link className="cw-link" href="/data">Open data <span aria-hidden="true">→</span></Link>
@@ -103,7 +100,7 @@ export default async function DashboardPage() {
                       <tr>
                         <th scope="col">Location</th>
                         <th scope="col">Price per m²</th>
-                        <th scope="col">Growth per year</th>
+                        <th scope="col">Based on</th>
                         <th scope="col">Data confidence</th>
                       </tr>
                     </thead>
@@ -117,7 +114,7 @@ export default async function DashboardPage() {
                             </span>
                             <span className="sq-fig">{row.price}</span>
                           </td>
-                          <td className="sq-fig">{row.growth}</td>
+                          <td className="sq-fig">{row.basis}</td>
                           <td>
                             <span className="brief-conf">
                               <i className={`sq-pat sq-pat-${row.pattern}`} aria-hidden="true" />
@@ -253,10 +250,6 @@ function cleanPriceLabel(value = "") {
   return String(value || "").replace("/sqm est.", "/m² est.").replace("/sqm", "/m²");
 }
 
-function growthLabel(market) {
-  return market.annualGrowthLabel && market.annualGrowthLabel !== "N/A" ? market.annualGrowthLabel : "—";
-}
-
 // Table rows: every location with a market profile, dearest first.
 // `share` is each naira price as a percentage of the highest, for the bar in the
 // price column. Locations priced in dollars get no bar.
@@ -271,7 +264,7 @@ function buildPriceRows(marketProfiles) {
       href: `/locations/${neighborhood.id}`,
       price: cleanPriceLabel(market.priceLabel).replace("/m² est.", "").replace("/m²", "") || "Under review",
       share: top ? Math.round((naira(market) / top) * 100) : 0,
-      growth: growthLabel(market),
+      basis: priceBasisLabel(market),
       score,
       level: confidenceLevel(score),
       pattern: confidencePattern(score)

@@ -864,5 +864,133 @@
         "official-baseline-v1"
       ]
     }
+  },
+  {
+    "id": "lekki",
+    "name": "Lekki",
+    "jurisdiction": "Eti-Osa / Lekki",
+    "geometry": {
+      "center": [
+        6.442,
+        3.528
+      ],
+      "polygon": [
+        [
+          6.456,
+          3.49
+        ],
+        [
+          6.46,
+          3.53
+        ],
+        [
+          6.456,
+          3.566
+        ],
+        [
+          6.43,
+          3.566
+        ],
+        [
+          6.426,
+          3.53
+        ],
+        [
+          6.43,
+          3.49
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Planning intelligence not yet reviewed",
+      "summary": "The Lekki corridor east of Phase 1, including Ikate, Chevron, Ologolo, Idado and VGC. Listed here from live asking prices; planning intelligence has not been reviewed.",
+      "bestNextAction": "Add source documents, planning constraints, and approval history.",
+      "riskLevel": "Unknown",
+      "confidence": 0,
+      "confidenceReason": "No verified planning sources have been entered for this area yet."
+    },
+    "intelligence": {
+      "buildParameters": [],
+      "constraints": [],
+      "redFlags": [],
+      "documentsToRequest": [
+        "Survey plan",
+        "Title evidence",
+        "Land-use confirmation"
+      ]
+    },
+    "approvals": [],
+    "notes": [],
+    "metadata": {
+      "lastReviewed": "2026-11-16",
+      "reviewedBy": "System",
+      "freshness": "Needs review",
+      "reviewStatus": "Draft",
+      "datasets": [
+        "cw-listings-2026-11-16"
+      ]
+    }
+  },
+  {
+    "id": "ajah",
+    "name": "Ajah",
+    "jurisdiction": "Eti-Osa / Ajah",
+    "geometry": {
+      "center": [
+        6.467,
+        3.585
+      ],
+      "polygon": [
+        [
+          6.485,
+          3.57
+        ],
+        [
+          6.487,
+          3.6
+        ],
+        [
+          6.468,
+          3.608
+        ],
+        [
+          6.45,
+          3.6
+        ],
+        [
+          6.449,
+          3.572
+        ]
+      ]
+    },
+    "recommendation": {
+      "headline": "Planning intelligence not yet reviewed",
+      "summary": "Ajah and the land around it at the eastern end of the Lekki corridor. Listed here from live asking prices; planning intelligence has not been reviewed.",
+      "bestNextAction": "Add source documents, planning constraints, and approval history.",
+      "riskLevel": "Unknown",
+      "confidence": 0,
+      "confidenceReason": "No verified planning sources have been entered for this area yet."
+    },
+    "intelligence": {
+      "buildParameters": [],
+      "constraints": [],
+      "redFlags": [],
+      "documentsToRequest": [
+        "Survey plan",
+        "Title evidence",
+        "Land-use confirmation"
+      ]
+    },
+    "approvals": [],
+    "notes": [],
+    "metadata": {
+      "lastReviewed": "2026-11-16",
+      "reviewedBy": "System",
+      "freshness": "Needs review",
+      "reviewStatus": "Draft",
+      "datasets": [
+        "cw-listings-2026-11-16"
+      ]
+    }
   }
 ]

@@ -11,7 +11,7 @@ A Next.js planning intelligence dashboard for evaluating Lagos development locat
 - Client-facing report pages
 - Admin login for creating and editing intelligence data
 - Admin-managed attachments and market research for locations and estates
-- SQLite-backed seed database created automatically at runtime
+- Seed data loaded automatically into PostgreSQL (production) or SQLite (local)
 
 ## Accounts
 
@@ -40,7 +40,7 @@ In production (`next start` or Vercel) `AUTH_SECRET`, `ADMIN_EMAIL` and `ADMIN_P
 
 - Next.js App Router
 - React
-- SQLite through Node's built-in `node:sqlite`
+- PostgreSQL (AWS RDS) in production through `pg`, SQLite locally through `better-sqlite3`
 - Leaflet/OpenStreetMap
 - Lucide icons
 
@@ -91,7 +91,13 @@ npm run start
 
 ## Data
 
-The app creates a local SQLite database at `data/app.db` when it starts. That file is intentionally ignored by Git because it is runtime data. On Vercel, the app uses `/tmp/cw-real-estate-app.db` because the deployed project filesystem is read-only at runtime.
+Listings, locations, reports, market data and uploaded resources live in one database:
+
+- Locally: a SQLite file, `data/app.db`, created on first start and ignored by Git.
+- In production: PostgreSQL on AWS RDS. Set `APP_DB_URL=postgres://USER:PASSWORD@HOST:5432/DBNAME`. If `APP_DB_URL` is empty and `ACCOUNTS_DB_URL` is a PostgreSQL address, the same database is used for both; the table names do not overlap.
+- With neither set on Vercel, the app falls back to a temporary SQLite file in `/tmp`, and anything an admin saves is lost when the instance restarts.
+
+On first connection the app creates its tables and loads the seed data. Two instances starting at once are safe: one sets up, the other waits. The RDS notes under Accounts (public access, security group, `ACCOUNTS_DB_CA`) apply to this connection too.
 
 Seed data lives in:
 
@@ -102,13 +108,25 @@ lib/reportSeeds.js
 
 If `data/app.db` is missing, the app recreates it from the seed files.
 
+### Listings
+
+Listings come from `data/listings.json`, which is built from a CW Lagos export:
+
+```bash
+npm run import:listings -- data/imports/land_listings_2026-11-16.csv
+```
+
+The import works out whether each price is for the whole plot or per sqm, rolls the export's neighbourhoods into the site's locations, and prints the rows it was unsure of. Correct those in `data/listing-overrides.json` (`{ "<listing id>": { "priceBasis": "total", "sizeSqm": 8000 } }`) and run it again. On its next start the app replaces every imported listing with the new file; listings an admin created or edited are kept.
+
+Prices listed in US dollars are shown in naira at the day's rate from open.er-api.com. `USD_NGN_FALLBACK` is used only if that service has never answered.
+
 Admins can add client-visible or internal-only research resources from `/data`. Resource records can target either a neighborhood or an estate and are shown on the dashboard feed, detail pages, and related reports when marked client-visible. The current prototype stores uploaded documents in SQLite with a 15MB per-file limit; production file storage should move to object storage such as S3 or Supabase Storage.
 
-The Vercel SQLite file is ephemeral. It is fine for the current seeded demo/admin prototype, but real production data should move to a persistent database such as Vercel Postgres, Neon, Supabase, or another managed Postgres database.
+Uploaded documents are stored in the database (15MB each); if they grow, move them to object storage such as S3.
 
 ## Deployment
 
-This project expects Node 22 because it uses Node's built-in `node:sqlite` module.
+This project expects Node 22.
 
 For Vercel:
 
@@ -119,6 +137,8 @@ For Vercel:
   - `ADMIN_EMAIL`
   - `ADMIN_PASSWORD`
   - `AUTH_SECRET`
+  - `ACCOUNTS_DB_URL` (PostgreSQL on AWS RDS)
+- Recommended: `APP_DB_URL` if listings and reports should use a different database from accounts, and `USD_NGN_FALLBACK`.
 
 Set a strong `AUTH_SECRET` and replace the development admin credentials before deploying. The app has development fallbacks so local setup is quick, but production/Vercel should always define these values.
 

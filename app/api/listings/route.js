@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const admin = await getAdminSession();
-  return NextResponse.json(await getLandListings({ includeDrafts: Boolean(admin) }));
+  return NextResponse.json(await getLandListings({ includeDrafts: Boolean(admin), summary: true }));
 }
 
 export async function POST(request) {

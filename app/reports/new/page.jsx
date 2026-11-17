@@ -12,14 +12,14 @@ export default async function NewReportPage() {
   const [neighborhoods, estates] = await Promise.all([getNeighborhoods(), getMarketEstates()]);
   return (
     <AppShell active="reports">
-      <NewReportClient estates={withLandBibleEstates(estates)} neighborhoods={neighborhoods} />
+      <NewReportClient estates={withLandBibleEstates(estates, await getLandBibleInventory())} neighborhoods={neighborhoods} />
     </AppShell>
   );
 }
 
-function withLandBibleEstates(estates) {
+function withLandBibleEstates(estates, inventory) {
   const byId = new Map();
-  getLandBibleInventory().estates.forEach((estate) => {
+  inventory.estates.forEach((estate) => {
     byId.set(toEstateSlug(estate.id), {
       id: toEstateSlug(estate.id),
       neighborhoodId: String(estate.neighborhood_id || "").replaceAll("_", "-"),

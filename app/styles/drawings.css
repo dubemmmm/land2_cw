@@ -807,3 +807,12 @@
 .sq-carto-price text {
   font-size: 11.5px;
 }
+
+/* One line under a plot card's figures, e.g. how its price sits against the area median. */
+.sq-plotcard-body .sq-plotcard-note {
+  display: block;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}

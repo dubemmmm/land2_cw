@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { getAdminSession } from "@/lib/auth";
-import { getLandMarketProfile } from "@/lib/landBible";
+import { loadMarket } from "@/lib/landBible";
+import { getAreaStats } from "@/lib/listingStats";
 import { getLandListings } from "@/lib/listingStore";
 import { getNeighborhood, getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getClientResources } from "@/lib/resourceStore";
@@ -13,17 +14,19 @@ export default async function LocationDetailPage({ params }) {
   const { id } = await params;
   const neighborhood = await getNeighborhood(id);
   if (!neighborhood) notFound();
-  const [market, admin, resources, neighborhoods, listings] = await Promise.all([
-    getLandMarketProfile(id),
+  const [marketData, areaStats, admin, resources, neighborhoods, listings] = await Promise.all([
+    loadMarket(),
+    getAreaStats(id),
     getAdminSession(),
     getClientResources({ targetType: "neighborhood", targetId: id }),
     getNeighborhoods(),
-    getLandListings()
+    getLandListings({ summary: true })
   ]);
+  const market = marketData.profile(id);
   const locationListings = listings.filter((listing) => listing.neighborhoodId === id);
   // Naira price per m² for every neighbourhood, so the budget drawing can compare this one with the rest.
   const pricedLocations = neighborhoods
-    .map((item) => ({ item, profile: item.id === id ? market : getLandMarketProfile(item.id) }))
+    .map((item) => ({ item, profile: item.id === id ? market : marketData.profile(item.id) }))
     .filter(({ profile }) => profile && Number(profile.priceValue) > 0 && profile.trendCurrency !== "USD")
     .map(({ item, profile }) => ({
       id: item.id,
@@ -38,6 +41,7 @@ export default async function LocationDetailPage({ params }) {
         neighborhood={neighborhood}
         neighborhoods={neighborhoods}
         market={market}
+        areaStats={areaStats}
         resources={resources}
         locationListings={locationListings}
         pricedLocations={pricedLocations}

@@ -62,8 +62,8 @@ export default function SqmCartogram({ layout, onNavy = true }) {
           <strong className="sq-fig">{active.priceShort}</strong>
         </div>
         <div>
-          <span>Growth / yr</span>
-          <strong className="sq-fig">{active.growthLabel}</strong>
+          <span>Based on</span>
+          <strong className="sq-fig">{active.basisLabel}</strong>
         </div>
         <div>
           <span>Confidence</span>

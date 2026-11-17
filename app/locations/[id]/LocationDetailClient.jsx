@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Database, FileText, Link as LinkIcon, Pencil, Save, Share2 } from "lucide-react";
 import { useState } from "react";
 import BudgetScale from "@/components/BudgetScale";
+import Distribution from "@/components/Distribution";
 import PlotCard from "@/components/PlotCard";
 import PriceTrace from "@/components/PriceTrace";
 import { SourcePill } from "@/components/Pills";
 import { confidenceLevel, confidencePattern, confidenceScore, formatDate } from "@/lib/metrics";
+import { againstMedianText } from "@/lib/listingMath";
 import { areaPhoto, photoCredits } from "@/lib/photos";
+import { formatNaira } from "@/lib/plot";
 
-export default function LocationDetailClient({ neighborhood, neighborhoods = [], market, resources = [], locationListings = [], pricedLocations = [], isAdmin = false }) {
+export default function LocationDetailClient({ neighborhood, neighborhoods = [], market, areaStats = null, resources = [], locationListings = [], pricedLocations = [], isAdmin = false }) {
   const [record, setRecord] = useState(neighborhood);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(toDraft(neighborhood));
@@ -74,7 +77,8 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
   const constraints = record.intelligence?.constraints || [];
   const approvals = record.approvals || [];
   const notes = record.notes || [];
-  const plotScale = Math.max(0, ...locationListings.slice(0, 4).map((listing) => Number(listing.sizeSqm) || 0));
+  const fromAsking = market?.priceSource === "asking";
+  const busiestMonth = Math.max(1, ...(areaStats?.byMonth || []).map((item) => item.count));
   const showsAreaPhotos = Boolean(lead) || locationListings.length > 0;
   const facts = [
     market?.lga ? { label: "Local government", value: market.lga } : null,
@@ -85,6 +89,7 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
     } : null,
     landText ? { label: "Land mapped", value: landText } : null,
     market ? { label: "Price basis", value: market.asOfLabel || market.meta?.pricing_date } : null,
+    fromAsking ? { label: "Middle half of asking prices", value: `${formatNaira(areaStats.lowerQuartile)} to ${formatNaira(areaStats.upperQuartile)} per m²` } : null,
     record.intelligence?.redFlags?.[0] ? { label: "Main risk flag", value: record.intelligence.redFlags[0] } : null,
     { label: "Last reviewed", value: `${formatDate(record.metadata?.lastReviewed)}${record.metadata?.reviewedBy ? ` by ${record.metadata.reviewedBy}` : ""}` }
   ].filter((fact) => fact && fact.value);
@@ -126,7 +131,12 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
       ) : null}
 
       <p className="focus-statement">
-        {hasPrice ? (
+        {fromAsking ? (
+          <>
+            Sellers in {record.name} are asking a median of <b className="sq-fig">{priceText} per m²</b>, across{" "}
+            {areaStats.pricedCount} plots listed now.{" "}
+          </>
+        ) : hasPrice ? (
           <>
             Land in {record.name} is estimated at <b className="sq-fig">{priceText} per m²</b> in {market.currentYear}
             {growthText ? <>, rising by about {growthText} a year</> : null}.{" "}
@@ -175,7 +185,13 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
               {trend.length > 1 ? `Price per m², ${trend[0].year} to ${trend.at(-1).year}` : "Market facts"}
             </h2>
           </div>
-          {trend.length > 1 ? (
+          {trend.length > 1 && fromAsking ? (
+            <p className="focus-note">
+              The {market.currentYear} figure is the median asking price of {areaStats.pricedCount} plots listed now. Earlier
+              figures are area averages from the Land Bible or entered by our team. The two are measured differently, so
+              the dashed line between them is not a growth rate.
+            </p>
+          ) : trend.length > 1 ? (
             <p className="focus-note">
               Years up to {market.currentYear} are recorded or estimated prices. Years after {market.currentYear} are
               projections{growthText ? ` at about ${growthText} a year` : ""}, not recorded prices.
@@ -186,14 +202,14 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
               <div className="focus-trace">
                 <PriceTrace points={trend} />
                 <p className="focus-trace-key">
-                  <span><i />Recorded and estimated</span>
-                  <span><i className="projected" />Projected</span>
+                  <span><i />{fromAsking ? "Recorded area average" : "Recorded and estimated"}</span>
+                  <span><i className="projected" />{fromAsking ? "To this year's median asking price" : "Projected"}</span>
                 </p>
               </div>
             ) : null}
             <FactList facts={facts} />
           </div>
-          {trend.length > 1 ? <YearTable points={trend} /> : null}
+          {trend.length > 1 && !fromAsking ? <YearTable points={trend} /> : null}
         </section>
       ) : (
         <section className="focus-section">
@@ -208,7 +224,7 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
             <h2 className="cw-h3">What a budget buys here and elsewhere</h2>
           </div>
           <p className="focus-note">
-            Drag the slider. Each line shows how much land the budget buys at this year&rsquo;s estimated price per m².
+            Drag the slider. Each line shows how much land the budget buys at that location&rsquo;s current price per m².
             The dashed line marks one standard 648 m² plot.
           </p>
           <BudgetScale items={budgetItems} />
@@ -342,13 +358,40 @@ export default function LocationDetailClient({ neighborhood, neighborhoods = [],
         {locationListings.length ? (
           <div className="focus-plots">
             {locationListings.slice(0, 4).map((listing) => (
-              <PlotCard listing={listing} scaleSqm={plotScale} href={`/listings?location=${listing.neighborhoodId}`} key={listing.id} />
+              <PlotCard listing={listing} note={againstMedianText(listing, areaStats?.median, record.name)} key={listing.id} />
             ))}
           </div>
         ) : (
           <p className="focus-empty">No plots are listed in {record.name} right now. Published listings will appear here when they are added.</p>
         )}
       </section>
+
+      {areaStats?.count ? (
+        <section className="focus-section">
+          <div className="focus-section-head">
+            <h2 className="cw-h3">What is on the market in {record.name}</h2>
+            <span>{areaStats.count} {areaStats.count === 1 ? "listing" : "listings"}</span>
+          </div>
+          <div className="land-dists focus-dists">
+            <Distribution title="By land use" total={areaStats.count} unit="listings" entries={areaStats.byUse} />
+            <Distribution title="By title document stated" total={areaStats.count} unit="listings" entries={areaStats.byTitle} />
+          </div>
+          {areaStats.byMonth.length > 1 ? (
+            <>
+              <h3 className="focus-months-title">New listings each month</h3>
+              <ol className="focus-months">
+                {areaStats.byMonth.map((item) => (
+                  <li key={item.month}>
+                    <span>{monthName(item.month)}</span>
+                    <i aria-hidden="true"><b style={{ width: `${(item.count / busiestMonth) * 100}%` }} /></i>
+                    <em className="sq-fig">{item.count}</em>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : null}
+        </section>
+      ) : null}
 
       {notes.length ? (
         <section className="focus-section">
@@ -469,6 +512,12 @@ function ResourceList({ resources }) {
       ))}
     </ul>
   );
+}
+
+// "2026-09" -> "Sep 2026"
+function monthName(month = "") {
+  const [year, number] = month.split("-");
+  return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(number) - 1] || ""} ${year}`;
 }
 
 function toEstateSlug(id = "") {

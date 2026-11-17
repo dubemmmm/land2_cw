@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { Grid2X2, List, Plus, RotateCcw } from "lucide-react";
 import PlotCard from "@/components/PlotCard";
+import { againstMedianText, medianRate, quantile } from "@/lib/listingMath";
 import { photoCredits } from "@/lib/photos";
-import { formatNaira, formatSqm, realPhoto } from "@/lib/plot";
-import { useMemo, useState } from "react";
+import { formatNaira, formatSqm, headlinePrice, quotedPrice, realPhoto } from "@/lib/plot";
+import { useEffect, useMemo, useState } from "react";
 
-const landUses = ["Residential", "Commercial", "Mixed-use"];
+const landUses = ["Residential", "Commercial", "Mixed-use", "Industrial"];
+const offerTypes = ["Sale", "Joint venture", "Lease"];
+const PAGE_SIZE = 24;
 
-export default function ListingsClient({ initialListings, neighborhoods, estates, initialView = "cards", initialLocation = "all", isAdmin = false }) {
+// areaMedians: { [neighborhoodId]: median asking ₦ per m² } for areas with enough listings.
+export default function ListingsClient({ initialListings, neighborhoods, estates, areaMedians = {}, fx = null, initialView = "cards", initialLocation = "all", isAdmin = false }) {
   const [view, setView] = useState(initialView);
   const [query, setQuery] = useState("");
   const [landUse, setLandUse] = useState("all");
@@ -20,6 +24,8 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
   const [minSize, setMinSize] = useState("");
   const [maxSize, setMaxSize] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [offer, setOffer] = useState("all");
+  const [shown, setShown] = useState(PAGE_SIZE);
 
   const locationOptions = useMemo(() => {
     const used = new Set(initialListings.map((listing) => listing.neighborhoodId));
@@ -44,24 +50,35 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
       .filter((listing) => isAdmin || listing.workflowStatus === "Published")
       .filter((listing) => location === "all" || listing.neighborhoodId === location)
       .filter((listing) => landUse === "all" || listing.landUse === landUse)
+      .filter((listing) => offer === "all" || listing.offerType === offer)
       .filter((listing) => estate === "all" || listing.estate === estate)
-      .filter((listing) => listing.askingPrice >= minPriceValue && listing.askingPrice <= maxPriceValue)
-      .filter((listing) => listing.sizeSqm >= minSizeValue && listing.sizeSqm <= maxSizeValue)
+      // A plot with no total price or no size only drops out once that range is actually set.
+      .filter((listing) => (!minPrice && !maxPrice) || (listing.askingPrice > 0 && listing.askingPrice >= minPriceValue && listing.askingPrice <= maxPriceValue))
+      .filter((listing) => (!minSize && !maxSize) || (listing.sizeSqm > 0 && listing.sizeSqm >= minSizeValue && listing.sizeSqm <= maxSizeValue))
       .filter((listing) => {
         if (!needle) return true;
         return [listing.title, listing.neighborhoodName, listing.estate, listing.landUse, listing.titleDocument, listing.listingStatus]
           .some((value) => String(value || "").toLowerCase().includes(needle));
       })
       .sort((a, b) => {
+        // Plots without the figure being sorted on go last.
         if (sortBy === "price-high") return b.askingPrice - a.askingPrice;
-        if (sortBy === "price-low") return a.askingPrice - b.askingPrice;
+        if (sortBy === "price-low") return (a.askingPrice || Infinity) - (b.askingPrice || Infinity);
+        if (sortBy === "rate-low") return (a.pricePerSqm || Infinity) - (b.pricePerSqm || Infinity);
         if (sortBy === "size-high") return b.sizeSqm - a.sizeSqm;
-        return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
+        return String(b.listedAt).localeCompare(String(a.listedAt));
       });
-  }, [estate, initialListings, isAdmin, landUse, location, maxPrice, maxSize, minPrice, minSize, query, sortBy]);
+  }, [estate, initialListings, isAdmin, landUse, location, maxPrice, maxSize, minPrice, minSize, offer, query, sortBy]);
 
-  const groups = useMemo(() => groupByLocation(visibleListings), [visibleListings]);
   const stats = useMemo(() => buildStats(visibleListings), [visibleListings]);
+  const pageListings = visibleListings.slice(0, shown);
+  const heading = location === "all" ? "All areas" : neighborhoods.find((item) => item.id === location)?.name || "Listings";
+  const hasConverted = visibleListings.some((listing) => listing.converted);
+
+  // A change of filter or sort starts again from the first page.
+  useEffect(() => {
+    setShown(PAGE_SIZE);
+  }, [estate, landUse, location, maxPrice, maxSize, minPrice, minSize, offer, query, sortBy]);
 
   function switchView(next) {
     setView(next);
@@ -89,6 +106,7 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
     setMinSize("");
     setMaxSize("");
     setSortBy("newest");
+    setOffer("all");
     selectLocation("all");
   }
 
@@ -152,6 +170,7 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
               <option value="newest">Newest first</option>
               <option value="price-high">Price, high to low</option>
               <option value="price-low">Price, low to high</option>
+              <option value="rate-low">Price per m², low to high</option>
               <option value="size-high">Size, largest first</option>
             </select>
           </label>
@@ -166,6 +185,15 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
             <button type="button" aria-pressed={landUse === "all"} onClick={() => setLandUse("all")}>All uses</button>
             {landUses.map((use) => (
               <button type="button" aria-pressed={landUse === use} onClick={() => setLandUse(use)} key={use}>{use}</button>
+            ))}
+          </div>
+        </div>
+        <div className="listing-toggle-row">
+          <span id="listing-offer-label">Offer</span>
+          <div className="listing-toggles" role="group" aria-labelledby="listing-offer-label">
+            <button type="button" aria-pressed={offer === "all"} onClick={() => setOffer("all")}>All offers</button>
+            {offerTypes.map((type) => (
+              <button type="button" aria-pressed={offer === type} onClick={() => setOffer(type)} key={type}>{type}</button>
             ))}
           </div>
         </div>
@@ -187,10 +215,27 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
           <strong>No listings match these filters</strong>
           <p>Widen the price or size range, or reset the filters to see every plot.</p>
         </div>
-      ) : view === "cards" ? (
-        <ListingCards groups={groups} isAdmin={isAdmin} />
       ) : (
-        <ListingLedger groups={groups} isAdmin={isAdmin} />
+        <>
+          {view === "cards"
+            ? <ListingCards heading={heading} total={visibleListings.length} listings={pageListings} areaMedians={areaMedians} isAdmin={isAdmin} />
+            : <ListingLedger heading={heading} total={visibleListings.length} listings={pageListings} areaMedians={areaMedians} isAdmin={isAdmin} />}
+          {shown < visibleListings.length ? (
+            <div className="listing-more">
+              <button className="cw-btn cw-btn-soft" type="button" onClick={() => setShown((count) => count + PAGE_SIZE)}>
+                Show {Math.min(PAGE_SIZE, visibleListings.length - shown)} more
+              </button>
+              <span>Showing {shown} of {visibleListings.length}</span>
+            </div>
+          ) : null}
+          <p className="listing-footnote">
+            Prices are what sellers are asking, not sale prices. Medians leave out joint ventures, leases and plots with no price per m².
+            {hasConverted && fx ? <> Prices listed in US dollars are converted at ₦{new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(fx.rate)} to the dollar{fx.asOf ? ` (rate of ${fx.asOf})` : ""}, with <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">rates by Exchange Rate API</a>.</> : null}
+          </p>
+          {view === "cards" ? (
+            <p className="sq-photo-credit">Area views are stand-in photos from Wikimedia Commons, not the listed plots. {photoCredits}</p>
+          ) : null}
+        </>
       )}
     </section>
   );
@@ -207,121 +252,101 @@ function ListingSummary({ stats, total }) {
       {stats.count === total
         ? <><strong>{stats.count}</strong> {plots}</>
         : <><strong>{stats.count}</strong> of {total} plots shown</>}
-      , <strong>{stats.available}</strong> available
-      {stats.value ? <>, <strong>{formatNaira(stats.value)}</strong> asking in total</> : null}
-      {stats.avgSize ? <>, <strong>{formatSqm(stats.avgSize)} m²</strong> on average</> : null}
+      {stats.median ? <>, median asking price <strong>{formatNaira(stats.median)} per m²</strong></> : null}
+      {stats.typicalSize ? <>, typical plot <strong>{formatSqm(stats.typicalSize)} m²</strong></> : null}
       .
     </p>
   );
 }
 
-function ListingCards({ groups, isAdmin }) {
-  // One scale for every plot on the page, so sizes can be compared by eye.
-  const scaleSqm = Math.max(0, ...groups.flatMap((group) => group.listings.map((listing) => Number(listing.sizeSqm) || 0)));
+function compareNote(listing, areaMedians) {
+  return againstMedianText(listing, areaMedians[listing.neighborhoodId], listing.neighborhoodName);
+}
+
+function ListingCards({ heading, total, listings, areaMedians, isAdmin }) {
   return (
-    <>
-      {/* Each area takes as many columns as it has listings, so short groups sit side by side. */}
-      <div className="listing-card-groups">
-        {groups.map((group) => (
-          <section className="listing-group" data-span={Math.min(group.listings.length, 4)} key={group.key}>
-            <h2>{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></h2>
-            <div className="listing-card-grid">
-              {group.listings.map((listing) => <ListingCard listing={listing} isAdmin={isAdmin} scaleSqm={scaleSqm} key={listing.id} />)}
-            </div>
-          </section>
-        ))}
-      </div>
-      <p className="sq-photo-credit">Area views are stand-in photos from Wikimedia Commons, not the listed plots. {photoCredits}</p>
-    </>
+    <div className="listing-card-groups">
+      <section className="listing-group" data-span="4">
+        <h2>{heading} <span>{total} {total === 1 ? "listing" : "listings"}</span></h2>
+        <div className="listing-card-grid">
+          {listings.map((listing) => (
+            <PlotCard
+              listing={listing}
+              note={[compareNote(listing, areaMedians), listing.converted ? `Listed at ${quotedPrice(listing)}` : ""].filter(Boolean).join(" · ")}
+              badge={isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
+              key={listing.id}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
-function ListingCard({ listing, isAdmin, scaleSqm }) {
-  return (
-    <PlotCard
-      listing={listing}
-      scaleSqm={scaleSqm}
-      href={isAdmin ? `/listings/new?id=${listing.id}` : undefined}
-      badge={isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
-    />
-  );
-}
-
-function ListingLedger({ groups, isAdmin }) {
+function ListingLedger({ heading, total, listings, areaMedians, isAdmin }) {
   return (
     <div className="listing-ledger">
       <table className="listing-ledger-table">
         <thead>
           <tr>
             <th scope="col">Listing</th>
-            <th scope="col">Estate</th>
+            <th scope="col">Area</th>
             <th scope="col">Use</th>
             <th scope="col" className="listing-num">Size</th>
             <th scope="col" className="listing-num">Asking price</th>
             <th scope="col" className="listing-num">Per m²</th>
+            <th scope="col">Against area median</th>
             <th scope="col">Title document</th>
-            <th scope="col">Status</th>
           </tr>
         </thead>
-        {groups.map((group) => (
-          <tbody key={group.key}>
-            <tr className="listing-ledger-group">
-              <th colSpan={8} scope="rowgroup">{group.name} <span>{group.listings.length} {group.listings.length === 1 ? "listing" : "listings"}</span></th>
-            </tr>
-            {group.listings.map((listing) => {
-              const photo = realPhoto(listing.photos);
-              return (
-                <tr className="listing-ledger-row" key={listing.id}>
-                  <th scope="row">
-                    <div className="listing-ledger-title">
-                      <div className="listing-ledger-thumb">{photo ? <img src={photo} alt="" loading="lazy" /> : <i aria-hidden="true" />}</div>
-                      {isAdmin ? <Link href={`/listings/new?id=${listing.id}`}>{listing.title}</Link> : <span>{listing.title}</span>}
-                      {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
-                    </div>
-                  </th>
-                  <td>{listing.estate || "—"}</td>
-                  <td>{listing.landUse}</td>
-                  <td className="listing-num">{formatSqm(listing.sizeSqm)} m²</td>
-                  <td className="listing-num">{formatFullPrice(listing.askingPrice)}</td>
-                  <td className="listing-num">{formatPerSqm(listing.askingPrice, listing.sizeSqm)}</td>
-                  <td>{listing.titleDocument || "—"}</td>
-                  <td><span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        ))}
+        <tbody>
+          <tr className="listing-ledger-group">
+            <th colSpan={8} scope="rowgroup">{heading} <span>{total} {total === 1 ? "listing" : "listings"}</span></th>
+          </tr>
+          {listings.map((listing) => {
+            const photo = realPhoto(listing.photos);
+            const price = headlinePrice(listing);
+            return (
+              <tr className="listing-ledger-row" key={listing.id}>
+                <th scope="row">
+                  <div className="listing-ledger-title">
+                    <div className="listing-ledger-thumb">{photo ? <img src={photo} alt="" loading="lazy" /> : <i aria-hidden="true" />}</div>
+                    <Link href={`/listings/${listing.id}`} prefetch={false}>{listing.title}</Link>
+                    {listing.offerType !== "Sale" ? <span className="listing-status">{listing.offerType}</span> : null}
+                    {listing.listingStatus !== "Available" ? <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span> : null}
+                    {isAdmin && listing.workflowStatus === "Draft" ? <span className="listing-draft-badge">Draft</span> : null}
+                  </div>
+                </th>
+                <td>{[listing.neighborhoodName, listing.estate].filter(Boolean).join(" · ")}</td>
+                <td>{listing.landUse || "—"}</td>
+                <td className="listing-num">{listing.sizeSqm ? `${formatSqm(listing.sizeSqm)} m²` : "—"}</td>
+                <td className="listing-num" title={listing.converted ? `Listed at ${quotedPrice(listing)}` : undefined}>
+                  {listing.askingPrice ? formatFullPrice(listing.askingPrice) : price.label === "Asking" ? "—" : price.value || "—"}
+                </td>
+                <td className="listing-num">{formatNaira(listing.pricePerSqm)}</td>
+                <td>{compareNote(listing, areaMedians).replace(` the ${listing.neighborhoodName} median`, "").replace(/^At$/, "At the median") || "—"}</td>
+                <td>{listing.titleDocument || "Not stated"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
     </div>
   );
 }
 
-function groupByLocation(listings) {
-  const groups = new Map();
-  listings.forEach((listing) => {
-    const key = listing.neighborhoodId;
-    if (!groups.has(key)) groups.set(key, { key, name: listing.neighborhoodName, listings: [] });
-    groups.get(key).listings.push(listing);
-  });
-  return Array.from(groups.values());
-}
-
 function buildStats(listings) {
-  const count = listings.length;
-  const value = listings.reduce((sum, listing) => sum + listing.askingPrice, 0);
-  const available = listings.filter((listing) => listing.listingStatus === "Available").length;
-  const avgSize = count ? Math.round(listings.reduce((sum, listing) => sum + listing.sizeSqm, 0) / count) : 0;
-  return { count, value, available, avgSize };
+  const sizes = listings.map((listing) => listing.sizeSqm).filter((size) => size > 0);
+  return {
+    count: listings.length,
+    median: medianRate(listings),
+    typicalSize: sizes.length ? Math.round(quantile(sizes, 0.5)) : 0
+  };
 }
 
 function formatFullPrice(value) {
   const price = Number(value) || 0;
   return price ? `₦${new Intl.NumberFormat("en-US").format(price)}` : "—";
-}
-
-function formatPerSqm(price, size) {
-  const perSqm = (Number(price) || 0) / (Number(size) || 0);
-  return Number.isFinite(perSqm) && perSqm > 0 ? formatNaira(perSqm) : "—";
 }
 
 function statusClass(status) {
