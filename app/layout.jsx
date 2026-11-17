@@ -13,6 +13,7 @@ import "./styles/account.css";
 import "./styles/listings.css";
 import "./styles/landing.css";
 import "./styles/responsive.css";
+import "./styles/atlas.css";
 
 export const metadata = {
   title: "Squaremeter by CW — Lagos land intelligence",
@@ -36,7 +37,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Instrument+Serif&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Instrument+Serif&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />

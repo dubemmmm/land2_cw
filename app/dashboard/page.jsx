@@ -57,9 +57,9 @@ export default async function DashboardPage() {
             <nav className="cw-crumbs" aria-label="Breadcrumb">
               <Link href="/">Squaremeter</Link>
               <span aria-hidden="true">/</span>
-              <span>Dashboard</span>
+              <span>Briefing</span>
             </nav>
-            <h1 className="cw-pagehead-title">Dashboard</h1>
+            <h1 className="cw-pagehead-title">Briefing</h1>
             <p className="brief-head-date">{today}</p>
           </div>
           <div className="brief-actions">

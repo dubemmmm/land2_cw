@@ -5,13 +5,12 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const pages = [
-  { group: "Sheet", label: "Dashboard", href: "/dashboard" },
-  { group: "Sheet", label: "Listings", href: "/listings" },
-  { group: "Sheet", label: "Map", href: "/map" },
-  { group: "Sheet", label: "Reports", href: "/reports" },
-  { group: "Sheet", label: "Data", href: "/data" },
-  { group: "Sheet", label: "Signals", href: "/signals" },
-  { group: "Sheet", label: "Public site", href: "/" }
+  { group: "Page", label: "Explore plots", href: "/listings" },
+  { group: "Page", label: "Briefing", href: "/dashboard" },
+  { group: "Page", label: "Planning map", href: "/map" },
+  { group: "Page", label: "Reports", href: "/reports" },
+  { group: "Page", label: "Signals", href: "/signals" },
+  { group: "Page", label: "Public site", href: "/" }
 ];
 
 async function load(url) {
@@ -26,7 +25,8 @@ async function load(url) {
 }
 
 // Jump anywhere in the portal. Opens with ⌘K / Ctrl K or the rail button.
-export default function CommandBar() {
+// variant "bar": a search field for the top bar. Otherwise an icon button.
+export default function CommandBar({ variant = "icon" }) {
   const router = useRouter();
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -96,15 +96,23 @@ export default function CommandBar() {
 
   return (
     <>
-      <button
-        className="rail-link rail-search"
-        type="button"
-        aria-label="Search and jump (Command K)"
-        data-label="Search ⌘K"
-        onClick={() => setOpen(true)}
-      >
-        <Search size={19} />
-      </button>
+      {variant === "bar" ? (
+        <button className="atlas-search" type="button" aria-label="Search and jump (Command K)" onClick={() => setOpen(true)}>
+          <Search size={16} aria-hidden="true" />
+          <span>Search plots, areas, reports</span>
+          <kbd>⌘K</kbd>
+        </button>
+      ) : (
+        <button
+          className="rail-link rail-search"
+          type="button"
+          aria-label="Search and jump (Command K)"
+          data-label="Search ⌘K"
+          onClick={() => setOpen(true)}
+        >
+          <Search size={19} />
+        </button>
+      )}
       {open ? (
         <div className="sq-cmd-scrim" onMouseDown={() => setOpen(false)}>
           <div className="sq-cmd" role="dialog" aria-modal="true" aria-label="Jump to" onMouseDown={(event) => event.stopPropagation()}>
@@ -113,7 +121,7 @@ export default function CommandBar() {
               <input
                 ref={inputRef}
                 value={query}
-                placeholder="Jump to a location, plot, report or sheet"
+                placeholder="Jump to an area, plot, report or page"
                 aria-label="Search"
                 onChange={(event) => { setQuery(event.target.value); setCursor(0); }}
                 onKeyDown={onKeyDown}

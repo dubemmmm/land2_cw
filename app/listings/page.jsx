@@ -1,57 +1,54 @@
 import AppShell from "@/components/AppShell";
 import { getAdminSession, requirePortalPage } from "@/lib/auth";
-import { loadMarket, toEstateSlug } from "@/lib/landBible";
 import { getListingStats } from "@/lib/listingStats";
 import { getLandListings } from "@/lib/listingStore";
-import { getMarketEstates } from "@/lib/marketDataStore";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
-import ListingsClient from "./ListingsClient";
+import ExploreClient from "./ExploreClient";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Explore plots — Squaremeter by CW" };
 
 export default async function ListingsPage({ searchParams }) {
-  const query = new URLSearchParams(Object.entries((await searchParams) || {}).filter(([, value]) => typeof value === "string")).toString();
+  const params = (await searchParams) || {};
+  const query = new URLSearchParams(Object.entries(params).filter(([, value]) => typeof value === "string")).toString();
   await requirePortalPage(query ? `/listings?${query}` : "/listings");
-  const [admin, neighborhoods, marketEstates] = await Promise.all([getAdminSession(), getNeighborhoods(), getMarketEstates()]);
-  const [listings, stats, marketData] = await Promise.all([
+  const admin = await getAdminSession();
+  const [listings, stats, neighborhoods] = await Promise.all([
     getLandListings({ includeDrafts: Boolean(admin), summary: true }),
     getListingStats(),
-    loadMarket()
+    getNeighborhoods()
   ]);
-  const areaMedians = Object.fromEntries(
-    Object.entries(stats.areas).filter(([, area]) => area.median).map(([id, area]) => [id, area.median])
-  );
-  const params = await searchParams;
+
+  // One entry per area for the map, the chart and each row's gauge, plus the
+  // figures for Lagos as a whole under the id "all-lagos".
+  const areas = neighborhoods.map((neighborhood) => {
+    const area = stats.areas[neighborhood.id];
+    const center = neighborhood.geometry?.center;
+    return {
+      id: neighborhood.id,
+      name: neighborhood.name,
+      center: Array.isArray(center) && center.length === 2 ? center.map(Number) : null,
+      count: area?.count || 0,
+      median: area?.median || null,
+      q1: area?.lowerQuartile || null,
+      q3: area?.upperQuartile || null
+    };
+  }).concat({ id: "all-lagos", name: "Lagos", center: null, count: stats.all.count, median: stats.all.median, q1: stats.all.lowerQuartile, q3: stats.all.upperQuartile });
+
   return (
-    <AppShell active="listings">
-      <ListingsClient
-        initialListings={listings.map(forList)}
-        areaMedians={areaMedians}
+    <AppShell active="listings" bleed>
+      <ExploreClient
+        listings={listings.map(forList)}
+        areas={areas}
         fx={stats.fx}
-        neighborhoods={neighborhoods}
-        estates={withLandBibleEstates(marketEstates, marketData.inventory())}
-        initialView={params?.view === "ledger" ? "ledger" : "cards"}
-        initialLocation={params?.location || "all"}
+        initialArea={typeof params.location === "string" ? params.location : "all"}
         isAdmin={Boolean(admin)}
       />
     </AppShell>
   );
 }
 
-function withLandBibleEstates(estates, inventory) {
-  const byId = new Map();
-  inventory.estates.forEach((estate) => {
-    byId.set(toEstateSlug(estate.id), {
-      id: toEstateSlug(estate.id),
-      neighborhoodId: String(estate.neighborhood_id || "").replaceAll("_", "-"),
-      name: estate.name
-    });
-  });
-  estates.forEach((estate) => byId.set(estate.id, estate));
-  return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-// Only what a card or table row shows: several hundred listings are sent to the browser at once.
+// Only what a row or a chart mark shows: several hundred listings are sent to the browser at once.
 function forList(listing) {
   return {
     id: listing.id,
@@ -73,6 +70,7 @@ function forList(listing) {
     listingStatus: listing.listingStatus,
     workflowStatus: listing.workflowStatus,
     photos: listing.photos.slice(0, 1),
+    sourceId: listing.sourceId,
     listedAt: listing.listedAt
   };
 }

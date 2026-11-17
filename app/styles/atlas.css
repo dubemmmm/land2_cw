@@ -1,0 +1,1003 @@
+/* The portal ("Atlas"). Everything here is scoped to .atlas, the portal frame,
+   so the public pages keep their own look.
+
+   Chrome is black ink on white and near-white. Colour is kept for data: one
+   lagoon ramp, light to dark, that always means "asking price per m²" - on the
+   map, in the price chart and beside each plot. */
+
+.atlas {
+  /* Type: one family throughout. Figures line up in columns. */
+  --font-sans: "Schibsted Grotesk", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* Ink and surfaces */
+  --ink: #0d1412;
+  --ink-soft: #232b28;
+  --muted: #5f6a66;
+  --faint: #9aa5a0;
+  --paper: #f6f7f6;
+  --paper-2: #eef0ee;
+  --paper-3: #e3e7e4;
+  --card: #ffffff;
+  --line: #e4e8e5;
+  --line-soft: #eef1ef;
+  --line-strong: #cbd2ce;
+
+  /* What used to be navy is ink here, so every existing button and tab follows. */
+  --navy: #0d1412;
+  --navy-500: #1a2421;
+  --navy-600: #121a17;
+  --navy-700: #080d0b;
+  --navy-300: #3b4743;
+  --navy-200: #c5cdc9;
+  --navy-100: #e0e5e2;
+  --navy-50: #eff2f0;
+
+  --accent: #0f6b62;
+  --accent-600: #0b534c;
+  --accent-50: #e2f1ee;
+
+  /* The price ramp: lowest asking price per m² to highest. */
+  --price-1: #d3ebe6;
+  --price-2: #94cdc3;
+  --price-3: #4fa59a;
+  --price-4: #1b756d;
+  --price-5: #084744;
+
+  --bar-h: 60px;
+  --tabs-h: 62px;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* This typeface widens commas and points along with tabular figures
+   ("1 , 020"), so figures are set proportionally throughout the portal. */
+.atlas * {
+  font-variant-numeric: normal !important;
+}
+
+/* ---------- Top bar ---------- */
+.atlas-bar {
+  position: sticky;
+  top: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: var(--bar-h);
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.atlas-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  color: var(--ink);
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.atlas-brand .cw-mark {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+
+.atlas-brand b {
+  font-weight: 600;
+}
+
+.atlas-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+}
+
+.atlas-nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 14.5px;
+  font-weight: 500;
+  transition: color 120ms ease;
+}
+
+.atlas-nav a:hover {
+  color: var(--ink);
+}
+
+.atlas-nav a.active {
+  color: var(--ink);
+}
+
+/* The current section is marked on the bar's own bottom edge. */
+.atlas-nav a.active::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  bottom: -1px;
+  left: 12px;
+  height: 2px;
+  background: var(--ink);
+}
+
+.atlas-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.atlas-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 280px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--muted);
+  font: 400 14px/1 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.atlas-search:hover {
+  border-color: var(--line-strong);
+  background: var(--card);
+}
+
+.atlas-search span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atlas-search kbd {
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--muted);
+  font: 500 11.5px/1 var(--font-sans);
+}
+
+.atlas-admin {
+  padding: 5px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.atlas .avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ---------- Page area ---------- */
+.atlas-main.page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 36px 32px 72px;
+}
+
+.atlas-bleed {
+  min-width: 0;
+}
+
+/* ---------- Phone: sections as labelled tabs along the bottom ---------- */
+.atlas-tabs {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .atlas-bar {
+    gap: 16px;
+  }
+
+  .atlas-search {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .atlas-search span,
+  .atlas-search kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .atlas {
+    padding-bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .atlas-bar {
+    gap: 12px;
+    height: 54px;
+    padding: 0 16px;
+    --bar-h: 54px;
+  }
+
+  .atlas-nav,
+  .atlas-admin {
+    display: none;
+  }
+
+  .atlas-main.page {
+    padding: 22px 16px 40px;
+  }
+
+  .atlas-tabs {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 400;
+    display: flex;
+    height: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px));
+    padding: 0 6px env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .atlas-tabs a {
+    flex: 1 1 0;
+    min-width: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .atlas-tabs a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .atlas-tabs a.active {
+    color: var(--ink);
+  }
+
+  .atlas-tabs a.active svg {
+    stroke-width: 2.4;
+  }
+}
+
+/* =====================================================================
+   Explore: the map, the price chart and the list of plots, kept in step.
+   ===================================================================== */
+.ex {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, clamp(480px, 46%, 720px));
+  height: calc(100vh - var(--bar-h));
+  overflow: hidden;
+}
+
+/* ---------- Map ---------- */
+.ex-map {
+  position: relative;
+  min-width: 0;
+  background: var(--paper-2);
+}
+
+/* The map library stacks its layers up to z-index 1000; keeping them in their
+   own stacking context stops them covering the top bar and the legend. */
+.ex-map-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.ex-map .leaflet-container {
+  background: #eef1ef;
+  font-family: var(--font-sans);
+}
+
+/* The street map is context, not content: drained of colour so the price ramp is the only hue. */
+.ex-map .leaflet-tile-pane {
+  filter: grayscale(1) contrast(0.86) brightness(1.08);
+}
+
+.ex-bubble {
+  display: grid;
+  place-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(13, 20, 18, 0.25);
+  color: #ffffff;
+  font: 600 12.5px/1 var(--font-sans);
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.ex-bubble.is-light {
+  color: var(--ink);
+}
+
+.ex-bubble.is-empty {
+  background: #ffffff;
+  border: 1.5px dashed var(--faint);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.ex-bubble:hover,
+.ex-bubble.is-hover {
+  transform: scale(1.06);
+}
+
+.ex-bubble.is-on {
+  box-shadow: 0 0 0 3px var(--ink), 0 6px 18px rgba(13, 20, 18, 0.3);
+}
+
+.ex-bubble.is-dim {
+  opacity: 0.6;
+}
+
+.ex-bubble-label {
+  position: absolute;
+  left: 0;
+  transform: translateX(-50%);
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1px 2px rgba(13, 20, 18, 0.14);
+  color: var(--ink);
+  font: 600 12px/1.1 var(--font-sans);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ex-bubble-label small {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.ex-legend {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  z-index: 2;
+  width: 232px;
+  padding: 12px 14px 11px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 2px rgba(13, 20, 18, 0.12), 0 8px 24px -12px rgba(13, 20, 18, 0.3);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ex-legend b {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ex-legend-ramp {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--price-1), var(--price-2), var(--price-3), var(--price-4), var(--price-5));
+}
+
+.ex-legend-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.ex-legend p {
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+/* ---------- Panel ---------- */
+.ex-panel {
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 1px solid var(--line);
+  background: var(--card);
+}
+
+.ex-head {
+  padding: 26px 28px 0;
+}
+
+.ex-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 500 13.5px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.ex-back:hover {
+  color: var(--ink);
+}
+
+.ex-head h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.ex-lede {
+  max-width: 58ch;
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.ex-lede b {
+  font-weight: 600;
+}
+
+.ex-lede a {
+  color: var(--accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ex-lede a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Price chart: every plot, one mark each ---------- */
+.ex-strip {
+  position: relative;
+  margin: 22px 28px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.ex-strip h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.ex-strip-note {
+  margin: 3px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ex-strip svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.ex-strip-row {
+  cursor: pointer;
+}
+
+.ex-strip-row rect.hit {
+  fill: transparent;
+}
+
+.ex-strip-row:hover rect.hit {
+  fill: var(--paper);
+}
+
+.ex-strip-row.is-on rect.hit {
+  fill: var(--paper);
+}
+
+.ex-strip-name {
+  fill: var(--ink);
+  font: 500 13px var(--font-sans);
+}
+
+.ex-strip-row.is-dim .ex-strip-name {
+  fill: var(--faint);
+}
+
+.ex-strip-count {
+  fill: var(--muted);
+  font: 400 11.5px var(--font-sans);
+}
+
+.ex-strip-axis text {
+  fill: var(--muted);
+  font: 400 11.5px var(--font-sans);
+}
+
+.ex-strip-axis line {
+  stroke: var(--line);
+}
+
+.ex-strip-median {
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.ex-strip-median-label {
+  fill: var(--ink);
+  font: 600 11.5px var(--font-sans);
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.ex-dot {
+  stroke: #ffffff;
+  stroke-width: 0.75;
+  transition: opacity 140ms ease;
+}
+
+.ex-dot.is-out {
+  opacity: 0.16;
+}
+
+.ex-dot-hot {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.ex-tip {
+  position: absolute;
+  z-index: 5;
+  max-width: 260px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 12.5px;
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+
+.ex-tip b {
+  display: block;
+  font-weight: 600;
+}
+
+.ex-tip span {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+/* ---------- Controls ---------- */
+.ex-controls {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.ex-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.ex-field:focus-within {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(13, 20, 18, 0.08);
+}
+
+.ex-field input,
+.ex-field select {
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 500 13.5px var(--font-sans);
+}
+
+.ex-field-search {
+  flex: 1 1 170px;
+}
+
+.ex-field-search input {
+  flex: 1;
+}
+
+.ex-field-budget input {
+  width: 64px;
+  text-align: right;
+}
+
+.ex-field.is-set {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
+.ex-clear {
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font: 500 13.5px var(--font-sans);
+  cursor: pointer;
+}
+
+.ex-clear:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ex-count {
+  margin: 0;
+  padding: 14px 28px 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.ex-count b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------- Plot rows ---------- */
+.ex-rows {
+  margin: 0;
+  padding: 0 14px 8px;
+  list-style: none;
+}
+
+.ex-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px 92px 112px;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  color: inherit;
+}
+
+.ex-rows li + li .ex-row {
+  box-shadow: 0 -1px 0 var(--line-soft);
+}
+
+.ex-row:hover,
+.ex-row.is-hover {
+  background: var(--paper);
+  box-shadow: none;
+}
+
+.ex-rows li:hover + li .ex-row {
+  box-shadow: none;
+}
+
+.ex-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ex-row-photo {
+  width: 52px;
+  height: 40px;
+  flex: none;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.ex-row-title {
+  display: block;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ex-row-meta {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ex-row-meta em {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--paper-2);
+  color: var(--ink-soft);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.ex-row.is-hover .ex-row-meta em,
+.ex-row:hover .ex-row-meta em {
+  background: var(--paper-3);
+}
+
+.ex-num {
+  text-align: right;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ex-num b {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ex-num small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+/* Where this plot's price sits in its area: the pale band is the middle half
+   of asking prices there, the tick is the area median, the dot is this plot. */
+.ex-gauge {
+  position: relative;
+  height: 22px;
+}
+
+.ex-gauge::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--line);
+}
+
+.ex-gauge i {
+  position: absolute;
+  top: 7px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--paper-3);
+}
+
+.ex-gauge u {
+  position: absolute;
+  top: 5px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--faint);
+}
+
+.ex-gauge b {
+  position: absolute;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(13, 20, 18, 0.2);
+}
+
+.ex-gauge-none {
+  color: var(--faint);
+  font-size: 12px;
+  text-align: right;
+}
+
+.ex-more {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 28px 20px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.ex-more button {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font: 500 14px var(--font-sans);
+  cursor: pointer;
+}
+
+.ex-more button:hover {
+  border-color: var(--ink);
+}
+
+.ex-empty {
+  margin: 8px 28px 24px;
+  padding: 28px 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 14.5px;
+  text-align: center;
+}
+
+.ex-foot {
+  margin: 0;
+  padding: 16px 28px 28px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.ex-foot a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- Narrower screens ---------- */
+@media (max-width: 1180px) {
+  .ex {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 56%);
+  }
+
+  .ex-row {
+    grid-template-columns: minmax(0, 1fr) 84px 92px;
+  }
+
+  .ex-row .ex-gauge,
+  .ex-row .ex-gauge-none {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .ex {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .ex-map {
+    height: 300px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ex-panel {
+    overflow: visible;
+    border-left: 0;
+  }
+
+  .ex-controls {
+    top: var(--bar-h);
+  }
+
+  .ex-legend {
+    display: none;
+  }
+
+  /* On a short map the circles crowd together; the chart below names every
+     area, so only the chosen one is named here. */
+  .ex-bubble-label:not(.is-on) {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .ex-map {
+    height: 240px;
+  }
+
+  .ex-head {
+    padding: 20px 16px 0;
+  }
+
+  .ex-head h1 {
+    font-size: 28px;
+  }
+
+  .ex-strip {
+    margin-right: 16px;
+    margin-left: 16px;
+  }
+
+  .ex-controls {
+    top: 54px;
+    padding: 10px 16px;
+  }
+
+  .ex-count {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .ex-rows {
+    padding: 0 6px 8px;
+  }
+
+  .ex-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 12px 10px;
+  }
+
+  /* Size sits under the price on a phone. */
+  .ex-row .ex-num-size {
+    display: none;
+  }
+
+  .ex-row-title {
+    white-space: normal;
+  }
+
+  .ex-more,
+  .ex-foot {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}
