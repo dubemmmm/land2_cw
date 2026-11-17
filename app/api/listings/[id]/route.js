@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { getAdminSession, requireAdminApi } from "@/lib/auth";
+import { getAdminSession, requireAdminApi, requirePortalApi } from "@/lib/auth";
 import { deleteLandListing, getLandListing, updateLandListing } from "@/lib/listingStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request, { params }) {
-  const admin = await getAdminSession();
+  const { session, refused } = await requirePortalApi();
+  if (refused) return refused;
   const { id } = await params;
-  const listing = await getLandListing(id, { includeDrafts: Boolean(admin) });
+  const listing = await getLandListing(id, { includeDrafts: Boolean(session.admin) });
   if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
   return NextResponse.json(listing);
 }

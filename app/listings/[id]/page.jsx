@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, ExternalLink, MessageCircle, Pencil, Phone } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PlotCard from "@/components/PlotCard";
-import { getAdminSession } from "@/lib/auth";
+import { getPortalSession, requirePortalPage } from "@/lib/auth";
 import { againstMedian, againstMedianText } from "@/lib/listingMath";
 import { getAreaStats } from "@/lib/listingStats";
 import { getLandListing, getLandListings } from "@/lib/listingStore";
@@ -15,13 +15,14 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const listing = await getLandListing(id);
+  // The title of a plot is not shown to someone who is not signed in.
+  const listing = (await getPortalSession()) ? await getLandListing(id) : null;
   return listing ? { title: `${listing.title} — Squaremeter by CW` } : {};
 }
 
 export default async function ListingPage({ params }) {
   const { id } = await params;
-  const admin = await getAdminSession();
+  const { admin } = await requirePortalPage(`/listings/${id}`);
   const listing = await getLandListing(id, { includeDrafts: Boolean(admin) });
   if (!listing) notFound();
 
@@ -30,6 +31,7 @@ export default async function ListingPage({ params }) {
     .filter((item) => item.neighborhoodId === listing.neighborhoodId && item.id !== listing.id)
     .slice(0, 4);
   const own = realPhoto(listing.photos);
+  const morePhotos = listing.photos.filter((src) => src !== own && realPhoto([src]));
   const view = own ? null : areaPhoto(listing.neighborhoodId, 1920) || photo("skyline", 1920);
   const price = headlinePrice(listing);
   const digits = listing.agentPhone.replace(/\D/g, "");
@@ -74,6 +76,14 @@ export default async function ListingPage({ params }) {
           <img src={own || view.src} alt={own ? listing.title : `Aerial view of ${view.place}`} />
           {view ? <figcaption>Area view · {view.place}, not this plot</figcaption> : null}
         </figure>
+
+        {morePhotos.length ? (
+          <div className="listing-gallery">
+            {morePhotos.map((src) => (
+              <a href={src} target="_blank" rel="noreferrer" key={src}><img src={src} alt={`${listing.title}, another view`} loading="lazy" /></a>
+            ))}
+          </div>
+        ) : null}
 
         <p className="focus-statement">
           <PriceSentence listing={listing} price={price} />{" "}

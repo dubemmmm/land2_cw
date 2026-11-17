@@ -1,5 +1,5 @@
 import AppShell from "@/components/AppShell";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminSession, requirePortalPage } from "@/lib/auth";
 import { loadMarket, toEstateSlug } from "@/lib/landBible";
 import { getListingStats } from "@/lib/listingStats";
 import { getLandListings } from "@/lib/listingStore";
@@ -10,6 +10,8 @@ import ListingsClient from "./ListingsClient";
 export const dynamic = "force-dynamic";
 
 export default async function ListingsPage({ searchParams }) {
+  const query = new URLSearchParams(Object.entries((await searchParams) || {}).filter(([, value]) => typeof value === "string")).toString();
+  await requirePortalPage(query ? `/listings?${query}` : "/listings");
   const [admin, neighborhoods, marketEstates] = await Promise.all([getAdminSession(), getNeighborhoods(), getMarketEstates()]);
   const [listings, stats, marketData] = await Promise.all([
     getLandListings({ includeDrafts: Boolean(admin), summary: true }),
@@ -70,7 +72,7 @@ function forList(listing) {
     titleDocument: listing.titleDocument,
     listingStatus: listing.listingStatus,
     workflowStatus: listing.workflowStatus,
-    photos: listing.photos,
+    photos: listing.photos.slice(0, 1),
     listedAt: listing.listedAt
   };
 }

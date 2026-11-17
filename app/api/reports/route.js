@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
-import { createReport, getReports } from "@/lib/reportStore";
+import { requireAdminApi, requirePortalApi } from "@/lib/auth";
+import { clientView, createReport, getReports } from "@/lib/reportStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(await getReports());
+  const { session, refused } = await requirePortalApi();
+  if (refused) return refused;
+  const reports = await getReports();
+  return NextResponse.json(session.admin ? reports : reports.filter((report) => report.clientVisible).map(clientView));
 }
 
 export async function POST(request) {

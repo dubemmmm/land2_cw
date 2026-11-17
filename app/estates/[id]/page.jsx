@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import { requirePortalPage } from "@/lib/auth";
 import { loadMarket } from "@/lib/landBible";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import { getClientResources } from "@/lib/resourceStore";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EstateDetailPage({ params }) {
   const { id } = await params;
+  await requirePortalPage(`/estates/${id}`);
   const marketData = await loadMarket();
   const estate = marketData.estateProfile(id);
   if (!estate) notFound();

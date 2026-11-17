@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Map, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import { requirePortalPage } from "@/lib/auth";
 import ConfidenceLegend from "@/components/ConfidenceLegend";
 import { getDashboardData } from "@/lib/dashboardStore";
 import { loadMarket } from "@/lib/landBible";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 const UPDATES_SHOWN = 8;
 
 export default async function DashboardPage() {
+  await requirePortalPage("/dashboard");
   const [neighborhoods, reports, dashboard, marketData] = await Promise.all([getNeighborhoods(), getReports(), getDashboardData(), loadMarket()]);
   const approvals = neighborhoods.flatMap((n) => (n.approvals || []).map((row) => ({ neighborhood: n, row })));
   const pending = approvals.filter((item) => item.row.outcome === "Pending").length;

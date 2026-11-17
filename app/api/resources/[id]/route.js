@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { getAdminSession, requireAdminApi } from "@/lib/auth";
+import { getAdminSession, requireAdminApi, requirePortalApi } from "@/lib/auth";
 import { deleteResource, getResource, updateResource } from "@/lib/resourceStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request, { params }) {
+  const { session, refused } = await requirePortalApi();
+  if (refused) return refused;
   const { id } = await params;
   const resource = await getResource(id);
-  if (!resource) return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+  if (!resource || (!session.admin && resource.visibility !== "Client")) return NextResponse.json({ error: "Resource not found" }, { status: 404 });
   return NextResponse.json(resource);
 }
 

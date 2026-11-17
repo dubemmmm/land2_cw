@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminSession, requirePortalPage } from "@/lib/auth";
 import { loadMarket } from "@/lib/landBible";
 import { getAreaStats } from "@/lib/listingStats";
 import { getLandListings } from "@/lib/listingStore";
@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LocationDetailPage({ params }) {
   const { id } = await params;
+  await requirePortalPage(`/locations/${id}`);
   const neighborhood = await getNeighborhood(id);
   if (!neighborhood) notFound();
   const [marketData, areaStats, admin, resources, neighborhoods, listings] = await Promise.all([

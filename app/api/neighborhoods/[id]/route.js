@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminApi, requirePortalApi } from "@/lib/auth";
 import { deleteNeighborhood, getNeighborhood, updateNeighborhood } from "@/lib/neighborhoodStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request, { params }) {
+  const { refused } = await requirePortalApi();
+  if (refused) return refused;
   const { id } = await params;
   const record = await getNeighborhood(id);
   if (!record) return NextResponse.json({ error: "Neighborhood not found" }, { status: 404 });

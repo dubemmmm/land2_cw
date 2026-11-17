@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
+import { requireAdminApi, requirePortalApi } from "@/lib/auth";
 import { createPricePoint, getPricePoints } from "@/lib/marketDataStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
+  const { refused } = await requirePortalApi();
+  if (refused) return refused;
   const { searchParams } = new URL(request.url);
   return NextResponse.json(await getPricePoints({
     targetType: searchParams.get("targetType") || undefined,

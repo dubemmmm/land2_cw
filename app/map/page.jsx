@@ -1,4 +1,5 @@
 import AppShell from "@/components/AppShell";
+import { requirePortalPage } from "@/lib/auth";
 import { loadMarket } from "@/lib/landBible";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
 import MapClient from "./MapClient";
@@ -6,6 +7,7 @@ import MapClient from "./MapClient";
 export const dynamic = "force-dynamic";
 
 export default async function MapPage() {
+  await requirePortalPage("/map");
   const [neighborhoods, marketData] = await Promise.all([getNeighborhoods(), loadMarket()]);
   return (
     <AppShell active="map">

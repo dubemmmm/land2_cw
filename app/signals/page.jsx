@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import { requirePortalPage } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,8 @@ const examples = [
   { kind: "Client alert", what: "A saved location, estate or listing changed materially", where: "Your saved items" }
 ];
 
-export default function SignalsPage() {
+export default async function SignalsPage() {
+  await requirePortalPage("/signals");
   return (
     <AppShell active="signals">
       <div className="briefing">

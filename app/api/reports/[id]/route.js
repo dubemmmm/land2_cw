@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
-import { deleteReport, getReport, updateReport } from "@/lib/reportStore";
+import { requireAdminApi, requirePortalApi } from "@/lib/auth";
+import { clientView, deleteReport, getReport, updateReport } from "@/lib/reportStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request, { params }) {
+  const { session, refused } = await requirePortalApi();
+  if (refused) return refused;
   const { id } = await params;
   const report = await getReport(id);
-  if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
-  return NextResponse.json(report);
+  if (!report || (!session.admin && !report.clientVisible)) return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  return NextResponse.json(session.admin ? report : clientView(report));
 }
 
 export async function PATCH(request, { params }) {

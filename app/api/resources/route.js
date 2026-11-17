@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { getAdminSession, requireAdminApi } from "@/lib/auth";
+import { getAdminSession, requireAdminApi, requirePortalApi } from "@/lib/auth";
 import { createResource, getResources } from "@/lib/resourceStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
+  const { session, refused } = await requirePortalApi();
+  if (refused) return refused;
   const { searchParams } = new URL(request.url);
   return NextResponse.json(await getResources({
     targetType: searchParams.get("targetType") || undefined,
     targetId: searchParams.get("targetId") || undefined,
-    visibility: searchParams.get("visibility") || undefined
+    // Internal research is for the admin; everyone else sees client-visible items only.
+    visibility: session.admin ? searchParams.get("visibility") || undefined : "Client"
   }));
 }
 

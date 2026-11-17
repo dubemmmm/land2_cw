@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { confidencePattern, formatDate } from "@/lib/metrics";
+import { requirePortalPage } from "@/lib/auth";
 import { getReport, getReports } from "@/lib/reportStore";
 import PrintButton from "./PrintButton";
 
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 // admin-only parts. It stays server-rendered so internal notes never reach this page.
 export default async function ClientReportPage({ params }) {
   const { id } = await params;
+  await requirePortalPage(`/client/reports/${id}`);
   const report = await getReport(id);
   if (!report || !report.clientVisible) notFound();
   const reports = await getReports();
