@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Grid2X2, List, Plus, RotateCcw } from "lucide-react";
+import { Grid2X2, List, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
 import PlotCard from "@/components/PlotCard";
 import { againstMedianText, medianRate, quantile } from "@/lib/listingMath";
 import { photoCredits } from "@/lib/photos";
@@ -26,6 +26,8 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
   const [sortBy, setSortBy] = useState("newest");
   const [offer, setOffer] = useState("all");
   const [shown, setShown] = useState(PAGE_SIZE);
+  // Only matters on a phone, where the filters are folded away until asked for.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const locationOptions = useMemo(() => {
     const used = new Set(initialListings.map((listing) => listing.neighborhoodId));
@@ -74,6 +76,7 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
   const pageListings = visibleListings.slice(0, shown);
   const heading = location === "all" ? "All areas" : neighborhoods.find((item) => item.id === location)?.name || "Listings";
   const hasConverted = visibleListings.some((listing) => listing.converted);
+  const activeFilters = [landUse !== "all", offer !== "all", estate !== "all", location !== "all", Boolean(minPrice || maxPrice), Boolean(minSize || maxSize), sortBy !== "newest"].filter(Boolean).length;
 
   // A change of filter or sort starts again from the first page.
   useEffect(() => {
@@ -131,13 +134,15 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
               <List size={15} aria-hidden="true" /> Table
             </button>
           </div>
-          <Link className="cw-btn cw-btn-navy cw-btn-sm" href={isAdmin ? "/listings/new" : "/admin/login?next=%2Flistings%2Fnew"}>
-            <Plus size={16} aria-hidden="true" /> New listing
-          </Link>
+          {isAdmin ? (
+            <Link className="cw-btn cw-btn-navy cw-btn-sm" href="/listings/new">
+              <Plus size={16} aria-hidden="true" /> New listing
+            </Link>
+          ) : null}
         </div>
       </header>
 
-      <section className="listing-filters" aria-label="Listing filters">
+      <section className={`listing-filters ${filtersOpen ? "is-open" : ""}`} aria-label="Listing filters">
         <div className="listing-filter-fields">
           <label className="cw-field listing-filter-search">
             <span>Search</span>
@@ -178,6 +183,11 @@ export default function ListingsClient({ initialListings, neighborhoods, estates
             <RotateCcw size={15} aria-hidden="true" /> Reset
           </button>
         </div>
+
+        <button className="cw-btn cw-btn-soft listing-filter-toggle" type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+          <SlidersHorizontal size={15} aria-hidden="true" />
+          {filtersOpen ? "Hide filters" : activeFilters ? `Filters and sorting (${activeFilters} on)` : "Filters and sorting"}
+        </button>
 
         <div className="listing-toggle-row">
           <span id="listing-use-label">Land use</span>
@@ -310,7 +320,7 @@ function ListingLedger({ heading, total, listings, areaMedians, isAdmin }) {
               <tr className="listing-ledger-row" key={listing.id}>
                 <th scope="row">
                   <div className="listing-ledger-title">
-                    <div className="listing-ledger-thumb">{photo ? <img src={photo} alt="" loading="lazy" /> : <i aria-hidden="true" />}</div>
+                    {photo ? <div className="listing-ledger-thumb"><img src={photo} alt="" loading="lazy" /></div> : null}
                     <Link href={`/listings/${listing.id}`} prefetch={false}>{listing.title}</Link>
                     {listing.offerType !== "Sale" ? <span className="listing-status">{listing.offerType}</span> : null}
                     {listing.listingStatus !== "Available" ? <span className={`listing-status ${statusClass(listing.listingStatus)}`}>{listing.listingStatus}</span> : null}

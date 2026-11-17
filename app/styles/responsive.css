@@ -1,0 +1,246 @@
+/* Small-screen adjustments that cut across pages. Imported last, so these win
+   over each page's own rules. Phone = up to 720px wide, as elsewhere. */
+
+/* ---------- Tables that scroll sideways ----------
+   A shadow at the edge shows there is more to the side. It is drawn on the
+   wrapper and covered by a strip that scrolls with the content, so it only
+   appears on the side that still has something hidden. */
+.brief-table-wrap,
+.land-table-wrap,
+.focus-table-wrap,
+.data-tablewrap,
+.acct-tablewrap,
+.listing-ledger {
+  background:
+    linear-gradient(to right, var(--card) 40%, transparent) left center / 36px 100% no-repeat local,
+    linear-gradient(to left, var(--card) 40%, transparent) right center / 36px 100% no-repeat local,
+    linear-gradient(to right, rgba(17, 29, 66, 0.16), transparent) left center / 14px 100% no-repeat scroll,
+    linear-gradient(to left, rgba(17, 29, 66, 0.16), transparent) right center / 14px 100% no-repeat scroll,
+    var(--card);
+}
+
+@media (max-width: 720px) {
+  /* ---------- Portal navigation along the bottom ---------- */
+  .rail {
+    gap: 4px;
+    padding: 8px 10px;
+  }
+
+  .rail nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  /* Every item shares the width, so the bar fits a 320px phone as well as a 430px one. */
+  .rail nav .rail-link {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: 52px;
+  }
+
+  .rail-foot {
+    flex: none;
+    flex-direction: row;
+    gap: 4px;
+    margin: 0;
+  }
+
+  .rail-foot .rail-link {
+    width: 36px;
+  }
+
+  /* The way to your own account stays reachable on a phone. */
+  .rail-foot .avatar {
+    display: grid;
+    flex: none;
+  }
+
+  /* ---------- Breadcrumbs: taller tap area without moving the text ---------- */
+  .cw-crumbs a {
+    display: inline-block;
+    margin: -10px 0;
+    padding: 10px 0;
+  }
+
+  /* ---------- Tab rows wrap instead of running off the edge ---------- */
+  .data-tabs,
+  .reports-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .data-tabs button,
+  .reports-tabs button {
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-ctl);
+    background: var(--card);
+  }
+
+  .data-tabs > :last-child,
+  .reports-tabs > :last-child {
+    border-right: 1px solid var(--line-strong);
+  }
+
+  .data-tabs .active,
+  .reports-tabs .active {
+    border-color: var(--navy);
+  }
+
+  /* ---------- Landing page: prices by location, two lines per place ---------- */
+  .land-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .land-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .land-table tbody {
+    display: block;
+  }
+
+  .land-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .land-table tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .land-table tbody th,
+  .land-table tbody td {
+    padding: 0;
+    border: 0;
+  }
+
+  .land-table tbody th img,
+  .land-table-blank {
+    width: 52px;
+    height: 40px;
+  }
+
+  /* Line 1: place and price. Line 2: what the price is based on, and confidence. */
+  .land-table tbody td:nth-child(2) {
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .land-table tbody td:nth-child(3),
+  .land-table tbody td:nth-child(5) {
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .land-table tbody td:nth-child(3) {
+    padding-left: 66px;
+    white-space: normal;
+  }
+
+  .land-table tbody td:nth-child(5) {
+    justify-self: end;
+  }
+
+  /* Estates tracked and the arrow: the place name is already the link. */
+  .land-table tbody td:nth-child(4),
+  .land-table tbody td:nth-child(6) {
+    display: none;
+  }
+
+  /* ---------- Dashboard: prices by location, two lines per place ---------- */
+  .brief-prices .brief-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .brief-prices .brief-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .brief-prices .brief-table tbody {
+    display: block;
+  }
+
+  .brief-prices .brief-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    align-items: center;
+    padding: 11px 18px;
+  }
+
+  .brief-prices .brief-table tbody th,
+  .brief-prices .brief-table tbody td,
+  .brief-prices .brief-table tbody td:first-child,
+  .brief-prices .brief-table tbody th:first-child,
+  .brief-prices .brief-table tbody td:last-child {
+    padding: 0;
+    white-space: normal;
+  }
+
+  .brief-prices .brief-table tbody td:nth-child(3),
+  .brief-prices .brief-table tbody td:nth-child(4) {
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .brief-prices .brief-table tbody td:nth-child(4) {
+    justify-self: end;
+  }
+
+  /* ---------- Listings: filters fold away so plots are on the first screen ---------- */
+  .listing-filters:not(.is-open) .listing-filter-fields > :not(.listing-filter-search),
+  .listing-filters:not(.is-open) .listing-toggle-row {
+    display: none;
+  }
+
+  .listing-filters:not(.is-open) {
+    margin-bottom: 20px;
+  }
+}
+
+/* The button that opens the listing filters only exists on a phone. */
+.listing-filter-toggle {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .listing-filter-toggle {
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+  }
+}
+
+/* Large phones and small tablets held upright: two plot cards across, not one very tall one. */
+@media (min-width: 521px) and (max-width: 600px) {
+  .listing-card-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .listing-group[data-span] {
+    --listing-cols: 2;
+  }
+}

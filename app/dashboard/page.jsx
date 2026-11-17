@@ -63,7 +63,6 @@ export default async function DashboardPage() {
             <p className="brief-head-date">{today}</p>
           </div>
           <div className="brief-actions">
-            <Link className="cw-btn cw-btn-soft cw-btn-sm" href="/admin/login">Admin login</Link>
             <Link className="cw-btn cw-btn-navy cw-btn-sm" href="/map"><Map size={15} /> Open map</Link>
           </div>
         </header>
