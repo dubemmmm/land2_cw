@@ -20,6 +20,7 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
   const router = useRouter();
   const firstLocation = initialListing?.neighborhoodId || neighborhoods[0]?.id || "";
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(0);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -97,15 +98,26 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
     setError("");
   }
 
+  // Each photo is shrunk in the browser, sent straight to photo storage, and
+  // the listing keeps only its address.
   async function readFiles(files) {
-    const selected = Array.from(files || []).slice(0, 8 - form.photos.length);
-    const encoded = await Promise.all(selected.map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    })));
-    setForm((current) => ({ ...current, photos: current.photos.concat(encoded.filter(Boolean)).slice(0, 8) }));
+    const selected = Array.from(files || []).filter((file) => file.type.startsWith("image/")).slice(0, 8 - form.photos.length);
+    if (!selected.length) return;
+    setError("");
+    setToast("");
+    setUploading(selected.length);
+    const failed = [];
+    for (const file of selected) {
+      try {
+        const url = await uploadPhoto(file);
+        setForm((current) => ({ ...current, photos: current.photos.concat(url).slice(0, 8) }));
+      } catch (problem) {
+        failed.push(`${file.name}: ${problem.message}`);
+      }
+      setUploading((count) => count - 1);
+    }
+    setUploading(0);
+    if (failed.length) setError(`Could not add ${failed.join("; ")}`);
   }
 
   function removePhoto(index) {
@@ -176,7 +188,11 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
                 <input type="file" accept="image/*" multiple aria-label="Add photos" onChange={(event) => readFiles(event.target.files)} />
                 <UploadCloud size={22} aria-hidden="true" />
                 <span>Drag photos here, or click to browse</span>
-                <small>JPG or PNG. The first photo is the cover; use the star to change it.</small>
+                <small>
+                  {uploading
+                    ? `Uploading ${uploading} ${uploading === 1 ? "photo" : "photos"}…`
+                    : "JPG, PNG or WebP, straight from a phone is fine. The first photo is the cover; use the star to change it."}
+                </small>
               </div>
               {form.photos.length ? (
                 <div className="listing-photo-strip">
@@ -329,8 +345,8 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
             )}
             <div>
               <button className="cw-btn cw-btn-soft cw-btn-sm" type="button" onClick={clearForm}>Clear</button>
-              <button className="cw-btn cw-btn-outline cw-btn-sm" type="button" onClick={() => saveListing("Draft")} disabled={saving}><Save size={15} /> Save as draft</button>
-              <button className="cw-btn cw-btn-navy cw-btn-sm" type="button" onClick={() => saveListing("Published")} disabled={!canPublish || saving}>
+              <button className="cw-btn cw-btn-outline cw-btn-sm" type="button" onClick={() => saveListing("Draft")} disabled={saving || uploading > 0}><Save size={15} /> Save as draft</button>
+              <button className="cw-btn cw-btn-navy cw-btn-sm" type="button" onClick={() => saveListing("Published")} disabled={!canPublish || saving || uploading > 0}>
                 <UploadCloud size={15} /> Publish listing
               </button>
             </div>
@@ -392,6 +408,38 @@ export default function NewListingClient({ neighborhoods, estates, listingsCount
       </div>
     </section>
   );
+}
+
+const MAX_PHOTO_SIDE = 1920;
+
+async function uploadPhoto(file) {
+  const blob = await shrink(file);
+  const ticket = await fetch("/api/uploads/listing-photo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contentType: blob.type })
+  });
+  const { uploadUrl, url, error } = await ticket.json().catch(() => ({}));
+  if (!ticket.ok) throw new Error(error || "upload was refused");
+  const sent = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": blob.type }, body: blob });
+  if (!sent.ok) throw new Error("photo storage did not accept it");
+  return url;
+}
+
+// Draws the photo no larger than MAX_PHOTO_SIDE on its longer side and saves
+// it as JPEG, so a 10MB phone picture goes up as a few hundred KB.
+async function shrink(file) {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+  if (!bitmap) throw new Error("not a readable image");
+  const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  if (!blob) throw new Error("could not be prepared for upload");
+  return blob;
 }
 
 function EditorSection({ title, meta, children }) {
