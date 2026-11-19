@@ -15,7 +15,16 @@ export async function POST(request) {
   if (!credentials) {
     return NextResponse.json({ error: "No admin account is configured on this server." }, { status: 503 });
   }
-  if (!(await allowAttempt(`admin-login:${clientIp(request)}`, 10, 15 * 60 * 1000))) {
+  // Counting attempts needs the accounts database. If it cannot be reached,
+  // say so instead of failing with an empty reply.
+  let allowed;
+  try {
+    allowed = await allowAttempt(`admin-login:${clientIp(request)}`, 10, 15 * 60 * 1000);
+  } catch (error) {
+    console.error("[admin login] accounts database unavailable:", error.message);
+    return NextResponse.json({ error: "Sign-in is unavailable: this server cannot reach its accounts database." }, { status: 503 });
+  }
+  if (!allowed) {
     return NextResponse.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429 });
   }
   if (email !== credentials.email.toLowerCase() || password !== credentials.password) {

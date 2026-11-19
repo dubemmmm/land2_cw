@@ -14,15 +14,17 @@ export default function LoginClient({ next = "/data", devHint = false }) {
     event.preventDefault();
     setLoading(true);
     setError("");
+    // A server fault can come back with no body at all, so nothing here
+    // assumes there is JSON to read.
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
-    });
-    const body = await res.json();
+    }).catch(() => null);
+    const body = res ? await res.json().catch(() => ({})) : {};
     setLoading(false);
-    if (!res.ok) {
-      setError(body.error || "Could not sign in");
+    if (!res?.ok) {
+      setError(body.error || (res ? "The server could not sign you in. Please try again in a moment." : "Could not reach the server. Check your connection."));
       return;
     }
     router.replace(next || "/data");
