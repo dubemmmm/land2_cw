@@ -12,7 +12,7 @@ const PAGE_SIZE = 18;
 // PREVIEW ONLY: plots with no photo of their own borrow a stand-in view of
 // Lagos, to show how the page looks once photos are uploaded. Nothing is saved
 // to the listings. Set this to false to go back to drawings alone.
-const PREVIEW_PLACEHOLDERS = true;
+const PREVIEW_PLACEHOLDERS = false;
 const STAND_INS = ["ikoyi", "lekki", "victoriaIsland", "bananaIsland", "farmland", "skyline"];
 const CROPS = ["50% 30%", "20% 60%", "80% 45%", "50% 75%", "35% 20%"];
 
@@ -267,7 +267,7 @@ export default function FindLandClient({ listings, areas, fx = null, initialArea
         <p className="fl-foot">
           Prices are what sellers are asking, not what plots sold for. "Typical" is the middle asking price per m² in that area.
           {fx && mine.some((listing) => listing.converted) ? <> Dollar prices are shown in naira at ₦{new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(fx.rate)} to the dollar{fx.asOf ? ` (rate of ${fx.asOf})` : ""}, with <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">rates by Exchange Rate API</a>.</> : null}
-          {isAdmin ? <> <Link href="/listings/new">Add a listing</Link>.</> : null}
+          {isAdmin ? <> <Link href="/data/listings?new=1">Add a listing</Link>.</> : null}
         </p>
       </div>
     </div>

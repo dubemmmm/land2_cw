@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Check, ExternalLink, Paperclip, Plus, Save, Trash2, UploadCloud } from "lucide-react";
 import ConfidenceLegend from "@/components/ConfidenceLegend";
-import ListingsManager from "./ListingsManager";
 import { confidenceLevel, confidencePattern, confidenceScore, formatDate } from "@/lib/metrics";
 
 const sourceTypes = ["Official", "Estate", "Internal", "Historical", "Manual"];
@@ -24,7 +23,6 @@ export default function DataAdminClient({
   initialResources = [],
   initialMarketEstates = [],
   initialPricePoints = [],
-  initialListings = [],
   estates = [],
   adminEmail
 }) {
@@ -33,7 +31,6 @@ export default function DataAdminClient({
   const [resources, setResources] = useState(initialResources);
   const [marketEstates, setMarketEstates] = useState(initialMarketEstates);
   const [pricePoints, setPricePoints] = useState(initialPricePoints);
-  const [listings, setListings] = useState(initialListings);
   const [selectedId, setSelectedId] = useState(initialRecords[0]?.id || "");
   const [draft, setDraft] = useState(initialRecords[0] || null);
   const [resourceDraft, setResourceDraft] = useState(defaultResourceDraft(initialRecords[0]?.id || ""));
@@ -445,19 +442,17 @@ export default function DataAdminClient({
           </div>
 
           <div className="data-panel" hidden={section !== "listings"}>
-            <ListingsManager
-              listings={listings}
-              locationId={selectedId}
-              locationName={selected?.name || "this location"}
-              onChange={(updated) => setListings((current) => current.map((item) => (item.id === updated.id ? {
-                ...item,
-                sizeSqm: updated.sizeSqm,
-                pricePerSqm: updated.pricePerSqm,
-                priceBasis: updated.priceBasis,
-                titleDocument: updated.titleDocument,
-                listingStatus: updated.listingStatus
-              } : item)))}
-            />
+            <section className="data-card">
+              <div className="data-section-head">
+                <div>
+                  <h2>Listings have their own desk</h2>
+                  <p>
+                    Every plot is edited in one place now: prices, sizes, photos, your own fields, and whether buyers can see each one.
+                  </p>
+                </div>
+                <Link className="cw-btn cw-btn-navy cw-btn-sm" href="/data/listings">Open the listings desk</Link>
+              </div>
+            </section>
           </div>
 
           <div className="data-panel" hidden={section !== "market"}>

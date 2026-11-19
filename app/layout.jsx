@@ -14,6 +14,7 @@ import "./styles/listings.css";
 import "./styles/landing.css";
 import "./styles/responsive.css";
 import "./styles/atlas.css";
+import "./styles/desk.css";
 
 export const metadata = {
   title: "Squaremeter by CW — Lagos land intelligence",

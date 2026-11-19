@@ -1,43 +1,12 @@
-import AppShell from "@/components/AppShell";
+import { redirect } from "next/navigation";
 import { requireAdminPage } from "@/lib/auth";
-import { getLandBibleInventory, toEstateSlug } from "@/lib/landBible";
-import { getLandListing, getLandListings } from "@/lib/listingStore";
-import { getMarketEstates } from "@/lib/marketDataStore";
-import { getNeighborhoods } from "@/lib/neighborhoodStore";
-import NewListingClient from "./NewListingClient";
 
 export const dynamic = "force-dynamic";
 
+// Listings are added and edited on the listings desk. This address is kept so
+// old links and bookmarks still land in the right place.
 export default async function NewListingPage({ searchParams }) {
-  await requireAdminPage("/listings/new");
-  const params = await searchParams;
-  const [neighborhoods, marketEstates, listings] = await Promise.all([
-    getNeighborhoods(),
-    getMarketEstates(),
-    getLandListings({ includeDrafts: true, summary: true })
-  ]);
-  const initialListing = params?.id ? await getLandListing(params.id, { includeDrafts: true }) : null;
-  return (
-    <AppShell active="listings">
-      <NewListingClient
-        neighborhoods={neighborhoods}
-        estates={withLandBibleEstates(marketEstates, await getLandBibleInventory())}
-        listingsCount={listings.length}
-        initialListing={initialListing}
-      />
-    </AppShell>
-  );
-}
-
-function withLandBibleEstates(estates, inventory) {
-  const byId = new Map();
-  inventory.estates.forEach((estate) => {
-    byId.set(toEstateSlug(estate.id), {
-      id: toEstateSlug(estate.id),
-      neighborhoodId: String(estate.neighborhood_id || "").replaceAll("_", "-"),
-      name: estate.name
-    });
-  });
-  estates.forEach((estate) => byId.set(estate.id, estate));
-  return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+  await requireAdminPage("/data/listings");
+  const params = (await searchParams) || {};
+  redirect(typeof params.id === "string" ? `/data/listings?open=${encodeURIComponent(params.id)}` : "/data/listings?new=1");
 }

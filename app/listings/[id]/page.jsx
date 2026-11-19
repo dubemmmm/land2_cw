@@ -6,6 +6,8 @@ import PlotCard from "@/components/PlotCard";
 import { getPortalSession, requirePortalPage } from "@/lib/auth";
 import { againstMedian, againstMedianText } from "@/lib/listingMath";
 import { getAreaStats } from "@/lib/listingStats";
+import { getListingFields } from "@/lib/listingFieldStore";
+import { formatValue } from "@/lib/listingFields";
 import { getLandListing, getLandListings } from "@/lib/listingStore";
 import { formatDate } from "@/lib/metrics";
 import { areaPhoto, photo, photoCredits } from "@/lib/photos";
@@ -44,7 +46,11 @@ export default async function ListingPage({ params }) {
     listing.address ? { label: "Address", value: listing.address } : null,
     listing.listingStatus !== "Available" ? { label: "Status", value: listing.listingStatus } : null,
     { label: "Listed", value: formatDate(listing.listedAt) },
-    listing.sourceId ? { label: "Reference", value: listing.sourceId } : null
+    listing.sourceId ? { label: "Reference", value: listing.sourceId } : null,
+    // Details CW staff have added and chosen to show to buyers.
+    ...(await getListingFields())
+      .filter((field) => field.showToBuyers && listing.custom[field.id] != null)
+      .map((field) => ({ label: field.label, value: formatValue(field, listing.custom[field.id]) }))
   ].filter(Boolean);
 
   return (
@@ -62,7 +68,7 @@ export default async function ListingPage({ params }) {
           </div>
           <div className="focus-head-actions">
             {admin ? (
-              <Link className="cw-btn cw-btn-soft cw-btn-sm" href={`/listings/new?id=${listing.id}`}><Pencil size={15} /> Edit</Link>
+              <Link className="cw-btn cw-btn-soft cw-btn-sm" href={`/data/listings?open=${listing.id}`}><Pencil size={15} /> Edit</Link>
             ) : null}
             {listing.sourceUrl ? (
               <a className="cw-btn cw-btn-navy cw-btn-sm" href={listing.sourceUrl} target="_blank" rel="noreferrer">

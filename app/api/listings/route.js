@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { getAdminSession, requireAdminApi, requirePortalApi } from "@/lib/auth";
-import { createLandListing, getLandListings } from "@/lib/listingStore";
+import { getListingFields } from "@/lib/listingFieldStore";
+import { buyerView, createLandListing, getLandListings } from "@/lib/listingStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const { session, refused } = await requirePortalApi();
   if (refused) return refused;
-  return NextResponse.json(await getLandListings({ includeDrafts: Boolean(session.admin), summary: true }));
+  const listings = await getLandListings({ includeDrafts: Boolean(session.admin), summary: true });
+  if (session.admin) return NextResponse.json(listings);
+  const fields = await getListingFields();
+  return NextResponse.json(listings.map((listing) => buyerView(listing, fields)));
 }
 
 export async function POST(request) {
