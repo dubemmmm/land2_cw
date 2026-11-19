@@ -3,10 +3,10 @@ import { getAdminSession, requirePortalPage } from "@/lib/auth";
 import { getListingStats } from "@/lib/listingStats";
 import { getLandListings } from "@/lib/listingStore";
 import { getNeighborhoods } from "@/lib/neighborhoodStore";
-import ExploreClient from "./ExploreClient";
+import FindLandClient from "./FindLandClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Explore plots — Squaremeter by CW" };
+export const metadata = { title: "Find land — Squaremeter by CW" };
 
 export default async function ListingsPage({ searchParams }) {
   const params = (await searchParams) || {};
@@ -19,8 +19,8 @@ export default async function ListingsPage({ searchParams }) {
     getNeighborhoods()
   ]);
 
-  // One entry per area for the map, the chart and each row's gauge, plus the
-  // figures for Lagos as a whole under the id "all-lagos".
+  // One entry per area for the area picker, the map and each row's comparison,
+  // plus the figures for Lagos as a whole under the id "all-lagos".
   const areas = neighborhoods.map((neighborhood) => {
     const area = stats.areas[neighborhood.id];
     const center = neighborhood.geometry?.center;
@@ -36,8 +36,8 @@ export default async function ListingsPage({ searchParams }) {
   }).concat({ id: "all-lagos", name: "Lagos", center: null, count: stats.all.count, median: stats.all.median, q1: stats.all.lowerQuartile, q3: stats.all.upperQuartile });
 
   return (
-    <AppShell active="listings" bleed>
-      <ExploreClient
+    <AppShell active="listings">
+      <FindLandClient
         listings={listings.map(forList)}
         areas={areas}
         fx={stats.fx}
@@ -48,7 +48,7 @@ export default async function ListingsPage({ searchParams }) {
   );
 }
 
-// Only what a row or a chart mark shows: several hundred listings are sent to the browser at once.
+// Only what a row shows: several hundred listings are sent to the browser at once.
 function forList(listing) {
   return {
     id: listing.id,

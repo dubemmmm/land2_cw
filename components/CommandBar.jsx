@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const pages = [
-  { group: "Page", label: "Explore plots", href: "/listings" },
+  { group: "Page", label: "Find land", href: "/listings" },
   { group: "Page", label: "Briefing", href: "/dashboard" },
   { group: "Page", label: "Planning map", href: "/map" },
   { group: "Page", label: "Reports", href: "/reports" },

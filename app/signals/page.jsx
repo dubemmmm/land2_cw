@@ -1,17 +1,13 @@
 import Link from "next/link";
+import { Radio } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { requirePortalPage } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// Illustrative rows only: the signal feed is not live yet.
-const examples = [
-  { kind: "Planning", what: "Height variance denied", where: "Banana Island" },
-  { kind: "Planning", what: "Drainage review requested", where: "Ikoyi" },
-  { kind: "Price", what: "Price per m² tracked above the prior average band", where: "Victoria Island" },
-  { kind: "Price", what: "Market activity increased", where: "Lekki Phase 1" },
-  { kind: "Client alert", what: "A saved location, estate or listing changed materially", where: "Your saved items" }
-];
+// The feed is not built yet. The page shows the shape of it, blurred, with
+// plain bars where the words will go, so nobody reads made-up signals as real.
+const rows = [[62, 34, 22], [48, 26, 22], [78, 40, 16], [44, 36, 16], [70, 30, 28], [54, 28, 22]];
 
 export default async function SignalsPage() {
   await requirePortalPage("/signals");
@@ -29,43 +25,27 @@ export default async function SignalsPage() {
             <p className="brief-head-date">Planning decisions, price movements and client alerts, listed as they happen.</p>
           </div>
           <div className="brief-actions">
-            <Link className="cw-btn cw-btn-soft cw-btn-sm" href="/dashboard">Back to dashboard</Link>
+            <Link className="cw-btn cw-btn-soft cw-btn-sm" href="/dashboard">Back to Briefing</Link>
           </div>
         </header>
 
-        <p className="signals-notice">
-          <strong>This feed is not live yet.</strong> The rows below are examples of what it will show once the signal engine is ready.
-          Until then, the latest location signals are under <Link href="/dashboard">What changed on the dashboard</Link>.
-        </p>
-
-        <section className="brief-card" aria-labelledby="signals-title">
-          <div className="brief-card-title">
-            <div>
-              <h2 id="signals-title">What a signal looks like</h2>
-              <p>{examples.length} examples, not live data</p>
-            </div>
+        <section className="signals-soon" aria-labelledby="signals-soon-title">
+          <div className="signals-ghost" aria-hidden="true">
+            {rows.map((widths, index) => (
+              <div className="signals-ghost-row" key={index}>
+                {widths.map((width, cell) => <i style={{ width: `${width}%` }} key={cell} />)}
+                <i className="signals-ghost-chip" />
+              </div>
+            ))}
           </div>
-          <div className="brief-table-wrap">
-            <table className="brief-table signals-table">
-              <thead>
-                <tr>
-                  <th scope="col">What changed</th>
-                  <th scope="col">Where</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {examples.map((item) => (
-                  <tr key={`${item.what}-${item.where}`}>
-                    <th scope="row">{item.what}</th>
-                    <td>{item.where}</td>
-                    <td>{item.kind}</td>
-                    <td><span className="cw-chip">Example</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="signals-soon-card">
+            <Radio size={22} aria-hidden="true" />
+            <h2 id="signals-soon-title">Signals is coming soon</h2>
+            <p>
+              You will see planning decisions, price movements and changes to the places you follow here, as they happen.
+              We are still building it.
+            </p>
+            <Link className="cw-btn cw-btn-navy cw-btn-sm" href="/listings">Browse land for sale</Link>
           </div>
         </section>
       </div>

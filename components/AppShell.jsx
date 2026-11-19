@@ -5,7 +5,7 @@ import { getAdminSession } from "@/lib/auth";
 import { Compass, Database, FileText, LayoutDashboard, Radio, Users } from "lucide-react";
 
 const items = [
-  { href: "/listings", key: "listings", label: "Explore", icon: Compass, also: ["map"] },
+  { href: "/listings", key: "listings", label: "Find land", icon: Compass, also: ["map"] },
   { href: "/dashboard", key: "dashboard", label: "Briefing", icon: LayoutDashboard },
   { href: "/reports", key: "reports", label: "Reports", icon: FileText },
   { href: "/signals", key: "signals", label: "Signals", icon: Radio },
@@ -16,7 +16,7 @@ const items = [
 
 // The portal frame: a bar across the top with the sections spelled out, and on
 // a phone the same sections as labelled tabs along the bottom.
-// `bleed` lets a page (Explore) run edge to edge under the bar.
+// `bleed` lets a page run edge to edge under the bar.
 export default async function AppShell({ active, bleed = false, children }) {
   const admin = await getAdminSession();
   const shown = items.filter((item) => admin || !item.adminOnly);
