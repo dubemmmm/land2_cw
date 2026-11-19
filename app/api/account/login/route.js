@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { crossSiteResponse, setUserCookie } from "@/lib/auth";
+import { crossSiteResponse, setUserCookie, withFaults } from "@/lib/auth";
 import { burnPasswordCheck, verifyPassword } from "@/lib/passwords";
 import { clearAttempts, findUserByEmail, isLimited, normalizeEmail, recordAttempt } from "@/lib/userStore";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const WINDOW = 15 * 60 * 1000;
 const MAX_FAILURES = 5;
 
-export async function POST(request) {
+export const POST = withFaults(async (request) => {
   const refused = crossSiteResponse(request);
   if (refused) return refused;
   const body = await request.json().catch(() => ({}));
@@ -39,4 +39,4 @@ export async function POST(request) {
 
   await clearAttempts(key);
   return setUserCookie(NextResponse.json({ ok: true }), user);
-}
+});
